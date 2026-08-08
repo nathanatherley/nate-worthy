@@ -2114,21 +2114,29 @@ function renderTrustCard() {
 function renderStatsCard() {
   if (!me) return '';
 
+  // Site-wide totals -- every rated restaurant across every user on the
+  // whole app, regardless of anyone's individual trust network.
+  const siteWideEntries = state.suggestions.length;
+  const siteWideCities = new Set(state.suggestions.map(e => e.cityId)).size;
+
+  // Network-specific totals -- just what's visible through this person's
+  // own trust circle, using the same function that powers recommendations.
+  const networkEntries = visibleSuggestions();
+  const networkCities = new Set(networkEntries.map(e => e.cityId)).size;
+
   const myEntries = state.suggestions.filter(s => s.friendId === me.friendId);
-  const citiesCovered = new Set(myEntries.map(e => e.cityId)).size;
   const ratedEntries = myEntries.filter(e => e.ratingTaste > 0);
   const avgRatingGiven = ratedEntries.length
     ? (ratedEntries.reduce((sum, e) => sum + e.ratingTaste, 0) / ratedEntries.length)
     : null;
 
   const trustedByOthers = state.friends.filter(f => f.id !== me.friendId && f.trustRatings && f.trustRatings[me.friendId] > 0);
-  const avgTrustReceived = trustedByOthers.length
-    ? (trustedByOthers.reduce((sum, f) => sum + f.trustRatings[me.friendId], 0) / trustedByOthers.length)
-    : null;
 
   let html = '<div class="card stats-compact">';
-  html += '<span class="stat-compact-item"><strong>' + myEntries.length + '</strong> ' + (myEntries.length === 1 ? 'entry' : 'entries') + '</span>';
-  html += '<span class="stat-compact-item"><strong>' + citiesCovered + '</strong> ' + (citiesCovered === 1 ? 'city' : 'cities') + '</span>';
+  html += '<span class="stat-compact-item"><strong>' + siteWideEntries + '</strong> ' + (siteWideEntries === 1 ? 'entry on the site' : 'entries on the site') + '</span>';
+  html += '<span class="stat-compact-item"><strong>' + siteWideCities + '</strong> ' + (siteWideCities === 1 ? 'city on the site' : 'cities on the site') + '</span>';
+  html += '<span class="stat-compact-item"><strong>' + networkEntries.length + '</strong> ' + (networkEntries.length === 1 ? 'entry in your network' : 'entries in your network') + '</span>';
+  html += '<span class="stat-compact-item"><strong>' + networkCities + '</strong> ' + (networkCities === 1 ? 'city in your network' : 'cities in your network') + '</span>';
   html += '<span class="stat-compact-item"><strong>' + (avgRatingGiven !== null ? avgRatingGiven.toFixed(1) : '—') + '</strong> avg given</span>';
   html += '<span class="stat-compact-item"><strong>' + trustedByOthers.length + '</strong> trust you</span>';
   html += '</div>';
