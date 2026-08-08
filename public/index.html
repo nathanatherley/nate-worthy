@@ -335,6 +335,25 @@
     padding: 2px 6px;
     margin-left: 6px;
   }
+  .community-source-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--rust);
+    border: 1px solid rgba(224,120,86,0.4);
+    border-radius: 2px;
+    padding: 2px 6px;
+    margin-left: 6px;
+  }
+  @keyframes highlightPulse {
+    0% { background: rgba(224,120,86,0.18); }
+    100% { background: transparent; }
+  }
+  .highlight-pulse {
+    animation: highlightPulse 2s ease-out;
+    border-radius: 6px;
+  }
   .group-pick-list {
     margin-top: 10px; padding: 12px 14px; background: rgba(46,139,139,0.06);
     border-radius: 4px; display: flex; flex-direction: column; gap: 8px;
@@ -2068,7 +2087,7 @@ function renderTrustCard() {
     }
     toRate.forEach(f => {
       const rating = ratings[f.id] || 0;
-      html += '<div class="friend-row"><span class="friend-name">' + escapeHtml(f.name) + '</span><div class="rate-dots">';
+      html += '<div class="friend-row" data-rate-friend-row="' + f.id + '"><span class="friend-name">' + escapeHtml(f.name) + '</span><div class="rate-dots">';
       for (let i = 1; i <= 5; i++) {
         html += '<button type="button" class="rate-star rate-star-trust' + (rating >= i ? ' filled' : '') + '" data-trust-star="' + f.id + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(f.name) + ' ' + i + ' of 5 stars">' + (rating >= i ? '\u2605' : '\u2606') + '</button>';
       }
@@ -2516,6 +2535,17 @@ function renderRecommendCard() {
           if (suggestion.friendId !== me.friendId) {
             html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '" style="margin-top:8px;">I\'m going here</button>';
           }
+          html += '</div>';
+        } else if (source === 'community') {
+          const city = state.cities.find(c => c.id === suggestion.cityId);
+          html += '<div class="rec-pick">';
+          html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="community-source-tag">From the community, not yet rated by you</span></p>';
+          html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from ' + escapeHtml(suggestion.friendName) + '</p>';
+          html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
+          html += '<div style="display:flex; gap:8px; margin-top:8px;">';
+          html += '<button class="btn btn-ghost btn-small" data-rate-community="' + escapeHtml(suggestion.friendId) + '">Rate ' + escapeHtml(suggestion.friendName) + '</button>';
+          html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '">I\'m going here</button>';
+          html += '</div>';
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
@@ -3730,6 +3760,23 @@ function attachHandlers() {
     });
   });
 
+  document.querySelectorAll('[data-rate-community]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const friendId = btn.getAttribute('data-rate-community');
+      currentTab = 'circle';
+      trustCardExpanded = true; // the card is collapsed by default; the target row won't exist otherwise
+      render();
+      setTimeout(() => {
+        const row = document.querySelector('[data-rate-friend-row="' + friendId + '"]');
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('highlight-pulse');
+          setTimeout(() => row.classList.remove('highlight-pulse'), 2000);
+        }
+      }, 50);
+    });
+  });
+
   document.querySelectorAll('[data-mark-going]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (!me) return;
@@ -4539,6 +4586,29 @@ async function runRecommendation() {
           return item;
         });
 
+      // Community tier: real entries from other actual app users the person
+      // hasn't personally trust-rated yet. Without this, someone with a
+      // small circle only ever sees their own picks plus generic seed data
+      // -- the network effect never reaches them even if hundreds of real
+      // people have added real, good entries. This tier makes those visible,
+      // clearly labeled as not personally vetted by the viewer, ranked below
+      // their own circle but above seed data.
+      const communitySuggestions = state.suggestions.filter(s => !candidateFriendIds.has(s.friendId) && s.restaurant);
+      const communityPayload = communitySuggestions.map(s => {
+        const city = state.cities.find(c => c.id === s.cityId);
+        return {
+          id: s.id,
+          source: "community member, not personally rated by you",
+          restaurant: s.restaurant,
+          city: city ? city.name : 'unknown',
+          cuisine: s.cuisine || 'unspecified',
+          cost: s.cost ? '$'.repeat(s.cost) : 'unknown',
+          note: s.note || '',
+          suggestedBy: s.friendName,
+          ownTasteRating: s.ratingTaste > 0 ? (s.ratingTaste + '/5') : 'not yet rated'
+        };
+      });
+
       const webPayload = webSeedPicks.map(p => ({
         id: p.id,
         source: "web reviews, not a friend",
@@ -4549,7 +4619,7 @@ async function runRecommendation() {
         note: p.note
       }));
 
-      const combinedPayload = friendPayload.concat(webPayload);
+      const combinedPayload = friendPayload.concat(communityPayload).concat(webPayload);
 
       if (!combinedPayload.length) {
         recResults = [];
@@ -4620,7 +4690,14 @@ async function runRecommendation() {
     recResults = parsed
       .map(p => {
         const friendMatch = state.suggestions.find(s => s.id === p.id);
-        if (friendMatch) return { source: 'friend', suggestion: friendMatch, reason: p.reason };
+        if (friendMatch) {
+          // A matched suggestion could be from the person's own trust circle
+          // or from a community member outside it -- these need different
+          // labels, so re-check circle membership here rather than assume
+          // every state.suggestions match is a personally-trusted pick.
+          const isInOwnCircle = visibleFriendIds().has(friendMatch.friendId);
+          return { source: isInOwnCircle ? 'friend' : 'community', suggestion: friendMatch, reason: p.reason };
+        }
         const webMatch = webSeedPicks.find(w => w.id === p.id);
         if (webMatch) return { source: 'web', webPick: webMatch, reason: p.reason };
         return null;
