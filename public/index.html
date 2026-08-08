@@ -632,6 +632,8 @@ let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
 let formState = { city: null, restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+let editingEntryId = null; // set while editing an existing entry rather than creating a new one
+let editKeptPhotoKeys = []; // existing photo keys still kept for the entry being edited (post-removal)
 let photoCache = {};
 let photoLoadQueued = {};
 let lightboxKeys = null;
@@ -2655,8 +2657,13 @@ function renderShareFavoriteForm() {
   if (formState.city === null) formState.city = defaultCityName;
 
   html += '<div class="card" id="section-share-favorite">';
-  html += '<h2>Share a favorite</h2>';
-  html += '<p class="hint">A place you\'d genuinely recommend — not just somewhere you\'ve eaten. Rate it as you add it, all in one go.</p>';
+  if (editingEntryId) {
+    html += '<div style="display:flex; justify-content:space-between; align-items:center;"><h2 style="margin:0;">Editing your entry</h2><button type="button" class="btn btn-ghost btn-small" id="cancel-edit-entry">Cancel</button></div>';
+    html += '<p class="hint">Update anything below, then save — this won\'t create a new entry.</p>';
+  } else {
+    html += '<h2>Share a favorite</h2>';
+    html += '<p class="hint">A place you\'d genuinely recommend — not just somewhere you\'ve eaten. Rate it as you add it, all in one go.</p>';
+  }
 
   html += '<label for="f-city">City</label>';
   html += '<input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '">';
@@ -2705,7 +2712,21 @@ function renderShareFavoriteForm() {
   html += '</div></div>';
   html += '</div>';
 
-  html += '<label for="f-photos">Photos (optional)</label>';
+  if (editingEntryId && editKeptPhotoKeys.length) {
+    html += '<label>Current photos</label>';
+    html += '<div class="photo-preview-row">';
+    editKeptPhotoKeys.forEach((key, idx) => {
+      if (photoCache[key]) {
+        html += '<div class="photo-thumb-wrap"><img src="' + photoCache[key] + '" alt="Existing photo ' + (idx + 1) + '"><button type="button" class="photo-remove-btn" data-remove-existing-photo="' + escapeHtml(key) + '" title="Remove" aria-label="Remove existing photo ' + (idx + 1) + '">&times;</button></div>';
+      } else {
+        html += '<div class="entry-photo-loading"></div>';
+        queuePhotoLoad(key);
+      }
+    });
+    html += '</div>';
+  }
+
+  html += '<label for="f-photos">' + (editingEntryId ? 'Add more photos (optional)' : 'Photos (optional)') + '</label>';
   if (formState.photos.length) {
     html += '<div class="photo-preview-row">';
     formState.photos.forEach((p, idx) => {
@@ -2713,14 +2734,15 @@ function renderShareFavoriteForm() {
     });
     html += '</div>';
   }
-  if (formState.photos.length < 3) {
+  const existingPhotoCount = editingEntryId ? editKeptPhotoKeys.length : 0;
+  if (existingPhotoCount + formState.photos.length < 3) {
     html += '<input type="file" id="f-photos" accept="image/*" multiple>';
-    html += '<p class="photo-hint">Up to 3 photos — food, the space, whatever\'s worth showing.</p>';
+    html += '<p class="photo-hint">Up to 3 photos total — food, the space, whatever\'s worth showing.</p>';
   } else {
-    html += '<p class="photo-hint">3 photos added — remove one to add a different shot.</p>';
+    html += '<p class="photo-hint">3 photos total — remove one to add a different shot.</p>';
   }
 
-  html += '<div class="actions"><button class="btn btn-primary" id="f-submit">Share it</button><span class="msg' + (confirmationMsg ? (isDuplicateEntryMsg ? ' msg-duplicate' : ' msg-success') : '') + '" id="f-msg">' + escapeHtml(confirmationMsg) + '</span></div>';
+  html += '<div class="actions"><button class="btn btn-primary" id="f-submit">' + (editingEntryId ? 'Save changes' : 'Share it') + '</button><span class="msg' + (confirmationMsg ? (isDuplicateEntryMsg ? ' msg-duplicate' : ' msg-success') : '') + '" id="f-msg">' + escapeHtml(confirmationMsg) + '</span></div>';
   html += '</div>';
 
   if (pendingCityConfirm) {
@@ -3075,7 +3097,7 @@ function renderBoard() {
         const stale = (Date.now() - e.ts) > ONE_YEAR_MS;
         out += '<div class="entry">';
         out += '<div class="entry-main">';
-        out += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : '') + '</p>';
+        out += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit</button> <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : '') + '</p>';
         out += (function() {
           const trustInfo = e.friendId !== me.friendId ? myTrustInfo(e.friendId) : null;
           const trustLabel = trustInfo
@@ -4242,7 +4264,7 @@ function attachHandlers() {
   if (noteInput) noteInput.addEventListener('input', () => { formState.note = noteInput.value; });
 
   const submitBtn = document.getElementById('f-submit');
-  if (submitBtn) submitBtn.addEventListener('click', submitSuggestion);
+  if (submitBtn) submitBtn.addEventListener('click', () => { editingEntryId ? submitEntryEdit() : submitSuggestion(); });
 
   document.querySelectorAll('[data-form-rate-taste]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -4283,7 +4305,8 @@ function attachHandlers() {
   if (photoInput) {
     photoInput.addEventListener('change', async () => {
       const files = Array.from(photoInput.files || []);
-      const remaining = 3 - formState.photos.length;
+      const existingCount = editingEntryId ? editKeptPhotoKeys.length : 0;
+      const remaining = 3 - existingCount - formState.photos.length;
       if (remaining <= 0) return;
       const toProcess = files.slice(0, remaining);
       if (files.length > toProcess.length) {
@@ -4357,6 +4380,23 @@ function attachHandlers() {
         pendingUndoTimeout = null;
         render();
       }, 6000);
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-edit-entry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      startEditingEntry(btn.getAttribute('data-edit-entry'));
+    });
+  });
+
+  const cancelEditBtn = document.getElementById('cancel-edit-entry');
+  if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEditingEntry);
+
+  document.querySelectorAll('[data-remove-existing-photo]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-remove-existing-photo');
+      editKeptPhotoKeys = editKeptPhotoKeys.filter(k => k !== key);
       render();
     });
   });
@@ -4837,6 +4877,125 @@ async function submitSuggestionInner() {
 
   const existingEntry = (match && match.exact) ? match.entry : null;
   await proceedAfterOwnMergeDecision(existingEntry, context);
+}
+
+function startEditingEntry(entryId) {
+  const entry = state.suggestions.find(s => s.id === entryId && s.friendId === me.friendId);
+  if (!entry) return;
+  const city = state.cities.find(c => c.id === entry.cityId);
+  editingEntryId = entryId;
+  editKeptPhotoKeys = (entry.photoKeys || []).slice();
+  formState = {
+    city: city ? city.name : '',
+    restaurant: entry.restaurant,
+    cuisine: entry.cuisine || '',
+    note: entry.note || '',
+    taste: entry.ratingTaste || 0,
+    ambiance: entry.ratingAmbiance || 0,
+    cost: entry.cost || 0,
+    photos: []
+  };
+  cuisineOtherMode = !!(formState.cuisine && !MAJOR_CUISINES.includes(formState.cuisine));
+  render();
+  const target = document.getElementById('section-share-favorite');
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function cancelEditingEntry() {
+  editingEntryId = null;
+  editKeptPhotoKeys = [];
+  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  cuisineOtherMode = false;
+  render();
+}
+
+async function submitEntryEdit() {
+  if (isSubmittingSuggestion) return;
+  isSubmittingSuggestion = true;
+  const submitBtn = document.getElementById('f-submit');
+  if (submitBtn) submitBtn.disabled = true;
+  const msg = document.getElementById('f-msg');
+
+  try {
+    const entry = state.suggestions.find(s => s.id === editingEntryId && s.friendId === me.friendId);
+    if (!entry) { if (msg) msg.textContent = 'This entry no longer exists.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
+
+    const restaurant = (formState.restaurant || '').trim();
+    const cityName = (formState.city || '').trim();
+    if (!restaurant) { if (msg) msg.textContent = 'Enter a restaurant name.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
+    if (!cityName) { if (msg) msg.textContent = 'Enter a city.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
+
+    let cityId = entry.cityId;
+    const existingCity = state.cities.find(c => c.name.toLowerCase() === cityName.toLowerCase());
+    if (existingCity) {
+      cityId = existingCity.id;
+    } else {
+      cityId = uid();
+      const known = lookupCoords(cityName);
+      state.cities.push({ id: cityId, name: cityName, lat: known ? known[0] : null, lon: known ? known[1] : null });
+    }
+
+    // Upload any newly added photos, then combine with the existing photos
+    // that weren't explicitly removed -- this genuinely adds to what's
+    // already there rather than wholesale replacing every photo just
+    // because one new one was added.
+    const newlyUploadedKeys = [];
+    for (let i = 0; i < formState.photos.length; i++) {
+      try {
+        const res = await fetch('/api/photos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl: formState.photos[i] }),
+        });
+        if (res.ok) {
+          const { key } = await res.json();
+          newlyUploadedKeys.push(key);
+        }
+      } catch (e) {
+        console.error('photo save failed', e);
+      }
+    }
+
+    const originalKeys = entry.photoKeys || [];
+    const removedKeys = originalKeys.filter(k => !editKeptPhotoKeys.includes(k));
+    const finalPhotoKeys = editKeptPhotoKeys.concat(newlyUploadedKeys);
+
+    removedKeys.forEach(key => {
+      fetch('/api/photos/' + key, { method: 'DELETE' }).catch(() => {});
+    });
+
+    entry.restaurant = restaurant;
+    entry.cityId = cityId;
+    entry.cuisine = (formState.cuisine || '').trim();
+    entry.note = (formState.note || '').trim();
+    entry.ratingTaste = formState.taste;
+    entry.ratingAmbiance = formState.ambiance;
+    entry.cost = formState.cost;
+    entry.photoKeys = finalPhotoKeys;
+
+    selectedCityId = cityId;
+    confirmationMsg = 'Saved your changes to "' + restaurant + '".';
+    isDuplicateEntryMsg = false;
+    await saveData();
+    logEvent('entry_edited', {});
+
+    editingEntryId = null;
+    editKeptPhotoKeys = [];
+    isSubmittingSuggestion = false;
+    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+    cuisineOtherMode = false;
+    render();
+
+    const boardEl = document.querySelector('[data-city-id="' + cityId + '"]');
+    if (boardEl) boardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => { confirmationMsg = ''; render(); }, 4000);
+  } catch (e) {
+    console.error('submitEntryEdit failed unexpectedly', e);
+    logEvent('error', { message: 'submitEntryEdit crashed: ' + (e && e.message ? e.message : String(e)) });
+    isSubmittingSuggestion = false;
+    if (submitBtn) submitBtn.disabled = false;
+    if (msg) msg.textContent = 'Something went wrong saving that — please try again.';
+  }
 }
 
 async function submitSuggestion() {
