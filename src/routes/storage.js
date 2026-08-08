@@ -16,6 +16,14 @@ const { requireAuth } = require('../auth/middleware');
 
 const router = express.Router();
 router.use(requireAuth);
+// This data changes frequently and must always be read fresh — a cached,
+// stale response here is exactly what caused real confusion tonight (an
+// import appeared to do nothing because the browser silently reused an old
+// cached copy of a GET request instead of asking the server again).
+router.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  next();
+});
 
 // GET /api/storage/:key?shared=true
 router.get('/:key', async (req, res) => {
