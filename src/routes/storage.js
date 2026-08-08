@@ -45,13 +45,23 @@ router.post('/:key', async (req, res) => {
   const ownerId = isShared ? null : req.userId;
 
   try {
-    await pool.query(
-      `INSERT INTO kv_store (key, shared, owner_user_id, value, updated_at)
-       VALUES ($1, $2, $3, $4, now())
-       ON CONFLICT (key, shared, owner_user_id)
-       DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
-      [key, isShared, ownerId, value]
-    );
+    if (isShared) {
+      await pool.query(
+        `INSERT INTO kv_store (key, shared, owner_user_id, value, updated_at)
+         VALUES ($1, true, NULL, $2, now())
+         ON CONFLICT (key) WHERE shared = true
+         DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [key, value]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO kv_store (key, shared, owner_user_id, value, updated_at)
+         VALUES ($1, false, $2, $3, now())
+         ON CONFLICT (key, owner_user_id) WHERE shared = false
+         DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [key, ownerId, value]
+      );
+    }
     res.json({ key, value, shared: isShared });
   } catch (e) {
     console.error('storage set failed', e);
