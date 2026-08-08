@@ -1840,14 +1840,32 @@ function getJumpstartInfo() {
   const allCandidateIds = Object.keys(candidateInfo);
   if (!allCandidateIds.length) return null;
 
+  // Sort by connection strength before batching, so the most relevant
+  // discoveries surface first at scale -- someone vouched for by many of
+  // your trusted connections should reliably beat someone vouched for by
+  // just one, rather than it coming down to arbitrary alphabetical luck.
+  // Primary signal: how many people vouch for them. Tiebreaker: the average
+  // trust rating those vouchers gave them.
+  const byStrength = allCandidateIds.slice().sort((a, b) => {
+    const infoA = candidateInfo[a], infoB = candidateInfo[b];
+    if (infoB.sourceNames.length !== infoA.sourceNames.length) {
+      return infoB.sourceNames.length - infoA.sourceNames.length;
+    }
+    const avgA = infoA.ratings.reduce((s, r) => s + r, 0) / infoA.ratings.length;
+    const avgB = infoB.ratings.reduce((s, r) => s + r, 0) / infoB.ratings.length;
+    return avgB - avgA;
+  });
+
   const BATCH_SIZE = 25;
-  let candidateIds = allCandidateIds;
-  if (allCandidateIds.length > BATCH_SIZE) {
-    const sorted = allCandidateIds.slice().sort();
-    const offset = (me.jumpstartBatchIndex || 0) % sorted.length;
+  let candidateIds = byStrength;
+  if (byStrength.length > BATCH_SIZE) {
+    // Rotate through fixed-size windows of the strength-ordered list, so
+    // repeat visits still surface fresh (but still well-ranked) people
+    // rather than only ever showing the same top 25 forever.
+    const offset = (me.jumpstartBatchIndex || 0) % byStrength.length;
     candidateIds = [];
     for (let i = 0; i < BATCH_SIZE; i++) {
-      candidateIds.push(sorted[(offset + i) % sorted.length]);
+      candidateIds.push(byStrength[(offset + i) % byStrength.length]);
     }
   }
   return { candidateInfo, candidateIds, totalCandidateCount: allCandidateIds.length };

@@ -86,7 +86,8 @@ async function main() {
   await pool.query(
     `INSERT INTO kv_store (key, shared, owner_user_id, value, updated_at)
      VALUES ('scout-data', true, NULL, $1, now())
-     ON CONFLICT (key, shared, owner_user_id) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+     ON CONFLICT (key) WHERE shared = true
+     DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
     [JSON.stringify(newState)]
   );
 
