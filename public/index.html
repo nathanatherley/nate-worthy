@@ -9,6 +9,14 @@
 <meta property="og:title" content="Nate-Worthy">
 <meta property="og:description" content="A running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://nate-worthy.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://nate-worthy.com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nate-Worthy">
+<meta name="twitter:description" content="A running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends.">
+<meta name="twitter:image" content="https://nate-worthy.com/og-image.jpg">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Nate-Worthy">
 <meta name="twitter:description" content="A running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends.">
@@ -3195,7 +3203,7 @@ function renderBoard() {
         if (e.note) out += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
         if (e.photoKeys && e.photoKeys.length) {
           out += '<div class="entry-photos">';
-          e.photoKeys.forEach((key, photoIdx) => {
+          e.photoKeys.slice(0, 3).forEach((key, photoIdx) => {
             if (photoCache[key]) {
               out += '<img class="entry-photo-thumb" src="' + photoCache[key] + '" data-photo-key="' + key + '" data-entry-id="' + e.id + '" data-photo-index="' + photoIdx + '" alt="Photo of ' + escapeHtml(e.restaurant) + '">';
             } else {
