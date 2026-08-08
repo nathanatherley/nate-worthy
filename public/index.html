@@ -2391,7 +2391,7 @@ function renderDataImportCard() {
 function renderSeedImportCard() {
   let html = '<div class="card">';
   html += '<h2>Import baseline seed picks</h2>';
-  html += '<p class="hint">Add starting recommendations for a new city — these show up in "What sounds good?" labeled as "Yelp / Google, not a friend" until someone in the trust network actually rates them. Persists for everyone once imported; safe to re-run with updates (matches by city + restaurant name).</p>';
+  html += '<p class="hint">Add starting recommendations for a new city — these show up in "What sounds good?" labeled as "Internet match, not a friend" until someone in the trust network actually rates them. Persists for everyone once imported; safe to re-run with updates (matches by city + restaurant name).</p>';
   html += '<label for="seed-import-file">Upload a JSON file</label>';
   html += '<input type="file" id="seed-import-file" accept=".json,application/json">';
   html += '<p class="hint" style="margin-top:8px;">Or paste it directly:</p>';
@@ -2526,7 +2526,7 @@ function renderRecommendCard() {
     if (!recResults.length) {
       html += '<p class="rec-status">Nothing matches that well yet — maybe ask friends to add some picks first.</p>';
     } else {
-      recResults.forEach(({ source, suggestion, webPick, reason }) => {
+      recResults.forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
           html += '<div class="rec-pick">';
@@ -2545,19 +2545,19 @@ function renderRecommendCard() {
           }
           html += '</div>';
         } else if (source === 'community') {
-          const city = state.cities.find(c => c.id === suggestion.cityId);
+          const first = communityGroup[0];
+          const city = state.cities.find(c => c.id === first.cityId);
+          const ratingLabel = communityAvgRating !== null ? communityAvgRating.toFixed(1) + '/5' : 'not yet rated';
+          const raterLabel = communityRaterCount + (communityRaterCount === 1 ? ' community pick' : ' community picks');
           html += '<div class="rec-pick">';
-          html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="community-source-tag">From the community, not yet rated by you</span></p>';
-          html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from ' + escapeHtml(suggestion.friendName) + '</p>';
+          html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span></p>';
+          html += '<p class="rec-pick-meta">' + escapeHtml(first.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
-          html += '<div style="display:flex; gap:8px; margin-top:8px;">';
-          html += '<button class="btn btn-ghost btn-small" data-rate-community="' + escapeHtml(suggestion.friendId) + '">Rate ' + escapeHtml(suggestion.friendName) + '</button>';
-          html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '">I\'m going here</button>';
-          html += '</div>';
+          html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(first.id) + '">I\'m going here</button>';
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
-          html += '<p class="rec-pick-title">' + escapeHtml(webPick.restaurant) + (webPick.cost ? ' <span class="cost-tag">' + costLabel(webPick.cost) + '</span>' : '') + '<span class="web-source-tag">Yelp / Google, not a friend</span></p>';
+          html += '<p class="rec-pick-title">' + escapeHtml(webPick.restaurant) + (webPick.cost ? ' <span class="cost-tag">' + costLabel(webPick.cost) + '</span>' : '') + '<span class="web-source-tag">Internet match, not a friend</span></p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(webPick.cuisine || 'unspecified') + ' — ' + escapeHtml(webPick.city) + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
           html += '<div style="display:flex; gap:8px; margin-top:8px;">';
@@ -4594,28 +4594,43 @@ async function runRecommendation() {
           return item;
         });
 
-      // Community tier: real entries from other actual app users the person
-      // hasn't personally trust-rated yet. Without this, someone with a
-      // small circle only ever sees their own picks plus generic seed data
-      // -- the network effect never reaches them even if hundreds of real
-      // people have added real, good entries. This tier makes those visible,
-      // clearly labeled as not personally vetted by the viewer, ranked below
-      // their own circle but above seed data.
+      // Community tier: aggregated by actual restaurant identity, not shown
+      // as individual entries from named strangers. The whole point is
+      // collective signal, not one data point -- so this groups every
+      // community member's entry for the same real-world restaurant
+      // together, computes a genuine average rating and how many people
+      // rated it, and combines their notes so the AI can write a real
+      // summary rather than quoting one specific person. Sorted by rating
+      // so the best community results genuinely come first, not randomly.
       const communitySuggestions = state.suggestions.filter(s => !candidateFriendIds.has(s.friendId) && s.restaurant);
-      const communityPayload = communitySuggestions.map(s => {
-        const city = state.cities.find(c => c.id === s.cityId);
-        return {
-          id: s.id,
-          source: "community member, not personally rated by you",
-          restaurant: s.restaurant,
-          city: city ? city.name : 'unknown',
-          cuisine: s.cuisine || 'unspecified',
-          cost: s.cost ? '$'.repeat(s.cost) : 'unknown',
-          note: s.note || '',
-          suggestedBy: s.friendName,
-          ownTasteRating: s.ratingTaste > 0 ? (s.ratingTaste + '/5') : 'not yet rated'
-        };
+      const communityGroups = {};
+      communitySuggestions.forEach(s => {
+        const gid = groupIdFor(s);
+        if (!communityGroups[gid]) communityGroups[gid] = [];
+        communityGroups[gid].push(s);
       });
+      const communityPayload = Object.entries(communityGroups)
+        .map(([gid, entries]) => {
+          const first = entries[0];
+          const city = state.cities.find(c => c.id === first.cityId);
+          const rated = entries.filter(e => e.ratingTaste > 0);
+          const avgRating = rated.length ? (rated.reduce((sum, e) => sum + e.ratingTaste, 0) / rated.length) : null;
+          const notes = [...new Set(entries.map(e => e.note).filter(Boolean))].slice(0, 4);
+          return {
+            id: gid,
+            source: "community consensus, not personally rated by you",
+            restaurant: first.restaurant,
+            city: city ? city.name : 'unknown',
+            cuisine: first.cuisine || 'unspecified',
+            cost: first.cost ? '$'.repeat(first.cost) : 'unknown',
+            communityRatingCount: entries.length,
+            communityAverageRating: avgRating !== null ? avgRating.toFixed(1) + '/5' : 'not yet rated',
+            notesFromMultiplePeople: notes.length ? notes : ['no written notes yet'],
+            _avgForSorting: avgRating !== null ? avgRating : -1
+          };
+        })
+        .sort((a, b) => b._avgForSorting - a._avgForSorting)
+        .map(({ _avgForSorting, ...rest }) => rest);
 
       const webPayload = webSeedPicks.map(p => ({
         id: p.id,
@@ -4697,14 +4712,28 @@ async function runRecommendation() {
 
     recResults = parsed
       .map(p => {
+        // Community picks are now sent to the AI keyed by group ID (which
+        // may be a canonicalId shared by several people's entries, or a
+        // single entry's own id if nobody else has logged the same place)
+        // rather than one specific suggestion's id -- so this has to
+        // resolve the id back to every entry in that group for the average
+        // rating and count to display correctly, not just find one row.
+        const communityMatches = state.suggestions.filter(s => !visibleFriendIds().has(s.friendId) && s.restaurant && groupIdFor(s) === p.id);
+        if (communityMatches.length) {
+          const rated = communityMatches.filter(e => e.ratingTaste > 0);
+          const avgRating = rated.length ? (rated.reduce((sum, e) => sum + e.ratingTaste, 0) / rated.length) : null;
+          return {
+            source: 'community',
+            communityGroup: communityMatches,
+            communityAvgRating: avgRating,
+            communityRaterCount: communityMatches.length,
+            reason: p.reason
+          };
+        }
         const friendMatch = state.suggestions.find(s => s.id === p.id);
         if (friendMatch) {
-          // A matched suggestion could be from the person's own trust circle
-          // or from a community member outside it -- these need different
-          // labels, so re-check circle membership here rather than assume
-          // every state.suggestions match is a personally-trusted pick.
           const isInOwnCircle = visibleFriendIds().has(friendMatch.friendId);
-          return { source: isInOwnCircle ? 'friend' : 'community', suggestion: friendMatch, reason: p.reason };
+          if (isInOwnCircle) return { source: 'friend', suggestion: friendMatch, reason: p.reason };
         }
         const webMatch = webSeedPicks.find(w => w.id === p.id);
         if (webMatch) return { source: 'web', webPick: webMatch, reason: p.reason };
