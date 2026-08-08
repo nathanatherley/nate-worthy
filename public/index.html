@@ -359,6 +359,23 @@
     border-radius: 4px; display: flex; flex-direction: column; gap: 8px;
   }
   .group-pick-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+  .group-pick-suggestions { margin-bottom: 8px; }
+  .group-pick-suggestion-row {
+    display: flex; align-items: center; gap: 10px; padding: 9px 6px; font-size: 13.5px;
+    border-bottom: 1px solid var(--line); cursor: pointer;
+  }
+  .group-pick-suggestion-row:last-child { border-bottom: none; }
+  .group-pick-suggestion-row .avatar-sm {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--brass); color: #fff;
+    font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .group-pick-suggestion-row .add-hint { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--brass-dim); }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
+  .chip {
+    display: flex; align-items: center; gap: 6px; background: rgba(46,139,139,0.1); color: var(--brass-dim);
+    border-radius: 100px; padding: 6px 6px 6px 12px; font-size: 12.5px; font-weight: 600;
+  }
+  .chip button { background: none; border: none; color: var(--brass-dim); font-size: 14px; cursor: pointer; padding: 0 4px; }
   .entry {
     display: flex;
     justify-content: space-between;
@@ -751,6 +768,7 @@ let recQuery = '';
 let recConversation = [];
 let groupPickExpanded = false;
 let groupPickSelectedIds = new Set();
+let groupPickSearchQuery = '';
 let lastGroupModeParticipants = null;
 let recLoading = false;
 let recError = '';
@@ -2477,6 +2495,63 @@ function renderPlannedVisitsCard() {
   return html;
 }
 
+function renderGroupPickResults(others) {
+  let html = '';
+  const query = groupPickSearchQuery.trim().toLowerCase();
+  if (query) {
+    const matches = others.filter(f => !groupPickSelectedIds.has(f.id) && f.name.toLowerCase().includes(query)).slice(0, 6);
+    if (matches.length) {
+      html += '<div class="group-pick-suggestions">';
+      matches.forEach(f => {
+        html += '<div class="group-pick-suggestion-row" data-group-pick-add="' + f.id + '"><span class="avatar-sm">' + escapeHtml(f.name.charAt(0).toUpperCase()) + '</span>' + escapeHtml(f.name) + '<span class="add-hint">TAP TO ADD</span></div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<p class="hint" style="margin:0 0 6px;">No matches.</p>';
+    }
+  }
+  if (groupPickSelectedIds.size) {
+    html += '<div class="chip-row">';
+    [...groupPickSelectedIds].forEach(fid => {
+      const f = others.find(x => x.id === fid);
+      if (!f) return;
+      html += '<span class="chip">' + escapeHtml(f.name) + '<button type="button" data-group-pick-remove="' + fid + '" aria-label="Remove ' + escapeHtml(f.name) + '">&times;</button></span>';
+    });
+    html += '</div>';
+  }
+  return html;
+}
+
+function attachGroupPickResultHandlers() {
+  document.querySelectorAll('[data-group-pick-add]').forEach(row => {
+    row.addEventListener('click', () => {
+      groupPickSelectedIds.add(row.getAttribute('data-group-pick-add'));
+      groupPickSearchQuery = '';
+      const searchEl = document.getElementById('group-pick-search');
+      if (searchEl) searchEl.value = '';
+      updateGroupPickResults();
+    });
+  });
+  document.querySelectorAll('[data-group-pick-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      groupPickSelectedIds.delete(btn.getAttribute('data-group-pick-remove'));
+      updateGroupPickResults();
+    });
+  });
+}
+
+function updateGroupPickResults() {
+  // Lightweight, targeted update -- rebuilds only the suggestions/chips
+  // container, never touching the actual search <input> itself, so typing
+  // doesn't lose focus or cursor position the way a full page re-render
+  // would (the same category of bug already fixed once for star ratings).
+  const container = document.getElementById('group-pick-results');
+  if (!container || !me) return;
+  const others = state.friends.filter(f => f.id !== me.friendId);
+  container.innerHTML = renderGroupPickResults(others);
+  attachGroupPickResultHandlers();
+}
+
 function renderRecommendCard() {
   const isFollowUp = recConversation.length > 0;
   const isGroupMode = groupPickSelectedIds.size > 0;
@@ -2500,10 +2575,12 @@ function renderRecommendCard() {
       if (!others.length) {
         html += '<p class="empty">No one else has joined yet.</p>';
       } else {
-        others.forEach(f => {
-          const checked = groupPickSelectedIds.has(f.id);
-          html += '<label class="group-pick-row"><input type="checkbox" data-group-pick-participant="' + f.id + '"' + (checked ? ' checked' : '') + '> ' + escapeHtml(f.name) + '</label>';
-        });
+        // Search-and-add instead of a checkbox per person -- a full list
+        // becomes genuinely unusable once someone has a large network (200+
+        // connections would mean 200 checkboxes to scroll through just to
+        // find two people). Typing narrows it down instantly instead.
+        html += '<input type="text" id="group-pick-search" placeholder="Type a name to add them…" value="' + escapeHtml(groupPickSearchQuery) + '" style="margin-bottom:8px;">';
+        html += '<div id="group-pick-results">' + renderGroupPickResults(others) + '</div>';
       }
       html += '</div>';
     }
@@ -3759,14 +3836,11 @@ function attachHandlers() {
       render();
     });
   }
-  document.querySelectorAll('[data-group-pick-participant]').forEach(cb => {
-    cb.addEventListener('change', () => {
-      const fid = cb.getAttribute('data-group-pick-participant');
-      if (cb.checked) groupPickSelectedIds.add(fid);
-      else groupPickSelectedIds.delete(fid);
-      render();
-    });
-  });
+  const groupPickSearchEl = document.getElementById('group-pick-search');
+  if (groupPickSearchEl) {
+    groupPickSearchEl.addEventListener('input', () => { groupPickSearchQuery = groupPickSearchEl.value; updateGroupPickResults(); });
+  }
+  attachGroupPickResultHandlers();
   document.querySelectorAll('[data-claim-seed]').forEach(btn => {
     btn.addEventListener('click', () => {
       const pickId = btn.getAttribute('data-claim-seed');
