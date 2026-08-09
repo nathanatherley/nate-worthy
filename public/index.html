@@ -578,6 +578,7 @@
     vertical-align: middle; position: relative; top: -1px;
   }
   .postcard-head-clickable { cursor: pointer; }
+  .near-major-city { font-weight: 400; font-size: 0.7em; color: var(--text-on-paper-dim); }
   .trending-card { border: 1px solid rgba(46,139,139,0.3); }
   .best-of-best {
     background: rgba(46,139,139,0.08); border-radius: 8px; padding: 10px 14px; margin: 10px 0 14px;
@@ -656,7 +657,7 @@ let webSeedPicks = [];
 let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
-let formState = { city: null, restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+let formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
 let editingEntryId = null; // set while editing an existing entry rather than creating a new one
 let editKeptPhotoKeys = []; // existing photo keys still kept for the entry being edited (post-removal)
 let photoCache = {};
@@ -1237,9 +1238,84 @@ const US_CITY_COORDS = {
   "dublin": [53.35, -6.26], "cape town": [-33.92, 18.42], "marrakech": [31.63, -7.99]
 };
 
-function lookupCoords(name) {
+// A handful of explicitly state-qualified entries for the classic
+// same-name-different-place cases, tried before falling back to the plain
+// city name. Not exhaustive -- most entries in US_CITY_COORDS above are
+// already unique names without real ambiguity -- but this covers the
+// cases most likely to actually come up and demonstrates state genuinely
+// disambiguating the coordinate lookup, not just which city record gets
+// reused.
+const STATE_QUALIFIED_COORDS = {
+  "portland,or": [45.52, -122.68], "portland,me": [43.66, -70.26],
+  "springfield,il": [39.78, -89.65], "springfield,mo": [37.21, -93.29],
+  "springfield,ma": [42.10, -72.59], "springfield,oh": [39.92, -83.81],
+  "columbia,sc": [34.00, -81.03], "columbia,mo": [38.95, -92.33],
+  "richmond,va": [37.54, -77.44], "richmond,ca": [37.94, -122.35],
+  "manchester,nh": [42.99, -71.46], "manchester,ct": [41.78, -72.52],
+  "charleston,sc": [32.78, -79.93], "charleston,wv": [38.35, -81.63],
+  "salem,or": [44.94, -123.04], "salem,ma": [42.52, -70.90],
+  "auburn,al": [32.61, -85.48], "auburn,me": [44.10, -70.23],
+  "georgetown,tx": [30.63, -97.68], "georgetown,sc": [33.38, -79.30],
+};
+function lookupCoords(name, stateAbbrev) {
   const key = name.trim().toLowerCase().replace(/[.,]/g, '');
+  if (stateAbbrev) {
+    const qualifiedKey = key + ',' + stateAbbrev.trim().toLowerCase();
+    if (STATE_QUALIFIED_COORDS[qualifiedKey]) return STATE_QUALIFIED_COORDS[qualifiedKey];
+  }
   return US_CITY_COORDS[key] || null;
+}
+
+// A curated subset of genuinely major, widely-recognized cities worth
+// referencing as a landmark -- not every city in US_CITY_COORDS qualifies
+// (many entries there are themselves smaller cities, like Cary or
+// Flagstaff, that wouldn't mean anything as a "near X" reference point).
+// Display names here are properly capitalized since US_CITY_COORDS keys
+// are lowercase for lookup purposes only.
+const MAJOR_CITIES = [
+  ["new york", "New York"], ["los angeles", "Los Angeles"], ["chicago", "Chicago"],
+  ["houston", "Houston"], ["phoenix", "Phoenix"], ["philadelphia", "Philadelphia"],
+  ["san antonio", "San Antonio"], ["san diego", "San Diego"], ["dallas", "Dallas"],
+  ["austin", "Austin"], ["san francisco", "San Francisco"], ["seattle", "Seattle"],
+  ["denver", "Denver"], ["washington", "Washington DC"], ["boston", "Boston"],
+  ["nashville", "Nashville"], ["detroit", "Detroit"], ["portland", "Portland"],
+  ["las vegas", "Las Vegas"], ["memphis", "Memphis"], ["louisville", "Louisville"],
+  ["baltimore", "Baltimore"], ["milwaukee", "Milwaukee"], ["atlanta", "Atlanta"],
+  ["miami", "Miami"], ["minneapolis", "Minneapolis"], ["tampa", "Tampa"],
+  ["new orleans", "New Orleans"], ["orlando", "Orlando"], ["salt lake city", "Salt Lake City"],
+  ["kansas city", "Kansas City"], ["cincinnati", "Cincinnati"], ["pittsburgh", "Pittsburgh"],
+  ["st louis", "St. Louis"], ["cleveland", "Cleveland"], ["sacramento", "Sacramento"],
+  ["charlotte", "Charlotte"], ["columbus", "Columbus"], ["indianapolis", "Indianapolis"],
+  ["honolulu", "Honolulu"], ["osaka", "Osaka"], ["kyoto", "Kyoto"], ["tokyo", "Tokyo"],
+  ["london", "London"], ["paris", "Paris"], ["rome", "Rome"], ["barcelona", "Barcelona"],
+  ["madrid", "Madrid"], ["amsterdam", "Amsterdam"], ["berlin", "Berlin"], ["vienna", "Vienna"],
+  ["prague", "Prague"], ["istanbul", "Istanbul"], ["dubai", "Dubai"], ["bangkok", "Bangkok"],
+  ["singapore", "Singapore"], ["hong kong", "Hong Kong"], ["seoul", "Seoul"],
+  ["sydney", "Sydney"], ["melbourne", "Melbourne"], ["toronto", "Toronto"],
+  ["vancouver", "Vancouver"], ["mexico city", "Mexico City"], ["rio de janeiro", "Rio de Janeiro"],
+  ["lisbon", "Lisbon"], ["cape town", "Cape Town"], ["marrakech", "Marrakech"]
+];
+const NEARBY_MAJOR_CITY_MILES = 20;
+
+// Finds the nearest genuinely major city within 20 miles, if any -- returns
+// null rather than force a match onto every city, per the explicit
+// requirement that this only shows when something real is actually nearby.
+// Excludes the trivial case where the city itself basically IS the major
+// city (matching by name), since "Orlando (~Orlando)" would be nonsense.
+function nearbyMajorCityFor(city) {
+  if (!city || typeof city.lat !== 'number' || typeof city.lon !== 'number') return null;
+  const ownKey = city.name.trim().toLowerCase().replace(/[.,]/g, '');
+  let nearest = null;
+  let bestKm = Infinity;
+  MAJOR_CITIES.forEach(([key, displayName]) => {
+    if (key === ownKey) return;
+    const coords = US_CITY_COORDS[key];
+    if (!coords) return;
+    const km = distKm(city.lat, city.lon, coords[0], coords[1]);
+    if (km < bestKm) { bestKm = km; nearest = displayName; }
+  });
+  const milesToNearest = bestKm * 0.621371;
+  return (nearest && milesToNearest <= NEARBY_MAJOR_CITY_MILES) ? nearest : null;
 }
 
 async function loadData() {
@@ -1711,7 +1787,7 @@ async function saveIdentity() {
 
 async function forgetIdentity() {
   me = null;
-  formState = { city: null, restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
   cuisineOtherMode = false;
   recQuery = '';
   recResults = null;
@@ -2806,9 +2882,12 @@ function renderShareFavoriteForm() {
     html += '<p class="hint">A place you\'d genuinely recommend — not just somewhere you\'ve eaten. Rate it as you add it, all in one go.</p>';
   }
 
-  html += '<label for="f-city">City</label>';
-  html += '<input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '">';
+  html += '<div class="row2">';
+  html += '<div><label for="f-city">City</label><input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '"></div>';
+  html += '<div><label for="f-state">State</label><input type="text" id="f-state" list="state-suggestions" placeholder="e.g. FL, or country if outside the US" value="' + escapeHtml(formState.state || '') + '"></div>';
+  html += '</div>';
   html += buildCityDatalist();
+  html += buildStateDatalist();
   if (fromGeo && !formState.restaurant) {
     html += '<p class="geo-note">Detected from your location — just type over it if that\'s wrong.</p>';
   }
@@ -3218,7 +3297,9 @@ function renderBoard() {
 
     const isCollapsed = collapsedCities.has(city.id);
     out += '<div class="postcard" data-city-id="' + city.id + '">';
-    out += '<div class="postcard-head postcard-head-clickable" data-toggle-city="' + city.id + '" role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + escapeHtml(city.name) + '"><div class="head-left"><div class="postmark">' + escapeHtml(city.name.slice(0,3).toUpperCase()) + '</div><h3>' + escapeHtml(city.name) + '</h3></div><span class="count">' + entries.length + ' spot' + (entries.length === 1 ? '' : 's') + ' ' + (isCollapsed ? '\u25b8' : '\u25be') + '</span></div>';
+    const nearbyMajor = nearbyMajorCityFor(city);
+    const nearbyMajorNote = nearbyMajor ? ' <span class="near-major-city">(~' + escapeHtml(nearbyMajor) + ')</span>' : '';
+    out += '<div class="postcard-head postcard-head-clickable" data-toggle-city="' + city.id + '" role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + escapeHtml(city.name) + '"><div class="head-left"><div class="postmark">' + escapeHtml(city.name.slice(0,3).toUpperCase()) + '</div><h3>' + escapeHtml(city.name) + nearbyMajorNote + '</h3></div><span class="count">' + entries.length + ' spot' + (entries.length === 1 ? '' : 's') + ' ' + (isCollapsed ? '\u25b8' : '\u25be') + '</span></div>';
 
     if (!isCollapsed) {
       const bestOfBest = getBestOfBestForCity(city.id).slice(0, 3);
@@ -3826,12 +3907,49 @@ function titleCase(str) {
   return str.replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// Matches an existing city by name AND state together, not name alone --
+// two different real places can share a city name (Portland, OR vs
+// Portland, ME being the classic example), so matching on name alone risks
+// silently picking the wrong one and getting its coordinates, which would
+// then feed wrong data into the nearby-major-city distance calculation.
+function findExistingCity(cityName, stateName) {
+  const typedCity = (cityName || '').trim().toLowerCase();
+  const typedState = (stateName || '').trim().toLowerCase();
+  if (!typedCity) return null;
+  return state.cities.find(c => {
+    if (c.name.toLowerCase() !== typedCity) return false;
+    const cState = (c.state || '').trim().toLowerCase();
+    // If either side hasn't specified a state, fall back to name-only
+    // matching rather than force a mismatch -- this keeps older cities
+    // saved before this feature existed working correctly.
+    if (!typedState || !cState) return true;
+    return cState === typedState;
+  });
+}
+
+function updateSelectedCityIdFromForm() {
+  const match = findExistingCity(formState.city, formState.state);
+  selectedCityId = match ? match.id : null;
+}
+
 function buildCityDatalist() {
   const names = new Set();
   state.cities.forEach(c => names.add(c.name));
   Object.keys(US_CITY_COORDS).forEach(k => names.add(titleCase(k)));
   const options = Array.from(names).sort().map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
   return '<datalist id="city-suggestions">' + options + '</datalist>';
+}
+
+const US_STATE_ABBREVIATIONS = [
+  "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA",
+  "ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK",
+  "OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"
+];
+function buildStateDatalist() {
+  const names = new Set(US_STATE_ABBREVIATIONS);
+  state.cities.forEach(c => { if (c.state) names.add(c.state); });
+  const options = Array.from(names).sort().map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
+  return '<datalist id="state-suggestions">' + options + '</datalist>';
 }
 
 function buildCuisineDatalist() {
@@ -4371,13 +4489,14 @@ function attachHandlers() {
     });
   });
   const cityInput = document.getElementById('f-city');
+  const stateInput = document.getElementById('f-state');
   if (cityInput) {
     cityInput.addEventListener('input', () => { formState.city = cityInput.value; });
-    cityInput.addEventListener('change', () => {
-      const typed = cityInput.value.trim().toLowerCase();
-      const match = state.cities.find(c => c.name.toLowerCase() === typed);
-      selectedCityId = match ? match.id : null;
-    });
+    cityInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
+  }
+  if (stateInput) {
+    stateInput.addEventListener('input', () => { formState.state = stateInput.value; });
+    stateInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
   }
   const restaurantInput = document.getElementById('f-restaurant');
   if (restaurantInput) restaurantInput.addEventListener('input', () => { formState.restaurant = restaurantInput.value; logEntryFormStartedOnce(); });
@@ -4980,8 +5099,11 @@ async function submitSuggestionInner() {
   const msg = document.getElementById('f-msg');
 
   const cityInputEl = document.getElementById('f-city');
+  const stateInputEl = document.getElementById('f-state');
   const cityName = (cityInputEl ? cityInputEl.value : formState.city || '').trim();
+  const stateName = (stateInputEl ? stateInputEl.value : formState.state || '').trim();
   if (!cityName) { msg.textContent = 'Enter a city.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
+  if (!stateName) { msg.textContent = 'Enter a state (or country if outside the US) — this keeps cities with the same name in different places from getting mixed up.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
 
   if (cityName !== cityConfirmBypassFor) {
     const similarCity = findSimilarCity(cityName);
@@ -4996,13 +5118,14 @@ async function submitSuggestionInner() {
   cityConfirmBypassFor = null;
 
   let cityId;
-  const existingCity = state.cities.find(c => c.name.toLowerCase() === cityName.toLowerCase());
+  const existingCity = findExistingCity(cityName, stateName);
   if (existingCity) {
     cityId = existingCity.id;
+    if (!existingCity.state) existingCity.state = stateName;
   } else {
     cityId = uid();
-    const known = lookupCoords(cityName);
-    state.cities.push({ id: cityId, name: cityName, lat: known ? known[0] : null, lon: known ? known[1] : null });
+    const known = lookupCoords(cityName, stateName);
+    state.cities.push({ id: cityId, name: cityName, state: stateName, lat: known ? known[0] : null, lon: known ? known[1] : null });
   }
 
   // Read from formState rather than re-querying the DOM by element ID — these
@@ -5044,6 +5167,7 @@ function startEditingEntry(entryId) {
   editKeptPhotoKeys = (entry.photoKeys || []).slice();
   formState = {
     city: city ? city.name : '',
+    state: city ? (city.state || '') : '',
     restaurant: entry.restaurant,
     cuisine: entry.cuisine || '',
     note: entry.note || '',
@@ -5061,7 +5185,7 @@ function startEditingEntry(entryId) {
 function cancelEditingEntry() {
   editingEntryId = null;
   editKeptPhotoKeys = [];
-  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', state: (state.cities.find(c => c.id === selectedCityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
   cuisineOtherMode = false;
   render();
 }
@@ -5079,17 +5203,20 @@ async function submitEntryEdit() {
 
     const restaurant = (formState.restaurant || '').trim();
     const cityName = (formState.city || '').trim();
+    const stateName = (formState.state || '').trim();
     if (!restaurant) { if (msg) msg.textContent = 'Enter a restaurant name.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
     if (!cityName) { if (msg) msg.textContent = 'Enter a city.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
+    if (!stateName) { if (msg) msg.textContent = 'Enter a state (or country if outside the US) — this keeps cities with the same name in different places from getting mixed up.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
 
     let cityId = entry.cityId;
-    const existingCity = state.cities.find(c => c.name.toLowerCase() === cityName.toLowerCase());
+    const existingCity = findExistingCity(cityName, stateName);
     if (existingCity) {
       cityId = existingCity.id;
+      if (!existingCity.state) existingCity.state = stateName;
     } else {
       cityId = uid();
-      const known = lookupCoords(cityName);
-      state.cities.push({ id: cityId, name: cityName, lat: known ? known[0] : null, lon: known ? known[1] : null });
+      const known = lookupCoords(cityName, stateName);
+      state.cities.push({ id: cityId, name: cityName, state: stateName, lat: known ? known[0] : null, lon: known ? known[1] : null });
     }
 
     // Upload any newly added photos, then combine with the existing photos
@@ -5139,7 +5266,7 @@ async function submitEntryEdit() {
     editingEntryId = null;
     editKeptPhotoKeys = [];
     isSubmittingSuggestion = false;
-    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
     cuisineOtherMode = false;
     render();
 
@@ -5295,7 +5422,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   entryFormStartedLogged = false;
   isSubmittingSuggestion = false;
   isDuplicateEntryMsg = duplicateUpdated;
-  formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
   cuisineOtherMode = false;
   render();
 
