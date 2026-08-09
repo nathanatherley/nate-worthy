@@ -2595,6 +2595,13 @@ function renderRecommendCard() {
     : 'Describe what you\'re after — cuisine, price, where you are — and this pulls the best matches from your trust circle\'s picks.') + '</p>';
   html += '<textarea id="rec-query" placeholder="' + (isFollowUp ? 'e.g. something cheaper, or not that one' : 'e.g. Chinese food, $$, nearby downtown Salt Lake') + '">' + escapeHtml(recQuery) + '</textarea>';
 
+  const submitLabel = recLoading ? 'Thinking…' : (isFollowUp ? (lastGroupModeParticipants ? 'Refine group picks' : 'Refine') : (isGroupMode ? 'Find group picks' : 'Find suggestions'));
+  html += '<div class="actions"><button class="btn btn-primary" id="rec-submit"' + (recLoading ? ' disabled' : '') + '>' + submitLabel + '</button>';
+  if (isFollowUp) {
+    html += '<button class="btn btn-ghost btn-small" id="rec-start-over">Start over</button>';
+  }
+  html += '</div>';
+
   if (!isFollowUp) {
     const others = me ? state.friends.filter(f => f.id !== me.friendId) : [];
     html += '<button type="button" class="btn btn-ghost btn-small" id="group-pick-toggle" style="margin-top:8px;">' +
@@ -2618,13 +2625,6 @@ function renderRecommendCard() {
     const n = lastGroupModeParticipants.size - 1;
     html += '<p class="hint" style="margin-top:8px;">Still finding group picks for you + ' + n + ' other' + (n === 1 ? '' : 's') + '.</p>';
   }
-
-  const submitLabel = recLoading ? 'Thinking…' : (isFollowUp ? (lastGroupModeParticipants ? 'Refine group picks' : 'Refine') : (isGroupMode ? 'Find group picks' : 'Find suggestions'));
-  html += '<div class="actions"><button class="btn btn-primary" id="rec-submit"' + (recLoading ? ' disabled' : '') + '>' + submitLabel + '</button>';
-  if (isFollowUp) {
-    html += '<button class="btn btn-ghost btn-small" id="rec-start-over">Start over</button>';
-  }
-  html += '</div>';
 
   if (recError) {
     html += '<p class="rec-status">' + escapeHtml(recError) + '</p>';
@@ -3270,9 +3270,6 @@ function renderBoard() {
           });
           out += '</div>';
         }
-        out += '<p class="track-record">' + trackLabel(record);
-        if (e.ratingAmbiance > 0) out += ' · ambiance ' + e.ratingAmbiance + '/5';
-        out += '</p>';
         out += '</div>';
         out += '<div class="entry-side">';
         out += '<div class="rate-group"><span class="rate-label">Taste</span><div class="rate-dots">';
