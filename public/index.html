@@ -2168,7 +2168,20 @@ function renderFriendSearchResults(others, visibleIds, unknownMarks) {
   const query = friendSearchQuery.trim().toLowerCase();
   if (!query) return '';
   const matches = others.filter(f => !visibleIds.has(f.id) && !unknownMarks[f.id] && f.name.toLowerCase().includes(query)).slice(0, 8);
-  if (!matches.length) return '<p class="hint" style="margin:6px 0 0;">No matches.</p>';
+  if (!matches.length) {
+    // Not actually a broken search -- this box is specifically for finding
+    // someone NOT already visible, to add them for the first time. If the
+    // query matches someone who's already in the list above (already rated,
+    // or already surfaced through jumpstart/a previous search), a bare "No
+    // matches" reads as a bug rather than "they're already right there" --
+    // check for that specific case and say so plainly instead of leaving
+    // the person confused about whether the search itself is broken.
+    const alreadyVisibleMatch = others.find(f => visibleIds.has(f.id) && f.name.toLowerCase().includes(query));
+    if (alreadyVisibleMatch) {
+      return '<p class="hint" style="margin:6px 0 0;">' + escapeHtml(alreadyVisibleMatch.name) + ' is already in your list above.</p>';
+    }
+    return '<p class="hint" style="margin:6px 0 0;">No matches.</p>';
+  }
   let html = '<div class="group-pick-suggestions" style="margin-top:6px;">';
   matches.forEach(f => {
     html += '<div class="group-pick-suggestion-row" data-friend-search-add="' + f.id + '"><span class="avatar-sm">' + escapeHtml(f.name.charAt(0).toUpperCase()) + '</span>' + escapeHtml(f.name) + '<span class="add-hint">TAP TO ADD</span></div>';
