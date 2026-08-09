@@ -21,7 +21,19 @@ router.post('/', async (req, res) => {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1000,
-        system: require('./recommend-system-prompt'),
+        // The system prompt never changes between requests, so it's marked
+        // as a cache breakpoint -- cached reads cost a small fraction of
+        // full input price. The much bigger saving is the seed-data cache
+        // breakpoint the frontend adds inside the first user message itself
+        // (the shared candidate list is the same for every user and rarely
+        // changes, and is the majority of the token cost per request).
+        system: [
+          {
+            type: 'text',
+            text: require('./recommend-system-prompt'),
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
         messages,
       }),
     });

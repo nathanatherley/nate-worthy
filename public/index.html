@@ -4764,16 +4764,37 @@ async function runRecommendation() {
         note: p.note
       }));
 
-      const combinedPayload = friendPayload.concat(communityPayload).concat(webPayload);
+      const personalPayload = friendPayload.concat(communityPayload);
 
-      if (!combinedPayload.length) {
+      if (!webPayload.length && !personalPayload.length) {
         recResults = [];
         recLoading = false;
         render();
         return;
       }
 
-      userTurnContent = (isGroupMode ? "This is a GROUP request for " + participantIds.size + " people going out together tonight. " : "") + "Request: " + query + "\n\nAvailable options:\n" + JSON.stringify(combinedPayload);
+      // Split into two content blocks rather than one combined string.
+      // webPayload is identical for every user and barely ever changes
+      // (only when seed data is imported), so it's marked as a cache
+      // breakpoint -- Anthropic charges close to full price the first time
+      // any user's request creates this cache entry, then a small fraction
+      // of that on every subsequent request from anyone, for up to 5
+      // minutes of inactivity (refreshed on each hit). Given this block is
+      // typically the majority of the tokens in a request, this is the
+      // actual cost saving, not just a token gesture. personalPayload
+      // varies per person and per request, so it's sent uncached, right
+      // after the cached block.
+      userTurnContent = [
+        {
+          type: "text",
+          text: "Baseline/reference restaurant options, shared across all requests:\n" + JSON.stringify(webPayload),
+          cache_control: { type: "ephemeral" }
+        },
+        {
+          type: "text",
+          text: (isGroupMode ? "This is a GROUP request for " + participantIds.size + " people going out together tonight. " : "") + "Request: " + query + "\n\nAdditional options from this person's circle and the wider community (combine these with the baseline options above as one full list to choose from):\n" + JSON.stringify(personalPayload)
+        }
+      ];
     } else {
       userTurnContent = "Refinement of the previous request — apply this as an adjustment to what you already suggested, still choosing only from the same 'Available options' list given earlier, unless nothing there fits, in which case say so: " + query;
     }
