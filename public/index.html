@@ -298,6 +298,13 @@
     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
     color: var(--text-on-paper-dim); font-size: 12px; pointer-events: none;
   }
+  .show-more-wrap { text-align: center; margin-top: 14px; }
+  .show-more-btn {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+    background: rgba(27,58,75,0.05); border: none; color: var(--ink); border-radius: 100px; padding: 11px 22px; cursor: pointer;
+  }
+  .show-more-btn:hover { background: rgba(27,58,75,0.09); }
+  .show-more-hint { font-size: 11px; color: var(--text-on-paper-dim); margin: 8px 0 0; }
   .postcard {
     background: var(--paper);
     color: var(--text-on-paper);
@@ -788,6 +795,7 @@ let lastGroupModeParticipants = null;
 let recLoading = false;
 let recError = '';
 let recResults = null;
+let recResultsShownCount = 5;
 let boardSearchQuery = '';
 let boardSortMode = 'rating';
 let collapsedCities = new Set();
@@ -1800,6 +1808,7 @@ async function forgetIdentity() {
   cuisineOtherMode = false;
   recQuery = '';
   recResults = null;
+  recResultsShownCount = 5;
   recError = '';
   recLoading = false;
   recConversation = [];
@@ -2866,7 +2875,7 @@ function renderRecommendCard() {
     if (!recResults.length) {
       html += '<p class="rec-status">Nothing matches that well yet — maybe ask friends to add some picks first.</p>';
     } else {
-      recResults.forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount }) => {
+      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
           html += '<div class="rec-pick">';
@@ -2937,6 +2946,11 @@ function renderRecommendCard() {
           html += '</div>';
         }
       });
+      if (recResultsShownCount < recResults.length) {
+        const remaining = recResults.length - recResultsShownCount;
+        const nextBatch = Math.min(5, remaining);
+        html += '<div class="show-more-wrap"><button type="button" class="show-more-btn" id="rec-show-more">Show ' + nextBatch + ' more option' + (nextBatch === 1 ? '' : 's') + '</button><p class="show-more-hint">' + remaining + ' more available</p></div>';
+      }
     }
     html += '</div>';
   }
@@ -4819,6 +4833,14 @@ function attachHandlers() {
   if (friendSearchEl) friendSearchEl.addEventListener('input', () => { friendSearchQuery = friendSearchEl.value; updateFriendSearchResults(); });
   attachFriendSearchHandlers();
 
+  const recShowMoreBtn = document.getElementById('rec-show-more');
+  if (recShowMoreBtn) {
+    recShowMoreBtn.addEventListener('click', () => {
+      recResultsShownCount = Math.min(recResultsShownCount + 5, recResults ? recResults.length : recResultsShownCount);
+      render();
+    });
+  }
+
   document.querySelectorAll('[data-remove-existing-photo]').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-remove-existing-photo');
@@ -5226,8 +5248,8 @@ async function runRecommendation() {
         if (webMatch) return { source: 'web', webPick: webMatch, reason: p.reason };
         return null;
       })
-      .filter(Boolean)
-      .slice(0, 5);
+      .filter(Boolean);
+    recResultsShownCount = Math.min(5, recResults.length);
     logEvent('rec_query_completed', { resultCount: recResults.length, wasFollowUp: isFollowUp });
   } catch (e) {
     console.error('recommendation failed', e);
@@ -5253,6 +5275,7 @@ async function runRecommendation() {
 function resetRecommendation() {
   recQuery = '';
   recResults = null;
+  recResultsShownCount = 5;
   recError = '';
   recConversation = [];
   lastGroupModeParticipants = null;
