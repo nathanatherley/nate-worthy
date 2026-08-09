@@ -2795,7 +2795,11 @@ function renderShareFavoriteForm() {
 
   html += '<div class="card" id="section-share-favorite">';
   if (editingEntryId) {
-    html += '<div style="display:flex; justify-content:space-between; align-items:center;"><h2 style="margin:0;">Editing your entry</h2><button type="button" class="btn btn-ghost btn-small" id="cancel-edit-entry">Cancel</button></div>';
+    const editingEntry = state.suggestions.find(s => s.id === editingEntryId);
+    const editHeaderText = (editingEntry && editingEntry.friendId !== me.friendId)
+      ? 'Editing ' + escapeHtml(editingEntry.friendName) + "'s entry (admin)"
+      : 'Editing your entry';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center;"><h2 style="margin:0;">' + editHeaderText + '</h2><button type="button" class="btn btn-ghost btn-small" id="cancel-edit-entry">Cancel</button></div>';
     html += '<p class="hint">Update anything below, then save — this won\'t create a new entry.</p>';
   } else {
     html += '<h2>Share a favorite</h2>';
@@ -3234,7 +3238,7 @@ function renderBoard() {
         const stale = (Date.now() - e.ts) > ONE_YEAR_MS;
         out += '<div class="entry">';
         out += '<div class="entry-main">';
-        out += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit</button> <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : '') + '</p>';
+        out += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit</button> <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : (isCurrentUserAdmin() ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" title="Edit as admin -- fix content, remove inappropriate material, add photos" style="background:none; border:none; font-size:12px; color:var(--rust); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit (admin)</button>' : '')) + '</p>';
         out += (function() {
           const trustInfo = e.friendId !== me.friendId ? myTrustInfo(e.friendId) : null;
           const trustLabel = trustInfo
@@ -5036,7 +5040,7 @@ async function submitSuggestionInner() {
 }
 
 function startEditingEntry(entryId) {
-  const entry = state.suggestions.find(s => s.id === entryId && s.friendId === me.friendId);
+  const entry = state.suggestions.find(s => s.id === entryId && (s.friendId === me.friendId || isCurrentUserAdmin()));
   if (!entry) return;
   const city = state.cities.find(c => c.id === entry.cityId);
   editingEntryId = entryId;
@@ -5073,7 +5077,7 @@ async function submitEntryEdit() {
   const msg = document.getElementById('f-msg');
 
   try {
-    const entry = state.suggestions.find(s => s.id === editingEntryId && s.friendId === me.friendId);
+    const entry = state.suggestions.find(s => s.id === editingEntryId && (s.friendId === me.friendId || isCurrentUserAdmin()));
     if (!entry) { if (msg) msg.textContent = 'This entry no longer exists.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
 
     const restaurant = (formState.restaurant || '').trim();
