@@ -367,14 +367,6 @@
     border-radius: 4px; display: flex; flex-direction: column; gap: 8px;
   }
   .group-pick-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-  .sort-pill-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
-  .sort-pill {
-    font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.02em;
-    background: rgba(27,58,75,0.05); border: none; color: var(--text-on-paper-dim);
-    border-radius: 100px; padding: 7px 14px; font-weight: 600; cursor: pointer;
-  }
-  .sort-pill.active { background: var(--ink); color: var(--paper); }
-  .sort-pill:hover:not(.active) { background: rgba(27,58,75,0.09); }
   .group-pick-suggestions { margin-bottom: 8px; }
   .group-pick-suggestion-row {
     display: flex; align-items: center; gap: 10px; padding: 9px 6px; font-size: 13.5px;
@@ -3075,11 +3067,11 @@ function renderBoardControls(totalVisible, newSinceCount) {
   let html = '<div class="card board-controls">';
   html += '<div class="board-controls-row">';
   html += '<input type="text" id="board-search" placeholder="Search restaurant or cuisine" value="' + escapeHtml(boardSearchQuery) + '">';
-  html += '</div>';
-  html += '<div class="sort-pill-row">';
-  html += '<button type="button" class="sort-pill' + (boardSortMode === 'rating' ? ' active' : '') + '" data-board-sort="rating">Top rated</button>';
-  html += '<button type="button" class="sort-pill' + (boardSortMode === 'recent' ? ' active' : '') + '" data-board-sort="recent">Most recent</button>';
-  html += '<button type="button" class="sort-pill' + (boardSortMode === 'alpha' ? ' active' : '') + '" data-board-sort="alpha">A–Z</button>';
+  html += '<select id="board-sort">';
+  html += '<option value="rating"' + (boardSortMode === 'rating' ? ' selected' : '') + '>Top rated</option>';
+  html += '<option value="recent"' + (boardSortMode === 'recent' ? ' selected' : '') + '>Most recent</option>';
+  html += '<option value="alpha"' + (boardSortMode === 'alpha' ? ' selected' : '') + '>A–Z</option>';
+  html += '</select>';
   html += '</div>';
   html += '<label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer; font-size:13px; color:var(--text-on-paper-dim);">';
   html += '<input type="checkbox" id="board-hide-mine"' + (hideMyEntries ? ' checked' : '') + '> Hide places I\'ve already added — show me what\'s new';
@@ -4531,12 +4523,13 @@ function attachHandlers() {
       render();
     });
   }
-  document.querySelectorAll('[data-board-sort]').forEach(pill => {
-    pill.addEventListener('click', () => {
-      boardSortMode = pill.getAttribute('data-board-sort');
+  const boardSortSelect = document.getElementById('board-sort');
+  if (boardSortSelect) {
+    boardSortSelect.addEventListener('change', () => {
+      boardSortMode = boardSortSelect.value;
       render();
     });
-  });
+  }
   document.querySelectorAll('[data-leaderboard-cuisine]').forEach(chip => {
     chip.addEventListener('click', () => {
       leaderboardCuisine = chip.getAttribute('data-leaderboard-cuisine');
