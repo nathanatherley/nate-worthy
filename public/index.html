@@ -1408,7 +1408,8 @@ let cuisineOtherMode = false;
 let cleanupSelections = {};
 let autoBackupsLoading = false;
 let autoBackupsList = null;
-let manageAdminsSearchQuery = '';
+let manageAdminsAddSearchQuery = '';
+let manageAdminsManuallyAddedIds = new Set();
 let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let pendingCleanupConfirm = null;
@@ -2433,25 +2434,30 @@ async function confirmCleanup() {
 
 function renderManageAdminsCard() {
   const others = state.friends.filter(f => f.id !== me.friendId);
-  const query = manageAdminsSearchQuery.trim().toLowerCase();
-  const filtered = query ? others.filter(f => f.name.toLowerCase().includes(query)) : others;
   let html = '<div class="card">';
   html += '<h2>Manage admins</h2>';
   html += '<p class="hint">Grant specific admin abilities to each person — not all-or-nothing. Someone can have just "Import seed picks" without also getting Export (which includes everyone\'s phone numbers) or the ability to delete accounts. Only people with "Manage admins" checked can grant or revoke access for others, which keeps a limited admin from giving themselves more.</p>';
-  if (others.length > 5) {
-    html += '<input type="text" id="manage-admins-search" placeholder="Search by name" value="' + escapeHtml(manageAdminsSearchQuery) + '" style="margin-bottom:10px;">';
-  }
-  if (!others.length) {
-    html += '<p class="empty">No one else has joined yet.</p>';
-  } else if (!filtered.length) {
-    html += '<p class="empty">No one matches "' + escapeHtml(manageAdminsSearchQuery) + '".</p>';
+
+  const currentAdmins = others.filter(f => {
+    const perms = getAdminPermissions(f);
+    return ADMIN_PERMISSIONS.some(p => perms[p]);
+  });
+  // Anyone already an admin stays visible for editing, plus anyone
+  // explicitly added via search this session -- this is the actual fix for
+  // the cumbersome-at-scale problem: the default view only ever shows
+  // people who genuinely need to be here (current admins, naturally a
+  // small list), not every single person on the whole app every time.
+  const visibleIds = new Set(currentAdmins.map(f => f.id));
+  manageAdminsManuallyAddedIds.forEach(id => visibleIds.add(id));
+  const visibleForEditing = others.filter(f => visibleIds.has(f.id));
+
+  if (!visibleForEditing.length) {
+    html += '<p class="empty">No one has admin access yet — search below to grant someone their first permission.</p>';
   } else {
-    if (query) html += '<p class="hint" style="margin-bottom:8px;">Showing ' + filtered.length + ' of ' + others.length + '.</p>';
-    filtered.forEach(f => {
+    visibleForEditing.forEach(f => {
       const perms = getAdminPermissions(f);
-      const anyAccess = ADMIN_PERMISSIONS.some(p => perms[p]);
       html += '<div class="friend-row" style="flex-direction:column; align-items:stretch; gap:8px;">';
-      html += '<span class="friend-name">' + escapeHtml(f.name) + (anyAccess ? ' <span class="meta-badge">ADMIN</span>' : '') + '</span>';
+      html += '<span class="friend-name">' + escapeHtml(f.name) + ' <span class="meta-badge">ADMIN</span></span>';
       html += '<div style="display:flex; flex-wrap:wrap; gap:10px;">';
       ADMIN_PERMISSIONS.forEach(p => {
         const checked = !!perms[p];
@@ -2460,8 +2466,56 @@ function renderManageAdminsCard() {
       html += '</div></div>';
     });
   }
+
+  html += '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">';
+  html += '<label for="manage-admins-add-search" style="font-size:12.5px; font-weight:600;">Grant access to someone else</label>';
+  html += '<input type="text" id="manage-admins-add-search" placeholder="Type a name to add them…" value="' + escapeHtml(manageAdminsAddSearchQuery) + '" style="margin-top:6px;">';
+  html += '<div id="manage-admins-add-results">' + renderManageAdminsAddResults(others, visibleIds) + '</div>';
+  html += '</div>';
+
   html += '</div>';
   return html;
+}
+
+function renderManageAdminsAddResults(others, visibleIds) {
+  const query = manageAdminsAddSearchQuery.trim().toLowerCase();
+  if (!query) return '';
+  const matches = others.filter(f => !visibleIds.has(f.id) && f.name.toLowerCase().includes(query)).slice(0, 6);
+  if (!matches.length) return '<p class="hint" style="margin:6px 0 0;">No matches.</p>';
+  let html = '<div class="group-pick-suggestions" style="margin-top:6px;">';
+  matches.forEach(f => {
+    html += '<div class="group-pick-suggestion-row" data-manage-admins-add="' + f.id + '"><span class="avatar-sm">' + escapeHtml(f.name.charAt(0).toUpperCase()) + '</span>' + escapeHtml(f.name) + '<span class="add-hint">TAP TO ADD</span></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function updateManageAdminsAddResults() {
+  // Lightweight, targeted update -- same reasoning as the group-planning
+  // search: rebuilds only the results list, never touches the search input
+  // itself, so typing doesn't lose focus or cursor position the way a full
+  // page re-render would.
+  const container = document.getElementById('manage-admins-add-results');
+  if (!container) return;
+  const others = state.friends.filter(f => f.id !== me.friendId);
+  const currentAdmins = others.filter(f => {
+    const perms = getAdminPermissions(f);
+    return ADMIN_PERMISSIONS.some(p => perms[p]);
+  });
+  const visibleIds = new Set(currentAdmins.map(f => f.id));
+  manageAdminsManuallyAddedIds.forEach(id => visibleIds.add(id));
+  container.innerHTML = renderManageAdminsAddResults(others, visibleIds);
+  attachManageAdminsAddHandlers();
+}
+
+function attachManageAdminsAddHandlers() {
+  document.querySelectorAll('[data-manage-admins-add]').forEach(row => {
+    row.addEventListener('click', () => {
+      manageAdminsManuallyAddedIds.add(row.getAttribute('data-manage-admins-add'));
+      manageAdminsAddSearchQuery = '';
+      render();
+    });
+  });
 }
 
 function renderExportCard() {
@@ -4261,8 +4315,9 @@ function attachHandlers() {
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
-  const manageAdminsSearchEl = document.getElementById('manage-admins-search');
-  if (manageAdminsSearchEl) manageAdminsSearchEl.addEventListener('input', () => { manageAdminsSearchQuery = manageAdminsSearchEl.value; render(); });
+  const manageAdminsAddSearchEl = document.getElementById('manage-admins-add-search');
+  if (manageAdminsAddSearchEl) manageAdminsAddSearchEl.addEventListener('input', () => { manageAdminsAddSearchQuery = manageAdminsAddSearchEl.value; updateManageAdminsAddResults(); });
+  attachManageAdminsAddHandlers();
   const cleanupSearchEl = document.getElementById('cleanup-search');
   if (cleanupSearchEl) cleanupSearchEl.addEventListener('input', () => { cleanupSearchQuery = cleanupSearchEl.value; render(); });
   const claimAccountSearchEl = document.getElementById('claim-account-search');
