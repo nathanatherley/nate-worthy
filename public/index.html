@@ -1410,6 +1410,8 @@ let autoBackupsLoading = false;
 let autoBackupsList = null;
 let manageAdminsAddSearchQuery = '';
 let manageAdminsManuallyAddedIds = new Set();
+let friendSearchQuery = '';
+let friendSearchAddedIds = new Set();
 let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let pendingCleanupConfirm = null;
@@ -2162,6 +2164,47 @@ function renderQuickConnectCard() {
   return html;
 }
 
+function renderFriendSearchResults(others, visibleIds, unknownMarks) {
+  const query = friendSearchQuery.trim().toLowerCase();
+  if (!query) return '';
+  const matches = others.filter(f => !visibleIds.has(f.id) && !unknownMarks[f.id] && f.name.toLowerCase().includes(query)).slice(0, 8);
+  if (!matches.length) return '<p class="hint" style="margin:6px 0 0;">No matches.</p>';
+  let html = '<div class="group-pick-suggestions" style="margin-top:6px;">';
+  matches.forEach(f => {
+    html += '<div class="group-pick-suggestion-row" data-friend-search-add="' + f.id + '"><span class="avatar-sm">' + escapeHtml(f.name.charAt(0).toUpperCase()) + '</span>' + escapeHtml(f.name) + '<span class="add-hint">TAP TO ADD</span></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function updateFriendSearchResults() {
+  // Same lightweight-update reasoning as every other search box built
+  // tonight -- rebuild only the results, never touch the search input
+  // itself, so typing doesn't lose focus or cursor position.
+  const container = document.getElementById('friend-search-results');
+  if (!container || !me) return;
+  const others = state.friends.filter(f => f.id !== me.friendId);
+  const ratings = myTrustRatings();
+  const myFriendRecord = state.friends.find(f => f.id === me.friendId);
+  const unknownMarks = (myFriendRecord && myFriendRecord.unknownMarks) || {};
+  const jumpstartInfo = getJumpstartInfo();
+  const jumpstartIds = new Set(jumpstartInfo ? jumpstartInfo.candidateIds : []);
+  const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
+  const visibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds]);
+  container.innerHTML = renderFriendSearchResults(others, visibleIds, unknownMarks);
+  attachFriendSearchHandlers();
+}
+
+function attachFriendSearchHandlers() {
+  document.querySelectorAll('[data-friend-search-add]').forEach(row => {
+    row.addEventListener('click', () => {
+      friendSearchAddedIds.add(row.getAttribute('data-friend-search-add'));
+      friendSearchQuery = '';
+      render();
+    });
+  });
+}
+
 function renderTrustCard() {
   if (!me) return '';
   const ratings = myTrustRatings();
@@ -2212,11 +2255,22 @@ function renderTrustCard() {
   } else {
     const myFriendRecord = state.friends.find(f => f.id === me.friendId);
     const unknownMarks = (myFriendRecord && myFriendRecord.unknownMarks) || {};
-    const toRate = others.filter(f => !unknownMarks[f.id]);
+    const jumpstartIds = new Set(jumpstartInfo ? jumpstartInfo.candidateIds : []);
+    // Default visible set: people already trusted (naturally the ones
+    // worth seeing again), plus anyone surfaced through the jumpstart
+    // suggestions, plus anyone explicitly found and added via search this
+    // session. Not literally everyone in the app -- at any real scale that
+    // becomes the same unusable wall of names the admin and account-claim
+    // screens had, and it's also just not how someone naturally finds a
+    // specific person, the same way Facebook's friend list isn't "rate
+    // every single person on the platform."
+    const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
+    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds]);
+    const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id));
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
 
-    if (!toRate.length && markedUnknown.length) {
-      html += '<p class="empty">You\'ve gone through everyone currently signed up.</p>';
+    if (!toRate.length) {
+      html += '<p class="empty">Search below to find and add specific people to rate.</p>';
     }
     toRate.forEach(f => {
       const rating = ratings[f.id] || 0;
@@ -2229,6 +2283,12 @@ function renderTrustCard() {
         html += '<div style="text-align:right; margin:-4px 0 6px;"><button type="button" class="btn-text-link" data-mark-unknown="' + f.id + '" style="background:none; border:none; font-size:11px; color:var(--text-on-paper-dim); text-decoration:underline; cursor:pointer; padding:0;">I don\'t know them</button></div>';
       }
     });
+
+    html += '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">';
+    html += '<label for="friend-search-input" style="font-size:12.5px; font-weight:600;">Find and add someone</label>';
+    html += '<input type="text" id="friend-search-input" placeholder="Type a name to search…" value="' + escapeHtml(friendSearchQuery) + '" style="margin-top:6px;">';
+    html += '<div id="friend-search-results">' + renderFriendSearchResults(others, defaultVisibleIds, unknownMarks) + '</div>';
+    html += '</div>';
 
     if (markedUnknown.length) {
       html += renderCollapsibleWrapper('unknown-people', 'People you don\'t know (' + markedUnknown.length + ')', markedUnknown.map(f =>
@@ -2319,29 +2379,51 @@ function renderAdminStatsCard() {
 }
 
 function renderAccountClaimCard() {
-  const others = state.friends.filter(f => !me || f.id !== me.friendId);
-  const claimQuery = claimAccountSearchQuery.trim().toLowerCase();
-  const claimFiltered = claimQuery ? others.filter(f => f.name.toLowerCase().includes(claimQuery)) : others;
   let html = '<div class="card">';
   html += '<h2>This is actually my account</h2>';
-  html += '<p class="hint">If a restore didn\'t automatically reunite you with your old account, find yourself in this list and claim it — your session adopts that account\'s history, trust ratings, and entries. Only use this on an account that\'s genuinely you.</p>';
-  if (others.length > 5) {
-    html += '<input type="text" id="claim-account-search" placeholder="Search by name" value="' + escapeHtml(claimAccountSearchQuery) + '" style="margin-bottom:10px;">';
-  }
-  if (!others.length) {
-    html += '<p class="empty">No other accounts exist yet.</p>';
-  } else if (!claimFiltered.length) {
-    html += '<p class="empty">No one matches "' + escapeHtml(claimAccountSearchQuery) + '".</p>';
-  } else {
-    if (claimQuery) html += '<p class="hint" style="margin-bottom:8px;">Showing ' + claimFiltered.length + ' of ' + others.length + '.</p>';
-    claimFiltered.forEach(f => {
-      const entryCount = state.suggestions.filter(s => s.friendId === f.id).length;
-      html += '<div class="friend-row"><span class="friend-name">' + escapeHtml(f.name) + ' <span class="track-record">(' + entryCount + ' ' + (entryCount === 1 ? 'entry' : 'entries') + ')</span></span>';
-      html += '<button class="btn btn-small btn-ghost" data-claim-account="' + f.id + '">This is me</button></div>';
-    });
-  }
+  html += '<p class="hint">If a restore didn\'t automatically reunite you with your old account, search your own name below and claim it — your session adopts that account\'s history, trust ratings, and entries. Only use this on an account that\'s genuinely you.</p>';
+  html += '<input type="text" id="claim-account-search" placeholder="Type your name to find your account…" value="' + escapeHtml(claimAccountSearchQuery) + '">';
+  html += '<div id="claim-account-results">' + renderAccountClaimResults() + '</div>';
   html += '</div>';
   return html;
+}
+
+function renderAccountClaimResults() {
+  const others = state.friends.filter(f => !me || f.id !== me.friendId);
+  const claimQuery = claimAccountSearchQuery.trim().toLowerCase();
+  // Deliberately no default list at all -- with any real number of people,
+  // browsing to find your own name isn't the natural way to do this, and
+  // showing everyone by default is exactly the problem being fixed here.
+  // Searching for your own name is quick and doesn't require scanning
+  // through anyone else's.
+  if (!claimQuery) return '';
+  if (!others.length) return '<p class="empty" style="margin-top:8px;">No other accounts exist yet.</p>';
+  const matches = others.filter(f => f.name.toLowerCase().includes(claimQuery)).slice(0, 8);
+  if (!matches.length) return '<p class="empty" style="margin-top:8px;">No one matches "' + escapeHtml(claimAccountSearchQuery) + '".</p>';
+  let html = '<div style="margin-top:8px;">';
+  matches.forEach(f => {
+    const entryCount = state.suggestions.filter(s => s.friendId === f.id).length;
+    html += '<div class="friend-row"><span class="friend-name">' + escapeHtml(f.name) + ' <span class="track-record">(' + entryCount + ' ' + (entryCount === 1 ? 'entry' : 'entries') + ')</span></span>';
+    html += '<button class="btn btn-small btn-ghost" data-claim-account="' + f.id + '">This is me</button></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function updateAccountClaimResults() {
+  // Same lightweight-update reasoning as the other search boxes tonight --
+  // rebuild only the results, never touch the search input itself, so
+  // typing doesn't lose focus or cursor position.
+  const container = document.getElementById('claim-account-results');
+  if (!container) return;
+  container.innerHTML = renderAccountClaimResults();
+  attachClaimAccountHandlers();
+}
+
+function attachClaimAccountHandlers() {
+  document.querySelectorAll('[data-claim-account]').forEach(btn => {
+    btn.addEventListener('click', () => { claimExistingAccount(btn.getAttribute('data-claim-account')); });
+  });
 }
 
 async function claimExistingAccount(targetId) {
@@ -4321,7 +4403,7 @@ function attachHandlers() {
   const cleanupSearchEl = document.getElementById('cleanup-search');
   if (cleanupSearchEl) cleanupSearchEl.addEventListener('input', () => { cleanupSearchQuery = cleanupSearchEl.value; render(); });
   const claimAccountSearchEl = document.getElementById('claim-account-search');
-  if (claimAccountSearchEl) claimAccountSearchEl.addEventListener('input', () => { claimAccountSearchQuery = claimAccountSearchEl.value; render(); });
+  if (claimAccountSearchEl) claimAccountSearchEl.addEventListener('input', () => { claimAccountSearchQuery = claimAccountSearchEl.value; updateAccountClaimResults(); });
   document.querySelectorAll('[data-cleanup-toggle]').forEach(cb => {
     cb.addEventListener('change', () => {
       const fid = cb.getAttribute('data-cleanup-toggle');
@@ -4719,6 +4801,10 @@ function attachHandlers() {
 
   const cancelEditBtn = document.getElementById('cancel-edit-entry');
   if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEditingEntry);
+
+  const friendSearchEl = document.getElementById('friend-search-input');
+  if (friendSearchEl) friendSearchEl.addEventListener('input', () => { friendSearchQuery = friendSearchEl.value; updateFriendSearchResults(); });
+  attachFriendSearchHandlers();
 
   document.querySelectorAll('[data-remove-existing-photo]').forEach(btn => {
     btn.addEventListener('click', () => {
