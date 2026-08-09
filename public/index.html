@@ -289,8 +289,14 @@
   .geo-note {
     font-size: 12px;
     color: var(--text-on-paper-dim);
-    margin: -12px 0 16px;
+    margin: 4px 0 16px;
     font-style: italic;
+  }
+  .combobox-wrap { position: relative; }
+  .combobox-input { padding-right: 30px !important; }
+  .combobox-chevron {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--text-on-paper-dim); font-size: 12px; pointer-events: none;
   }
   .postcard {
     background: var(--paper);
@@ -2884,7 +2890,7 @@ function renderShareFavoriteForm() {
 
   html += '<div class="row2">';
   html += '<div><label for="f-city">City</label><input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '"></div>';
-  html += '<div><label for="f-state">State</label><input type="text" id="f-state" list="state-suggestions" placeholder="e.g. FL, or country if outside the US" value="' + escapeHtml(formState.state || '') + '"></div>';
+  html += '<div><label for="f-state">State</label><div class="combobox-wrap"><input type="text" id="f-state" class="combobox-input" list="state-suggestions" placeholder="e.g. FL, or country if outside the US" value="' + escapeHtml(formState.state || '') + '" autocomplete="off"><span class="combobox-chevron" aria-hidden="true">▾</span></div></div>';
   html += '</div>';
   html += buildCityDatalist();
   html += buildStateDatalist();
@@ -4496,6 +4502,17 @@ function attachHandlers() {
   }
   if (stateInput) {
     stateInput.addEventListener('input', () => { formState.state = stateInput.value; });
+    stateInput.addEventListener('click', () => {
+      // showPicker() forces the native suggestion list open immediately,
+      // even if the field already has a value -- without this, clicking a
+      // datalist-backed input that's already filled in doesn't reliably
+      // reopen the list in every browser, which undercuts the "it's a real
+      // dropdown too" feel. Not universally supported yet, so this fails
+      // silently and the person can just type instead, same as before.
+      if (typeof stateInput.showPicker === 'function') {
+        try { stateInput.showPicker(); } catch (e) { /* unsupported context, ignore */ }
+      }
+    });
     stateInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
   }
   const restaurantInput = document.getElementById('f-restaurant');
