@@ -23,15 +23,22 @@ router.post('/', async (req, res) => {
         max_tokens: 1000,
         // The system prompt never changes between requests, so it's marked
         // as a cache breakpoint -- cached reads cost a small fraction of
-        // full input price. The much bigger saving is the seed-data cache
-        // breakpoint the frontend adds inside the first user message itself
-        // (the shared candidate list is the same for every user and rarely
-        // changes, and is the majority of the token cost per request).
+        // full input price. Using the 1-hour TTL rather than the 5-minute
+        // default, since this app's usage is sporadic (a handful of people
+        // searching now and then, not continuous back-to-back requests) --
+        // the default 5-minute window would likely expire between most real
+        // requests, meaning the discount would rarely actually apply. The
+        // 1-hour write costs more upfront (2x base input vs 1.25x for
+        // 5-minute) but stays warm long enough to actually get hit given
+        // this app's realistic usage pattern. The much bigger saving is the
+        // seed-data cache breakpoint the frontend adds inside the first
+        // user message itself (the shared candidate list is the same for
+        // every user and is the majority of the token cost per request).
         system: [
           {
             type: 'text',
             text: require('./recommend-system-prompt'),
-            cache_control: { type: 'ephemeral' },
+            cache_control: { type: 'ephemeral', ttl: '1h' },
           },
         ],
         messages,

@@ -4788,7 +4788,7 @@ async function runRecommendation() {
         {
           type: "text",
           text: "Baseline/reference restaurant options, shared across all requests:\n" + JSON.stringify(webPayload),
-          cache_control: { type: "ephemeral" }
+          cache_control: { type: "ephemeral", ttl: "1h" }
         },
         {
           type: "text",
