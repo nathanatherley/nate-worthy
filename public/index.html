@@ -890,6 +890,28 @@ function groupIdFor(entry) {
   return entry.canonicalId || entry.id;
 }
 
+// Photos are treated as public, restaurant-level information rather than
+// something gated by trust -- the rating and note behind a photo might be
+// personal, but the photo itself just shows what the food looks like, which
+// is useful to anyone regardless of whether they personally trust who took
+// it. This pools photoKeys across every entry sharing the same canonical
+// restaurant (matching on the same mechanism Best of the Best already uses),
+// deduplicated, so someone seeing a restaurant at all sees every photo
+// anyone has added for it, not just the specific person's whose entry
+// happened to surface it for them.
+function pooledPhotosForRestaurant(entry) {
+  const gid = groupIdFor(entry);
+  const seen = new Set();
+  const pooled = [];
+  state.suggestions.forEach(s => {
+    if (groupIdFor(s) !== gid) return;
+    (s.photoKeys || []).forEach(key => {
+      if (!seen.has(key)) { seen.add(key); pooled.push(key); }
+    });
+  });
+  return pooled;
+}
+
 function groupMembers(entry) {
   const gid = groupIdFor(entry);
   return state.suggestions.filter(s => groupIdFor(s) === gid);
@@ -2627,6 +2649,21 @@ function renderRecommendCard() {
             }
           }
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
+          (function() {
+            const photos = pooledPhotosForRestaurant(suggestion).slice(0, 4);
+            if (photos.length) {
+              html += '<div class="entry-photos">';
+              photos.forEach(key => {
+                if (photoCache[key]) {
+                  html += '<img class="entry-photo-thumb" src="' + photoCache[key] + '" alt="Photo of ' + escapeHtml(suggestion.restaurant) + '">';
+                } else {
+                  html += '<div class="entry-photo-loading"></div>';
+                  queuePhotoLoad(key);
+                }
+              });
+              html += '</div>';
+            }
+          })();
           if (suggestion.friendId !== me.friendId) {
             html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '" style="margin-top:8px;">I\'m going here</button>';
           }
@@ -2640,6 +2677,21 @@ function renderRecommendCard() {
           html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span></p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(first.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
+          (function() {
+            const photos = pooledPhotosForRestaurant(first).slice(0, 4);
+            if (photos.length) {
+              html += '<div class="entry-photos">';
+              photos.forEach(key => {
+                if (photoCache[key]) {
+                  html += '<img class="entry-photo-thumb" src="' + photoCache[key] + '" alt="Photo of ' + escapeHtml(first.restaurant) + '">';
+                } else {
+                  html += '<div class="entry-photo-loading"></div>';
+                  queuePhotoLoad(key);
+                }
+              });
+              html += '</div>';
+            }
+          })();
           html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(first.id) + '">I\'m going here</button>';
           html += '</div>';
         } else {
@@ -3201,9 +3253,10 @@ function renderBoard() {
           return '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + '</p>';
         })();
         if (e.note) out += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
-        if (e.photoKeys && e.photoKeys.length) {
+        const pooledPhotos = pooledPhotosForRestaurant(e);
+        if (pooledPhotos.length) {
           out += '<div class="entry-photos">';
-          e.photoKeys.slice(0, 3).forEach((key, photoIdx) => {
+          pooledPhotos.slice(0, 6).forEach((key, photoIdx) => {
             if (photoCache[key]) {
               out += '<img class="entry-photo-thumb" src="' + photoCache[key] + '" data-photo-key="' + key + '" data-entry-id="' + e.id + '" data-photo-index="' + photoIdx + '" alt="Photo of ' + escapeHtml(e.restaurant) + '">';
             } else {
@@ -4418,7 +4471,7 @@ function attachHandlers() {
       const entryId = img.getAttribute('data-entry-id');
       const idx = parseInt(img.getAttribute('data-photo-index'), 10) || 0;
       const entry = state.suggestions.find(s => s.id === entryId);
-      lightboxKeys = entry && entry.photoKeys ? entry.photoKeys : [img.getAttribute('data-photo-key')];
+      lightboxKeys = entry ? pooledPhotosForRestaurant(entry) : [img.getAttribute('data-photo-key')];
       lightboxIndex = idx;
       render();
     });
