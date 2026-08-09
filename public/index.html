@@ -5335,6 +5335,21 @@ async function runRecommendation() {
         return null;
       })
       .filter(Boolean);
+
+    // Guaranteed tier ordering, enforced here rather than only asked of the
+    // AI -- the prompt already instructs friend picks first, but that's a
+    // request the model can occasionally get wrong (exactly what happened
+    // here: a web match outranked a genuine friend recommendation). Sorting
+    // explicitly by source tier after parsing makes "friends always come
+    // first" a hard guarantee instead of a hope, while preserving the AI's
+    // own relative ranking within each tier (a stable sort keeps items with
+    // the same tier in the order the AI returned them).
+    const TIER_ORDER = { friend: 0, community: 1, web: 2 };
+    recResults = recResults
+      .map((r, idx) => ({ r, idx }))
+      .sort((a, b) => (TIER_ORDER[a.r.source] - TIER_ORDER[b.r.source]) || (a.idx - b.idx))
+      .map(x => x.r);
+
     recResultsShownCount = Math.min(5, recResults.length);
     logEvent('rec_query_completed', { resultCount: recResults.length, wasFollowUp: isFollowUp });
   } catch (e) {
