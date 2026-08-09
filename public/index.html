@@ -1270,6 +1270,9 @@ const STATE_QUALIFIED_COORDS = {
   "salem,or": [44.94, -123.04], "salem,ma": [42.52, -70.90],
   "auburn,al": [32.61, -85.48], "auburn,me": [44.10, -70.23],
   "georgetown,tx": [30.63, -97.68], "georgetown,sc": [33.38, -79.30],
+  "winter garden,fl": [28.5654, -81.5862], "windermere,fl": [28.4931, -81.5326],
+  "ocoee,fl": [28.5694, -81.5387], "apopka,fl": [28.6934, -81.5322],
+  "clermont,fl": [28.5494, -81.7729],
 };
 function lookupCoords(name, stateAbbrev) {
   const key = name.trim().toLowerCase().replace(/[.,]/g, '');
@@ -1332,6 +1335,56 @@ function nearbyMajorCityFor(city) {
   return (nearest && milesToNearest <= NEARBY_MAJOR_CITY_MILES) ? nearest : null;
 }
 
+// Unified coordinate lookup: checks real, already-saved city records first
+// (which may have been backfilled or geo-detected), falling back to the
+// static lookup tables. This is what lets radius matching work consistently
+// whether a city's coordinates came from a real saved record or a lookup.
+function getCityCoords(cityName, stateName) {
+  const nameKey = (cityName || '').trim().toLowerCase();
+  const stateKey = (stateName || '').trim().toLowerCase();
+  const savedMatch = state.cities.find(c => {
+    if (c.name.trim().toLowerCase() !== nameKey) return false;
+    const cState = (c.state || '').trim().toLowerCase();
+    return !stateKey || !cState || cState === stateKey;
+  });
+  if (savedMatch && typeof savedMatch.lat === 'number' && typeof savedMatch.lon === 'number') {
+    return [savedMatch.lat, savedMatch.lon];
+  }
+  return lookupCoords(cityName, stateName);
+}
+
+const RADIUS_MATCH_MILES = 5;
+let radiusMatchCache = {};
+
+// Given one city (name + state), returns the names of every OTHER distinct
+// city that actually has restaurant data (real entries or seed picks)
+// within RADIUS_MATCH_MILES -- computed from real coordinates, not asked of
+// the AI as a guess. Cached per unique city per session, since this would
+// otherwise be recomputed identically for every single entry sharing that
+// city on every request.
+function citiesWithinRadius(cityName, stateName, allCandidateCityNames) {
+  const cacheKey = (cityName || '').toLowerCase() + '|' + (stateName || '').toLowerCase();
+  if (radiusMatchCache[cacheKey]) return radiusMatchCache[cacheKey];
+
+  const ownCoords = getCityCoords(cityName, stateName);
+  if (!ownCoords) { radiusMatchCache[cacheKey] = []; return []; }
+
+  const ownNameLower = (cityName || '').trim().toLowerCase();
+  const nearby = [];
+  const seenLower = new Set([ownNameLower]);
+  allCandidateCityNames.forEach(otherName => {
+    const otherLower = otherName.trim().toLowerCase();
+    if (seenLower.has(otherLower)) return;
+    seenLower.add(otherLower);
+    const otherCoords = getCityCoords(otherName, null);
+    if (!otherCoords) return;
+    const miles = distKm(ownCoords[0], ownCoords[1], otherCoords[0], otherCoords[1]) * 0.621371;
+    if (miles <= RADIUS_MATCH_MILES) nearby.push(otherName);
+  });
+  radiusMatchCache[cacheKey] = nearby;
+  return nearby;
+}
+
 async function loadData() {
   try {
     const res = await window.storage.get('scout-data', true);
@@ -1340,6 +1393,19 @@ async function loadData() {
       state.cities = state.cities || [];
       state.friends = state.friends || [];
       state.suggestions = state.suggestions || [];
+      // Backfill coordinates for cities that were created before their
+      // coordinates existed in the lookup tables (or before a state was
+      // required at all) -- without this, a city like Winter Garden, added
+      // before it was in the coordinate data, would stay permanently
+      // unable to participate in distance-based matching even after the
+      // data gets added, since coordinates were only ever looked up once,
+      // at creation time.
+      state.cities.forEach(c => {
+        if (typeof c.lat !== 'number' || typeof c.lon !== 'number') {
+          const found = lookupCoords(c.name, c.state);
+          if (found) { c.lat = found[0]; c.lon = found[1]; }
+        }
+      });
       state.suggestions.forEach(s => { if (typeof s.canonicalId === 'undefined') s.canonicalId = null; });
       state.friends.forEach(f => {
         if (!f.trustRatings || typeof f.trustRatings !== 'object') {
@@ -5041,6 +5107,18 @@ async function runRecommendation() {
         });
       }
 
+      // Reset the radius-match cache for this query, and build the shared
+      // list of every distinct city name that actually has data (real
+      // entries or seed picks) -- computed once and reused across all three
+      // payload tiers below, rather than recomputed per entry.
+      radiusMatchCache = {};
+      const allCandidateCityNames = [
+        ...new Set([
+          ...state.cities.map(c => c.name),
+          ...webSeedPicks.map(p => p.city)
+        ])
+      ];
+
       const friendPayload = candidateSuggestions
         .map(s => {
           const city = state.cities.find(c => c.id === s.cityId);
@@ -5056,11 +5134,15 @@ async function runRecommendation() {
               ? trustInfo.weight + '/5 (indirect — via ' + trustInfo.via + ', a mutual connection, not someone you rated directly)'
               : trustInfo.weight + '/5 (direct)';
 
+          const cityName = city ? city.name : 'unknown';
+          const nearbyCities = city ? citiesWithinRadius(cityName, city.state, allCandidateCityNames) : [];
+
           const item = {
             id: s.id,
             source: "friend",
             restaurant: s.restaurant,
-            city: city ? city.name : 'unknown',
+            city: cityName,
+            nearbyCities: nearbyCities,
             cuisine: s.cuisine || 'unspecified',
             cost: s.cost ? '$'.repeat(s.cost) : 'unknown',
             note: s.note || '',
@@ -5104,11 +5186,14 @@ async function runRecommendation() {
           const rated = entries.filter(e => e.ratingTaste > 0);
           const avgRating = rated.length ? (rated.reduce((sum, e) => sum + e.ratingTaste, 0) / rated.length) : null;
           const notes = [...new Set(entries.map(e => e.note).filter(Boolean))].slice(0, 4);
+          const cityName = city ? city.name : 'unknown';
+          const nearbyCities = city ? citiesWithinRadius(cityName, city.state, allCandidateCityNames) : [];
           return {
             id: gid,
             source: "community consensus, not personally rated by you",
             restaurant: first.restaurant,
-            city: city ? city.name : 'unknown',
+            city: cityName,
+            nearbyCities: nearbyCities,
             cuisine: first.cuisine || 'unspecified',
             cost: first.cost ? '$'.repeat(first.cost) : 'unknown',
             communityRatingCount: entries.length,
@@ -5125,6 +5210,7 @@ async function runRecommendation() {
         source: "web reviews, not a friend",
         restaurant: p.restaurant,
         city: p.city,
+        nearbyCities: citiesWithinRadius(p.city, null, allCandidateCityNames),
         cuisine: p.cuisine || 'unspecified',
         cost: p.cost ? '$'.repeat(p.cost) : 'unknown',
         note: p.note
