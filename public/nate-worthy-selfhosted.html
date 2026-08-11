@@ -228,6 +228,13 @@
   }
   .tab-btn.active { background: var(--ink); color: #fff; font-weight: 600; }
   .tab-icon { font-size: 16px; line-height: 1; }
+  .tab-icon-wrap { position: relative; display: inline-flex; }
+  .tab-badge {
+    position: absolute; top: -6px; right: -11px;
+    background: var(--rust); color: #fff; font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px; font-weight: 700; line-height: 1; padding: 2px 4px; border-radius: 8px;
+    min-width: 14px; text-align: center;
+  }
 
   .hero-panel {
     background: transparent; border-radius: 14px; padding: 26px 4px; color: var(--text-on-paper);
@@ -2155,6 +2162,55 @@ function myTrustRatings() {
   return (friend && friend.trustRatings) ? friend.trustRatings : {};
 }
 
+// People who've rated me but who I haven't rated back. This is the core
+// "reciprocity gap" driving low rate-back rates: rating someone is currently
+// something you have to remember to go do on your own initiative, with
+// nothing surfacing that a specific person is waiting on you. Used both for
+// the tab badge and the nudge card below.
+function unratedReciprocityList() {
+  if (!me) return [];
+  const myRatings = myTrustRatings();
+  return state.friends.filter(f => f.id !== me.friendId && f.trustRatings && f.trustRatings[me.friendId] > 0 && !(myRatings[f.id] > 0));
+}
+
+function myCircleRatedCount() {
+  const ratings = myTrustRatings();
+  return Object.values(ratings).filter(v => v > 0).length;
+}
+
+function renderCircleNudgeCard() {
+  if (!me) return '';
+  const ratedCount = myCircleRatedCount();
+  const reciprocityGap = unratedReciprocityList();
+
+  // Brand-new circle: nothing else in the app (Discover, Board, recommendations)
+  // does anything useful until this is done, so this is the highest-priority
+  // thing to surface -- shown before Planned Visits and Quick Connect.
+  if (ratedCount === 0) {
+    let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
+    html += '<h2 style="margin-bottom:4px;">Add people you trust</h2>';
+    html += '<p class="hint">Your board and recommendations stay empty until you rate a few people\'s taste, 1 to 5 stars. It only takes a minute.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Go rate people</button></div>';
+    html += '</div>';
+    return html;
+  }
+
+  if (reciprocityGap.length > 0) {
+    const names = reciprocityGap.slice(0, 3).map(f => f.name.split(' ')[0]);
+    const nameList = reciprocityGap.length > 3
+      ? names.join(', ') + ', + ' + (reciprocityGap.length - 3) + ' more'
+      : names.join(reciprocityGap.length === 2 ? ' and ' : ', ');
+    let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
+    html += '<h2 style="margin-bottom:4px;">' + reciprocityGap.length + (reciprocityGap.length === 1 ? ' person trusts' : ' people trust') + ' you back</h2>';
+    html += '<p class="hint">' + escapeHtml(nameList) + ' rated you, but you haven\'t rated ' + (reciprocityGap.length === 1 ? 'them' : 'them back') + ' yet — do it so your picks show up in their recommendations too.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Rate them back</button></div>';
+    html += '</div>';
+    return html;
+  }
+
+  return '';
+}
+
 function myTrustRating(targetId) {
   return myTrustRatings()[targetId] || 0;
 }
@@ -2308,7 +2364,7 @@ function renderFriendSearchResults(others, visibleIds, unknownMarks) {
   }
   let html = '<div class="group-pick-suggestions" style="margin-top:6px;">';
   matches.forEach(f => {
-    html += '<div class="group-pick-suggestion-row" data-friend-search-add="' + f.id + '"><span class="avatar-sm">' + escapeHtml(f.name.charAt(0).toUpperCase()) + '</span>' + escapeHtml(f.name) + '<span class="add-hint">TAP TO ADD</span></div>';
+    html += '<div class="group-pick-suggestion-row" data-friend-search-add="' + f.id + '"><span class="avatar-sm">' + escapeHtml(f.name.charAt(0).toUpperCase()) + '</span>' + escapeHtml(f.name) + '<span class="add-hint">ADD TO YOUR LIST</span></div>';
   });
   html += '</div>';
   return html;
@@ -2335,7 +2391,26 @@ function updateFriendSearchResults() {
 function attachFriendSearchHandlers() {
   document.querySelectorAll('[data-friend-search-add]').forEach(row => {
     row.addEventListener('click', () => {
-      friendSearchAddedIds.add(row.getAttribute('data-friend-search-add'));
+      const targetId = row.getAttribute('data-friend-search-add');
+      // Previously this only added the id to a plain in-memory JS variable
+      // (friendSearchAddedIds), which is session-only -- it resets on
+      // reload. So tapping a search result looked like it worked (the
+      // person appeared in the list below), but if someone left before
+      // actually tapping a star, that person silently vanished and nothing
+      // was ever saved. This now persists "found and pending a rating" to
+      // the server (pendingToRate), so the person stays visible across
+      // sessions until an actual trust decision is made -- no rating is
+      // set here, and nobody counts toward the recommendation algorithm
+      // until a real, deliberate star tap happens below.
+      const myFriend = state.friends.find(f => f.id === me.friendId);
+      if (myFriend) {
+        if (!Array.isArray(myFriend.pendingToRate)) myFriend.pendingToRate = [];
+        if (!myFriend.pendingToRate.includes(targetId)) {
+          myFriend.pendingToRate.push(targetId);
+          saveData();
+        }
+      }
+      friendSearchAddedIds.add(targetId);
       friendSearchQuery = '';
       render();
     });
@@ -2402,7 +2477,8 @@ function renderTrustCard() {
     // specific person, the same way Facebook's friend list isn't "rate
     // every single person on the platform."
     const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
-    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds]);
+    const pendingToRateIds = new Set((myFriendRecord && Array.isArray(myFriendRecord.pendingToRate)) ? myFriendRecord.pendingToRate : []);
+    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds]);
     const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id));
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
 
@@ -3304,6 +3380,7 @@ function renderPage() {
     html += '<button class="switch-link" id="switch-user">Sign out</button>';
     html += '</div></div>';
 
+    html += renderCircleNudgeCard();
     html += renderAdminClaimCard();
     html += renderPlannedVisitsCard();
     html += renderQuickConnectCard();
@@ -3313,7 +3390,7 @@ function renderPage() {
     html += '<div class="tab-bar">';
     html += '<button class="tab-btn' + (currentTab === 'discover' ? ' active' : '') + '" data-switch-tab="discover"><span class="tab-icon">\u2726</span>Discover</button>';
     html += '<button class="tab-btn' + (currentTab === 'board' ? ' active' : '') + '" data-switch-tab="board"><span class="tab-icon">\u2261</span>My Ratings</button>';
-    html += '<button class="tab-btn' + (currentTab === 'circle' ? ' active' : '') + '" data-switch-tab="circle"><span class="tab-icon">\u25d0</span>Circle</button>';
+    html += '<button class="tab-btn' + (currentTab === 'circle' ? ' active' : '') + '" data-switch-tab="circle"><span class="tab-icon-wrap"><span class="tab-icon">\u25d0</span>' + (unratedReciprocityList().length > 0 ? '<span class="tab-badge">' + unratedReciprocityList().length + '</span>' : '') + '</span>Circle</button>';
     if (isCurrentUserAdmin()) html += '<button class="tab-btn' + (currentTab === 'admin' ? ' active' : '') + '" data-switch-tab="admin"><span class="tab-icon">\u2699</span>Admin</button>';
     html += '</div>';
 
@@ -4680,6 +4757,12 @@ function attachHandlers() {
       if (!myFriend.trustRatings || typeof myFriend.trustRatings !== 'object') myFriend.trustRatings = {};
       const current = myFriend.trustRatings[targetId] || 0;
       myFriend.trustRatings[targetId] = current === val ? 0 : val;
+      // A real rating now exists (or was explicitly cleared back to 0) --
+      // either way this is a deliberate decision, so no need to keep them
+      // in the "pending, unrated" list anymore.
+      if (Array.isArray(myFriend.pendingToRate)) {
+        myFriend.pendingToRate = myFriend.pendingToRate.filter(id => id !== targetId);
+      }
       saveData();
       render();
     });
@@ -4691,6 +4774,9 @@ function attachHandlers() {
       if (!myFriend) return;
       if (!myFriend.unknownMarks || typeof myFriend.unknownMarks !== 'object') myFriend.unknownMarks = {};
       myFriend.unknownMarks[targetId] = true;
+      if (Array.isArray(myFriend.pendingToRate)) {
+        myFriend.pendingToRate = myFriend.pendingToRate.filter(id => id !== targetId);
+      }
       saveData();
       render();
     });
@@ -4734,6 +4820,13 @@ function attachHandlers() {
   if (expandTrustBtn) expandTrustBtn.addEventListener('click', () => { trustCardExpanded = true; render(); });
   const collapseTrustBtn = document.getElementById('collapse-trust-card');
   if (collapseTrustBtn) collapseTrustBtn.addEventListener('click', () => { trustCardExpanded = false; render(); });
+  const circleNudgeBtn = document.getElementById('circle-nudge-go');
+  if (circleNudgeBtn) circleNudgeBtn.addEventListener('click', () => {
+    currentTab = 'circle';
+    trustCardExpanded = true;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
   const expandCuisineBtn = document.getElementById('expand-cuisine-card');
   if (expandCuisineBtn) expandCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = true; render(); });
   const collapseCuisineBtn = document.getElementById('collapse-cuisine-card');
