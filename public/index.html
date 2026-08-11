@@ -1017,6 +1017,31 @@ function groupWeightedScore(entry) {
 // common other restaurant among them is the suggestion, and since a real
 // person is the reason it surfaced, that person becomes a second, separate
 // suggestion: connecting with them, not just the restaurant they pointed to.
+
+// Overall taste match between you and another person, across every
+// restaurant you've both rated -- not just the one restaurant that
+// happened to trigger this suggestion. Rewards both breadth (more
+// restaurants rated in common add more to the score) and closeness (a
+// restaurant you both rated 5 counts more than one where you gave it a 5
+// and they gave it a 2), so the "connect with" pick reflects your actual
+// overlap in taste rather than whoever happened to be first in a set.
+function tasteSimilarityScore(friendIdA, friendIdB) {
+  const bByGroup = {};
+  state.suggestions.filter(s => s.friendId === friendIdB && s.ratingTaste > 0).forEach(s => { bByGroup[groupIdFor(s)] = s; });
+
+  let score = 0, sharedCount = 0;
+  state.suggestions.filter(s => s.friendId === friendIdA && s.ratingTaste > 0).forEach(aEntry => {
+    const bEntry = bByGroup[groupIdFor(aEntry)];
+    if (!bEntry) return;
+    sharedCount++;
+    // 1 when ratings match exactly, scaling down to 0 at the maximum
+    // possible gap (4, e.g. a 5 vs. a 1) -- so a close-but-not-identical
+    // rating still counts for something rather than an all-or-nothing match.
+    score += Math.max(0, 1 - Math.abs(aEntry.ratingTaste - bEntry.ratingTaste) / 4);
+  });
+  return { score, sharedCount };
+}
+
 function getCoLikeSuggestion(entry) {
   if (!me || entry.friendId !== me.friendId || !(entry.ratingTaste >= 4)) return null;
   const gid = groupIdFor(entry);
@@ -1040,10 +1065,21 @@ function getCoLikeSuggestion(entry) {
   const ranked = Object.values(byGroup).sort((a, b) => b.raterIds.size - a.raterIds.size);
   if (!ranked.length) return null;
   const best = ranked[0];
-  const raterId = [...best.raterIds][0];
-  const rater = state.friends.find(f => f.id === raterId);
+
+  // Among the people who liked this restaurant too, the "connect with"
+  // pick is whoever has the strongest overall taste match with you across
+  // every restaurant you've both rated -- not just this single one.
+  let rater = null, bestScore = -1, bestSharedCount = 0;
+  best.raterIds.forEach(raterId => {
+    const { score, sharedCount } = tasteSimilarityScore(me.friendId, raterId);
+    if (sharedCount > 0 && score > bestScore) {
+      bestScore = score;
+      bestSharedCount = sharedCount;
+      rater = state.friends.find(f => f.id === raterId);
+    }
+  });
   if (!rater) return null;
-  return { entry: best.entry, rater, raterCount: best.raterIds.size };
+  return { entry: best.entry, rater, raterCount: best.raterIds.size, similarityScore: bestScore, sharedRestaurantCount: bestSharedCount };
 }
 
 // "Trending" = a restaurant where 2+ distinct people in your visible circle have
@@ -3828,7 +3864,7 @@ function renderEntryCard(e, showCityLabel) {
     html += '<p style="font-size:12.5px; color:var(--text-on-paper-dim); margin:0 0 6px;">Others who liked this also liked <strong>' + escapeHtml(coLike.entry.restaurant) + '</strong></p>';
     html += '<div class="actions" style="gap:8px;">';
     html += '<button type="button" class="btn btn-ghost btn-small" data-mark-going="friend:' + coLike.entry.id + '">Add to my list</button>';
-    html += '<button type="button" class="btn btn-ghost btn-small" data-add-colike-connection="' + coLike.rater.id + '">Connect with ' + escapeHtml(coLike.rater.name.split(' ')[0]) + '</button>';
+    html += '<button type="button" class="btn btn-ghost btn-small" data-add-colike-connection="' + coLike.rater.id + '" title="You\'ve rated ' + coLike.sharedRestaurantCount + ' restaurant' + (coLike.sharedRestaurantCount === 1 ? '' : 's') + ' about the same way">Connect with ' + escapeHtml(coLike.rater.name.split(' ')[0]) + '</button>';
     html += '</div>';
     html += '</div>';
   }
