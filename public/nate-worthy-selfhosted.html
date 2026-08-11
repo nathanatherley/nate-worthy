@@ -1010,6 +1010,42 @@ function groupWeightedScore(entry) {
   return weightTotal > 0 ? weightedSum / weightTotal : null;
 }
 
+// "Others who liked this also liked ___" -- for one of your own highly
+// rated entries, find people (anyone in the app, not just your circle --
+// this is about taste overlap, not trust) who also rated this restaurant
+// highly, then look at what else those people rated highly. The most
+// common other restaurant among them is the suggestion, and since a real
+// person is the reason it surfaced, that person becomes a second, separate
+// suggestion: connecting with them, not just the restaurant they pointed to.
+function getCoLikeSuggestion(entry) {
+  if (!me || entry.friendId !== me.friendId || !(entry.ratingTaste >= 4)) return null;
+  const gid = groupIdFor(entry);
+  const coLikers = state.suggestions.filter(s => groupIdFor(s) === gid && s.friendId !== me.friendId && s.ratingTaste >= 4);
+  if (!coLikers.length) return null;
+
+  const myGroupIds = new Set(state.suggestions.filter(s => s.friendId === me.friendId).map(s => groupIdFor(s)));
+
+  const byGroup = {};
+  coLikers.forEach(coLiker => {
+    state.suggestions
+      .filter(s => s.friendId === coLiker.friendId && s.ratingTaste >= 4 && groupIdFor(s) !== gid)
+      .forEach(other => {
+        const otherGid = groupIdFor(other);
+        if (myGroupIds.has(otherGid)) return;
+        if (!byGroup[otherGid]) byGroup[otherGid] = { entry: other, raterIds: new Set() };
+        byGroup[otherGid].raterIds.add(coLiker.friendId);
+      });
+  });
+
+  const ranked = Object.values(byGroup).sort((a, b) => b.raterIds.size - a.raterIds.size);
+  if (!ranked.length) return null;
+  const best = ranked[0];
+  const raterId = [...best.raterIds][0];
+  const rater = state.friends.find(f => f.id === raterId);
+  if (!rater) return null;
+  return { entry: best.entry, rater, raterCount: best.raterIds.size };
+}
+
 // "Trending" = a restaurant where 2+ distinct people in your visible circle have
 // vouched for it (via cross-friend linking), with at least one confirmation recent
 // enough to matter. Surfaces group momentum that'd otherwise be buried in the board.
@@ -2212,11 +2248,55 @@ function pendingAdminSuggestionsFor(friendId) {
   return results;
 }
 
+// People who share the same inviter as you -- automatic, no admin curation
+// needed. The inviter and their invitees already have a natural connection
+// (there's a whole quick-connect flow for that at signup); the actual new
+// information here is that two people invited by the same person likely
+// know each other too, and have no way of discovering that on their own.
+function sameInviterSuggestionsFor(friendId) {
+  if (!friendId) return [];
+  const friend = state.friends.find(f => f.id === friendId);
+  if (!friend || !friend.referredBy) return [];
+  const myRatings = friendId === (me && me.friendId) ? myTrustRatings() : {};
+  const unknownMarks = friend.unknownMarks || {};
+  return state.friends.filter(f =>
+    f.id !== friendId &&
+    f.referredBy === friend.referredBy &&
+    !((myRatings[f.id] || 0) > 0) &&
+    !unknownMarks[f.id]
+  );
+}
+
+// Combines admin-curated and same-inviter suggestions into one deduplicated
+// list, each tagged with why it's showing up -- admin suggestions take
+// precedence on the label when both apply, since a person specifically
+// flagging two people is more informative than the generic inviter note.
+function allConnectionSuggestionsFor(friendId) {
+  if (!friendId) return [];
+  const results = [];
+  const seen = new Set();
+
+  pendingAdminSuggestionsFor(friendId).forEach(s => {
+    seen.add(s.friend.id);
+    results.push({ friend: s.friend, label: 'suggested for you' });
+  });
+
+  const friend = state.friends.find(f => f.id === friendId);
+  const inviter = (friend && friend.referredBy) ? state.friends.find(f => f.id === friend.referredBy) : null;
+  sameInviterSuggestionsFor(friendId).forEach(f => {
+    if (seen.has(f.id)) return;
+    seen.add(f.id);
+    results.push({ friend: f, label: inviter ? 'you both know ' + inviter.name : 'invited by the same person' });
+  });
+
+  return results;
+}
+
 function renderCircleNudgeCard() {
   if (!me) return '';
   const ratedCount = myCircleRatedCount();
   const reciprocityGap = unratedReciprocityList();
-  const adminSuggestions = pendingAdminSuggestionsFor(me.friendId);
+  const adminSuggestions = allConnectionSuggestionsFor(me.friendId);
 
   // Brand-new circle: nothing else in the app (Discover, Board, recommendations)
   // does anything useful until this is done, so this is normally the
@@ -2246,10 +2326,11 @@ function renderCircleNudgeCard() {
     return html;
   }
 
-  // Admin-curated introductions -- named people, from a person, not an
-  // algorithm, so this is worth surfacing ahead of the automatic
-  // trust-graph discovery below (which needs an already-dense network to
-  // find much of anything, which won't exist yet for a brand-new circle).
+  // Named introductions -- either an admin flagged the pair directly, or
+  // they share an inviter, which is a strong automatic signal on its own.
+  // Both are worth surfacing ahead of the automatic trust-graph discovery
+  // below, which needs an already-dense network to find much of anything --
+  // not something a brand-new circle has yet.
   if (adminSuggestions.length > 0) {
     const names = adminSuggestions.slice(0, 3).map(s => s.friend.name.split(' ')[0]);
     const nameList = adminSuggestions.length > 3
@@ -2257,7 +2338,7 @@ function renderCircleNudgeCard() {
       : names.join(adminSuggestions.length === 2 ? ' and ' : ', ');
     let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
     html += '<h2 style="margin-bottom:4px;">You might know ' + (adminSuggestions.length === 1 ? 'someone' : 'some people') + ' here</h2>';
-    html += '<p class="hint">' + escapeHtml(nameList) + ' — flagged as someone you might want to connect with. Take a look and rate them if that\'s right.</p>';
+    html += '<p class="hint">' + escapeHtml(nameList) + ' — take a look and rate them if that\'s right.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Take a look</button></div>';
     html += '</div>';
     return html;
@@ -2552,9 +2633,10 @@ function renderTrustCard() {
     // every single person on the platform."
     const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
     const pendingToRateIds = new Set((myFriendRecord && Array.isArray(myFriendRecord.pendingToRate)) ? myFriendRecord.pendingToRate : []);
-    const adminSuggestions = pendingAdminSuggestionsFor(me.friendId);
-    const adminSuggestedIds = new Set(adminSuggestions.map(s => s.friend.id));
-    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds, ...adminSuggestedIds]);
+    const connectionSuggestions = allConnectionSuggestionsFor(me.friendId);
+    const connectionSuggestionLabels = {};
+    connectionSuggestions.forEach(s => { connectionSuggestionLabels[s.friend.id] = s.label; });
+    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds, ...Object.keys(connectionSuggestionLabels)]);
     const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id));
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
 
@@ -2563,7 +2645,8 @@ function renderTrustCard() {
     }
     toRate.forEach(f => {
       const rating = ratings[f.id] || 0;
-      const suggestedTag = adminSuggestedIds.has(f.id) ? ' <span class="meta-badge" title="An admin flagged you two as likely to know each other">suggested for you</span>' : '';
+      const suggestedLabel = connectionSuggestionLabels[f.id];
+      const suggestedTag = suggestedLabel ? ' <span class="meta-badge" title="Why this person is showing up">' + escapeHtml(suggestedLabel) + '</span>' : '';
       html += '<div class="friend-row" data-rate-friend-row="' + f.id + '"><span class="friend-name">' + escapeHtml(f.name) + suggestedTag + '</span><div class="rate-dots">';
       for (let i = 1; i <= 5; i++) {
         html += '<button type="button" class="rate-star rate-star-trust' + (rating >= i ? ' filled' : '') + '" data-trust-star="' + f.id + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(f.name) + ' ' + i + ' of 5 stars">' + (rating >= i ? '\u2605' : '\u2606') + '</button>';
@@ -2583,6 +2666,21 @@ function renderTrustCard() {
     if (markedUnknown.length) {
       html += renderCollapsibleWrapper('unknown-people', 'People you don\'t know (' + markedUnknown.length + ')', markedUnknown.map(f =>
         '<div class="friend-row"><span class="friend-name" style="opacity:0.6;">' + escapeHtml(f.name) + '</span><button type="button" class="btn btn-ghost btn-small" data-unmark-unknown="' + f.id + '">Undo</button></div>'
+      ).join(''), true);
+    }
+
+    // Who trusts you back -- names only, deliberately never the rating
+    // value they gave. The number itself isn't useful information for you
+    // (it doesn't change whether you'd want to rate them), and showing it
+    // invites comparison and hurt feelings over what's meant to be someone
+    // else's private, personal judgment -- same reasoning already used for
+    // jumpstart candidates elsewhere in this file. Closed by default since
+    // it's context to check on, not an action item (the reciprocity nudge
+    // card already handles the actionable version of this).
+    const trustedByOthers = state.friends.filter(f => f.id !== me.friendId && f.trustRatings && f.trustRatings[me.friendId] > 0);
+    if (trustedByOthers.length) {
+      html += renderCollapsibleWrapper('trusted-by-others', 'People who trust you (' + trustedByOthers.length + ')', trustedByOthers.map(f =>
+        '<div class="friend-row"><span class="friend-name">' + escapeHtml(f.name) + '</span></div>'
       ).join(''), true);
     }
   }
@@ -3722,6 +3820,16 @@ function renderEntryCard(e, showCityLabel) {
         queuePhotoLoad(key);
       }
     });
+    html += '</div>';
+  }
+  const coLike = getCoLikeSuggestion(e);
+  if (coLike) {
+    html += '<div class="co-like-suggestion" style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--line);">';
+    html += '<p style="font-size:12.5px; color:var(--text-on-paper-dim); margin:0 0 6px;">Others who liked this also liked <strong>' + escapeHtml(coLike.entry.restaurant) + '</strong></p>';
+    html += '<div class="actions" style="gap:8px;">';
+    html += '<button type="button" class="btn btn-ghost btn-small" data-mark-going="friend:' + coLike.entry.id + '">Add to my list</button>';
+    html += '<button type="button" class="btn btn-ghost btn-small" data-add-colike-connection="' + coLike.rater.id + '">Connect with ' + escapeHtml(coLike.rater.name.split(' ')[0]) + '</button>';
+    html += '</div>';
     html += '</div>';
   }
   html += '</div>';
@@ -5030,6 +5138,21 @@ function attachHandlers() {
       state.adminConnections = state.adminConnections.filter(c => c.id !== connId);
       saveData();
       render();
+    });
+  });
+  document.querySelectorAll('[data-add-colike-connection]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!me) return;
+      const targetId = btn.getAttribute('data-add-colike-connection');
+      const myFriend = state.friends.find(f => f.id === me.friendId);
+      if (!myFriend) return;
+      if (!Array.isArray(myFriend.pendingToRate)) myFriend.pendingToRate = [];
+      if (!myFriend.pendingToRate.includes(targetId)) {
+        myFriend.pendingToRate.push(targetId);
+        saveData();
+      }
+      btn.textContent = 'Added to your circle to rate';
+      btn.disabled = true;
     });
   });
   document.querySelectorAll('[data-jumpstart-toggle]').forEach(cb => {
