@@ -3707,7 +3707,18 @@ function renderBoard() {
   let totalVisible = 0;
   let out = '';
 
-  state.cities.forEach(city => {
+  // Current city always leads, since it's the one already expanded by
+  // default -- everything else follows in alphabetical order rather than
+  // insertion order (the order cities happened to be created in the
+  // database), which was effectively random from a user's point of view
+  // and made the collapsed list below it feel unpredictable to scan.
+  const orderedCities = state.cities.slice().sort((a, b) => {
+    if (a.id === geoDetectedCityId) return -1;
+    if (b.id === geoDetectedCityId) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  orderedCities.forEach(city => {
     let entries = state.suggestions.filter(s => s.cityId === city.id && visibleIds.has(s.friendId));
     if (hideMyEntries) entries = entries.filter(e => e.friendId !== me.friendId);
     if (showOnlyNew) entries = entries.filter(e => e.ts > previousVisitTs);
