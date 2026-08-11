@@ -827,9 +827,8 @@ let recLoading = false;
 let recError = '';
 let recResults = null;
 let recResultsShownCount = 5;
-let boardSearchQuery = '';
 let boardSortMode = 'rating';
-let collapsedCities = new Set();
+let manuallyToggledCities = new Set(); // cities where the user overrode the default expand/collapse state
 let hideMyEntries = false;
 let pendingUndo = null;
 let pendingUndoTimeout = null;
@@ -1942,9 +1941,8 @@ async function forgetIdentity() {
   quickConnectInviterId = null;
   quickConnectSelections = {};
   referrerJumpstartSelections = {};
-  boardSearchQuery = '';
   boardSortMode = 'rating';
-  collapsedCities = new Set();
+  manuallyToggledCities = new Set();
   hideMyEntries = false;
   if (pendingUndoTimeout) clearTimeout(pendingUndoTimeout);
   pendingUndo = null;
@@ -3559,10 +3557,72 @@ function renderLeaderboardCard() {
   return renderCollapsibleWrapper('leaderboard', 'Leaderboard by cuisine', inner, true);
 }
 
+function renderEntryCard(e, showCityLabel) {
+  const stale = (Date.now() - e.ts) > ONE_YEAR_MS;
+  let html = '<div class="entry">';
+  html += '<div class="entry-main">';
+  html += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit</button> <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : (isCurrentUserAdmin() ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" title="Edit as admin -- fix content, remove inappropriate material, add photos" style="background:none; border:none; font-size:12px; color:var(--rust); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit (admin)</button>' : '')) + '</p>';
+  html += (function() {
+    const trustInfo = e.friendId !== me.friendId ? myTrustInfo(e.friendId) : null;
+    const trustLabel = trustInfo
+      ? ' · ' + '\u2605'.repeat(trustInfo.weight) + '\u2606'.repeat(5 - trustInfo.weight) + (trustInfo.degree === 2 ? ' via ' + escapeHtml(trustInfo.via) : '')
+      : '';
+    const members = groupMembers(e).filter(m => m.id !== e.id && visibleFriendIds().has(m.friendId));
+    const linkedBadge = members.length
+      ? ' <span class="meta-badge" title="Also recommended by ' + members.map(m => escapeHtml(m.friendName)).join(', ') + '">+' + members.length + '</span>'
+      : '';
+    const outsideBadge = isOutsideExpertise(e)
+      ? ' <span class="meta-badge meta-badge-warn" title="' + escapeHtml(e.friendName) + ' doesn\'t usually recommend ' + escapeHtml(e.cuisine || 'this cuisine') + '">off-cuisine</span>'
+      : '';
+    const staleBadge = stale
+      ? ' <span class="meta-badge meta-badge-warn" title="Last confirmed over a year ago">stale</span>'
+      : '';
+    let cityLabelPart = '';
+    if (showCityLabel) {
+      const c = state.cities.find(ct => ct.id === e.cityId);
+      cityLabelPart = c ? ' — ' + escapeHtml(c.name) : '';
+    }
+    return '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + cityLabelPart + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + '</p>';
+  })();
+  if (e.note) html += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
+  const pooledPhotos = pooledPhotosForRestaurant(e);
+  if (pooledPhotos.length) {
+    html += '<div class="entry-photos">';
+    pooledPhotos.slice(0, 6).forEach((key, photoIdx) => {
+      if (photoCache[key]) {
+        html += '<img class="entry-photo-thumb" src="' + photoCache[key] + '" data-photo-key="' + key + '" data-entry-id="' + e.id + '" data-photo-index="' + photoIdx + '" alt="Photo of ' + escapeHtml(e.restaurant) + '">';
+      } else {
+        html += '<div class="entry-photo-loading"></div>';
+        queuePhotoLoad(key);
+      }
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div class="entry-side">';
+  html += '<div class="rate-group"><span class="rate-label">Taste</span><div class="rate-dots">';
+  for (let i = 1; i <= 5; i++) {
+    html += '<button class="rate-star' + (e.ratingTaste >= i ? ' filled' : '') + '" data-rate-taste="' + e.id + '" data-val="' + i + '" aria-label="Rate ' + escapeHtml(e.restaurant) + ' taste ' + i + ' of 5 stars">' + (e.ratingTaste >= i ? '\u2605' : '\u2606') + '</button>';
+  }
+  html += '</div></div>';
+  html += '<div class="rate-group"><span class="rate-label">Ambiance</span><div class="rate-dots">';
+  for (let i = 1; i <= 5; i++) {
+    html += '<button class="rate-star' + (e.ratingAmbiance >= i ? ' filled' : '') + '" data-rate-ambiance="' + e.id + '" data-val="' + i + '" aria-label="Rate ' + escapeHtml(e.restaurant) + ' ambiance ' + i + ' of 5 stars">' + (e.ratingAmbiance >= i ? '\u2605' : '\u2606') + '</button>';
+  }
+  html += '</div></div>';
+  html += '<div class="rate-group"><span class="rate-label">Cost</span><div class="cost-btns">';
+  for (let i = 1; i <= 4; i++) {
+    html += '<button class="cost-btn' + (e.cost >= i ? ' filled' : '') + '" data-rate-cost="' + e.id + '" data-val="' + i + '" aria-label="Set ' + escapeHtml(e.restaurant) + ' cost level ' + i + ' of 4">' + '$'.repeat(i) + '</button>';
+  }
+  html += '</div></div>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
 function renderBoardControls(totalVisible, newSinceCount) {
   let html = '<div class="card board-controls">';
   html += '<div class="board-controls-row">';
-  html += '<input type="text" id="board-search" placeholder="Search restaurant or cuisine" value="' + escapeHtml(boardSearchQuery) + '">';
   html += '<select id="board-sort">';
   html += '<option value="rating"' + (boardSortMode === 'rating' ? ' selected' : '') + '>Top rated</option>';
   html += '<option value="recent"' + (boardSortMode === 'recent' ? ' selected' : '') + '>Most recent</option>';
@@ -3585,6 +3645,21 @@ function renderBoardControls(totalVisible, newSinceCount) {
 // recommended a place first, then by trust-weighted rating as the tiebreaker —
 // a place two people you trust independently vouched for beats a place only
 // one person rated highly, same consensus philosophy as group-pick planning.
+// A city starts expanded only if it's your current city (from geolocation),
+// and starts collapsed otherwise -- rather than the old behavior of every
+// city being expanded until you individually collapsed it, which became an
+// unreadable wall of entries as more cities accumulated. manuallyToggledCities
+// records a one-time override per city (tap once to flip away from its
+// default state); it doesn't store true/false, just "this city differs from
+// its default," so the default itself can change (e.g. your current city
+// changes) without stale explicit states fighting it.
+function isCityCollapsed(cityId) {
+  const defaultExpanded = (cityId === geoDetectedCityId);
+  const overridden = manuallyToggledCities.has(cityId);
+  const effectiveExpanded = overridden ? !defaultExpanded : defaultExpanded;
+  return !effectiveExpanded;
+}
+
 function getBestOfBestForCity(cityId) {
   const visibleIds = visibleFriendIds();
   const cityEntries = state.suggestions.filter(s => s.cityId === cityId && visibleIds.has(s.friendId) && s.ratingTaste > 0);
@@ -3622,8 +3697,13 @@ function renderBoard() {
     return '';
   }
   const visibleIds = visibleFriendIds();
-  const query = boardSearchQuery.trim().toLowerCase();
   const newSinceCount = state.suggestions.filter(s => visibleIds.has(s.friendId) && s.ts > previousVisitTs).length;
+
+  // Browse by city. Your current city (if detected) opens
+  // expanded by default; every other city starts collapsed to a single
+  // summary row (see isCityCollapsed), so the page stays short even as
+  // more cities accumulate, instead of stacking every city's full entry
+  // list on one endless scroll.
   let totalVisible = 0;
   let out = '';
 
@@ -3631,12 +3711,6 @@ function renderBoard() {
     let entries = state.suggestions.filter(s => s.cityId === city.id && visibleIds.has(s.friendId));
     if (hideMyEntries) entries = entries.filter(e => e.friendId !== me.friendId);
     if (showOnlyNew) entries = entries.filter(e => e.ts > previousVisitTs);
-    if (query) {
-      entries = entries.filter(e =>
-        e.restaurant.toLowerCase().includes(query) ||
-        (e.cuisine || '').toLowerCase().includes(query)
-      );
-    }
     if (!entries.length) return;
     totalVisible += entries.length;
 
@@ -3656,7 +3730,7 @@ function renderBoard() {
       });
     }
 
-    const isCollapsed = collapsedCities.has(city.id);
+    const isCollapsed = isCityCollapsed(city.id);
     out += '<div class="postcard" data-city-id="' + city.id + '">';
     const nearbyMajor = nearbyMajorCityFor(city);
     const nearbyMajorNote = nearbyMajor ? ' <span class="near-major-city">(~' + escapeHtml(nearbyMajor) + ')</span>' : '';
@@ -3676,68 +3750,13 @@ function renderBoard() {
         });
         out += '</div>';
       }
-      scored.forEach(({ e, record }) => {
-        const stale = (Date.now() - e.ts) > ONE_YEAR_MS;
-        out += '<div class="entry">';
-        out += '<div class="entry-main">';
-        out += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit</button> <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : (isCurrentUserAdmin() ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" title="Edit as admin -- fix content, remove inappropriate material, add photos" style="background:none; border:none; font-size:12px; color:var(--rust); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit (admin)</button>' : '')) + '</p>';
-        out += (function() {
-          const trustInfo = e.friendId !== me.friendId ? myTrustInfo(e.friendId) : null;
-          const trustLabel = trustInfo
-            ? ' · ' + '\u2605'.repeat(trustInfo.weight) + '\u2606'.repeat(5 - trustInfo.weight) + (trustInfo.degree === 2 ? ' via ' + escapeHtml(trustInfo.via) : '')
-            : '';
-          const members = groupMembers(e).filter(m => m.id !== e.id && visibleFriendIds().has(m.friendId));
-          const linkedBadge = members.length
-            ? ' <span class="meta-badge" title="Also recommended by ' + members.map(m => escapeHtml(m.friendName)).join(', ') + '">+' + members.length + '</span>'
-            : '';
-          const outsideBadge = isOutsideExpertise(e)
-            ? ' <span class="meta-badge meta-badge-warn" title="' + escapeHtml(e.friendName) + ' doesn\'t usually recommend ' + escapeHtml(e.cuisine || 'this cuisine') + '">off-cuisine</span>'
-            : '';
-          const staleBadge = stale
-            ? ' <span class="meta-badge meta-badge-warn" title="Last confirmed over a year ago">stale</span>'
-            : '';
-          return '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + '</p>';
-        })();
-        if (e.note) out += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
-        const pooledPhotos = pooledPhotosForRestaurant(e);
-        if (pooledPhotos.length) {
-          out += '<div class="entry-photos">';
-          pooledPhotos.slice(0, 6).forEach((key, photoIdx) => {
-            if (photoCache[key]) {
-              out += '<img class="entry-photo-thumb" src="' + photoCache[key] + '" data-photo-key="' + key + '" data-entry-id="' + e.id + '" data-photo-index="' + photoIdx + '" alt="Photo of ' + escapeHtml(e.restaurant) + '">';
-            } else {
-              out += '<div class="entry-photo-loading"></div>';
-              queuePhotoLoad(key);
-            }
-          });
-          out += '</div>';
-        }
-        out += '</div>';
-        out += '<div class="entry-side">';
-        out += '<div class="rate-group"><span class="rate-label">Taste</span><div class="rate-dots">';
-        for (let i = 1; i <= 5; i++) {
-          out += '<button class="rate-star' + (e.ratingTaste >= i ? ' filled' : '') + '" data-rate-taste="' + e.id + '" data-val="' + i + '" aria-label="Rate ' + escapeHtml(e.restaurant) + ' taste ' + i + ' of 5 stars">' + (e.ratingTaste >= i ? '\u2605' : '\u2606') + '</button>';
-        }
-        out += '</div></div>';
-        out += '<div class="rate-group"><span class="rate-label">Ambiance</span><div class="rate-dots">';
-        for (let i = 1; i <= 5; i++) {
-          out += '<button class="rate-star' + (e.ratingAmbiance >= i ? ' filled' : '') + '" data-rate-ambiance="' + e.id + '" data-val="' + i + '" aria-label="Rate ' + escapeHtml(e.restaurant) + ' ambiance ' + i + ' of 5 stars">' + (e.ratingAmbiance >= i ? '\u2605' : '\u2606') + '</button>';
-        }
-        out += '</div></div>';
-        out += '<div class="rate-group"><span class="rate-label">Cost</span><div class="cost-btns">';
-        for (let i = 1; i <= 4; i++) {
-          out += '<button class="cost-btn' + (e.cost >= i ? ' filled' : '') + '" data-rate-cost="' + e.id + '" data-val="' + i + '" aria-label="Set ' + escapeHtml(e.restaurant) + ' cost level ' + i + ' of 4">' + '$'.repeat(i) + '</button>';
-        }
-        out += '</div></div>';
-        out += '</div>';
-        out += '</div>';
-      });
+      scored.forEach(({ e }) => { out += renderEntryCard(e, false); });
     }
     out += '</div>';
   });
 
   if (!out) {
-    return renderBoardControls(0, newSinceCount) + '<p class="empty">Nothing matches right now — try a different search or turn off "hide places I\'ve already added."</p>';
+    return renderBoardControls(0, newSinceCount) + '<p class="empty">Nothing here yet \u2014 try turning off \u201chide places I\'ve already added.\u201d</p>';
   }
 
   return renderBoardControls(totalVisible, newSinceCount) + out;
@@ -5090,13 +5109,6 @@ function attachHandlers() {
   const mergeCrossNoBtn = document.getElementById('merge-cross-no-btn');
   if (mergeCrossNoBtn) mergeCrossNoBtn.addEventListener('click', confirmCrossMergeNo);
 
-  const boardSearchInput = document.getElementById('board-search');
-  if (boardSearchInput) {
-    boardSearchInput.addEventListener('input', () => {
-      boardSearchQuery = boardSearchInput.value;
-      render();
-    });
-  }
   const boardSortSelect = document.getElementById('board-sort');
   if (boardSortSelect) {
     boardSortSelect.addEventListener('change', () => {
@@ -5145,8 +5157,8 @@ function attachHandlers() {
   document.querySelectorAll('[data-toggle-city]').forEach(head => {
     const toggle = () => {
       const cityId = head.getAttribute('data-toggle-city');
-      if (collapsedCities.has(cityId)) collapsedCities.delete(cityId);
-      else collapsedCities.add(cityId);
+      if (manuallyToggledCities.has(cityId)) manuallyToggledCities.delete(cityId);
+      else manuallyToggledCities.add(cityId);
       render();
     };
     head.addEventListener('click', toggle);
