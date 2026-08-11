@@ -696,7 +696,7 @@
 </div>
 
 <script>
-let state = { cities: [], friends: [], suggestions: [] };
+let state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
 let webSeedPicks = [];
 let selectedCityId = null;
 let confirmationMsg = '';
@@ -751,20 +751,29 @@ async function applyAdminBootstrapIfRequested() {
   }
 }
 
-const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup'];
+const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking'];
 const ADMIN_PERMISSION_LABELS = {
   export: 'Export data', restore: 'Restore from backup', seedImport: 'Import seed picks',
-  manageAdmins: 'Manage admins', viewStats: 'View app stats', cleanup: 'Clean up accounts'
+  manageAdmins: 'Manage admins', viewStats: 'View app stats', cleanup: 'Clean up accounts',
+  matchmaking: 'Suggest connections between users'
 };
 
 function getAdminPermissions(friend) {
   if (!friend) return null;
+  const full = friend.isAdmin === true;
   if (!friend.adminPermissions || typeof friend.adminPermissions !== 'object') {
     // Backfill: anyone with the old all-or-nothing isAdmin flag keeps full access,
     // preserving existing admins' permissions exactly as they were before this change.
-    const full = friend.isAdmin === true;
     friend.adminPermissions = {};
     ADMIN_PERMISSIONS.forEach(p => { friend.adminPermissions[p] = full; });
+  } else {
+    // Backfill any individual permission keys added after this admin's
+    // permissions object was first created -- otherwise a full admin would
+    // silently lose access to any newly shipped admin capability until
+    // someone manually re-toggles it back on.
+    ADMIN_PERMISSIONS.forEach(p => {
+      if (typeof friend.adminPermissions[p] === 'undefined') friend.adminPermissions[p] = full;
+    });
   }
   return friend.adminPermissions;
 }
@@ -1448,6 +1457,7 @@ async function loadData() {
       state.cities = state.cities || [];
       state.friends = state.friends || [];
       state.suggestions = state.suggestions || [];
+      state.adminConnections = state.adminConnections || [];
       // Backfill coordinates for cities that were created before their
       // coordinates existed in the lookup tables (or before a state was
       // required at all) -- without this, a city like Winter Garden, added
@@ -1477,7 +1487,7 @@ async function loadData() {
       });
     }
   } catch (e) {
-    state = { cities: [], friends: [], suggestions: [] };
+    state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
   }
   if (state.cities.length && !selectedCityId) selectedCityId = state.cities[0].id;
 
@@ -2174,15 +2184,47 @@ function myCircleRatedCount() {
   return Object.values(ratings).filter(v => v > 0).length;
 }
 
+// People an admin has manually suggested I connect with (used during
+// cold-start, before the trust graph is dense enough for the automatic
+// "discovered through your circle" suggestions to find much on their own).
+// This never sets a trust rating for anyone -- it only makes someone
+// visible in the normal rate-them-yourself list, the same way a search-add
+// does, so the actual trust decision always stays a deliberate, personal
+// one. Excludes anyone already rated or marked "I don't know them," since
+// once a real decision has been made there's nothing left to suggest.
+function pendingAdminSuggestionsFor(friendId) {
+  if (!friendId || !Array.isArray(state.adminConnections)) return [];
+  const myRatings = friendId === (me && me.friendId) ? myTrustRatings() : {};
+  const myFriendRecord = state.friends.find(f => f.id === friendId);
+  const unknownMarks = (myFriendRecord && myFriendRecord.unknownMarks) || {};
+  const results = [];
+  state.adminConnections.forEach(conn => {
+    let otherId = null;
+    if (conn.aId === friendId) otherId = conn.bId;
+    else if (conn.bId === friendId) otherId = conn.aId;
+    if (!otherId) return;
+    if ((myRatings[otherId] || 0) > 0) return;
+    if (unknownMarks[otherId]) return;
+    const other = state.friends.find(f => f.id === otherId);
+    if (!other) return;
+    results.push({ friend: other, connection: conn });
+  });
+  return results;
+}
+
 function renderCircleNudgeCard() {
   if (!me) return '';
   const ratedCount = myCircleRatedCount();
   const reciprocityGap = unratedReciprocityList();
+  const adminSuggestions = pendingAdminSuggestionsFor(me.friendId);
 
   // Brand-new circle: nothing else in the app (Discover, Board, recommendations)
-  // does anything useful until this is done, so this is the highest-priority
-  // thing to surface -- shown before Planned Visits and Quick Connect.
-  if (ratedCount === 0) {
+  // does anything useful until this is done, so this is normally the
+  // highest-priority thing to surface -- except when there are specific,
+  // named admin suggestions available (below), which are strictly more
+  // actionable than a generic "go rate people" prompt for someone who
+  // doesn't yet know who to look for.
+  if (ratedCount === 0 && adminSuggestions.length === 0) {
     let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
     html += '<h2 style="margin-bottom:4px;">Add people you trust</h2>';
     html += '<p class="hint">Your board and recommendations stay empty until you rate a few people\'s taste, 1 to 5 stars. It only takes a minute.</p>';
@@ -2200,6 +2242,23 @@ function renderCircleNudgeCard() {
     html += '<h2 style="margin-bottom:4px;">' + reciprocityGap.length + (reciprocityGap.length === 1 ? ' person trusts' : ' people trust') + ' you back</h2>';
     html += '<p class="hint">' + escapeHtml(nameList) + ' rated you, but you haven\'t rated ' + (reciprocityGap.length === 1 ? 'them' : 'them back') + ' yet — do it so your picks show up in their recommendations too.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Rate them back</button></div>';
+    html += '</div>';
+    return html;
+  }
+
+  // Admin-curated introductions -- named people, from a person, not an
+  // algorithm, so this is worth surfacing ahead of the automatic
+  // trust-graph discovery below (which needs an already-dense network to
+  // find much of anything, which won't exist yet for a brand-new circle).
+  if (adminSuggestions.length > 0) {
+    const names = adminSuggestions.slice(0, 3).map(s => s.friend.name.split(' ')[0]);
+    const nameList = adminSuggestions.length > 3
+      ? names.join(', ') + ', + ' + (adminSuggestions.length - 3) + ' more'
+      : names.join(adminSuggestions.length === 2 ? ' and ' : ', ');
+    let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
+    html += '<h2 style="margin-bottom:4px;">You might know ' + (adminSuggestions.length === 1 ? 'someone' : 'some people') + ' here</h2>';
+    html += '<p class="hint">' + escapeHtml(nameList) + ' — flagged as someone you might want to connect with. Take a look and rate them if that\'s right.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Take a look</button></div>';
     html += '</div>';
     return html;
   }
@@ -2493,7 +2552,9 @@ function renderTrustCard() {
     // every single person on the platform."
     const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
     const pendingToRateIds = new Set((myFriendRecord && Array.isArray(myFriendRecord.pendingToRate)) ? myFriendRecord.pendingToRate : []);
-    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds]);
+    const adminSuggestions = pendingAdminSuggestionsFor(me.friendId);
+    const adminSuggestedIds = new Set(adminSuggestions.map(s => s.friend.id));
+    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds, ...adminSuggestedIds]);
     const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id));
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
 
@@ -2502,7 +2563,8 @@ function renderTrustCard() {
     }
     toRate.forEach(f => {
       const rating = ratings[f.id] || 0;
-      html += '<div class="friend-row" data-rate-friend-row="' + f.id + '"><span class="friend-name">' + escapeHtml(f.name) + '</span><div class="rate-dots">';
+      const suggestedTag = adminSuggestedIds.has(f.id) ? ' <span class="meta-badge" title="An admin flagged you two as likely to know each other">suggested for you</span>' : '';
+      html += '<div class="friend-row" data-rate-friend-row="' + f.id + '"><span class="friend-name">' + escapeHtml(f.name) + suggestedTag + '</span><div class="rate-dots">';
       for (let i = 1; i <= 5; i++) {
         html += '<button type="button" class="rate-star rate-star-trust' + (rating >= i ? ' filled' : '') + '" data-trust-star="' + f.id + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(f.name) + ' ' + i + ' of 5 stars">' + (rating >= i ? '\u2605' : '\u2606') + '</button>';
       }
@@ -2826,6 +2888,52 @@ function attachManageAdminsAddHandlers() {
       render();
     });
   });
+}
+
+function renderMatchmakingCard() {
+  let html = '<div class="card">';
+  html += '<h2 style="margin-bottom:4px;">Suggest connections</h2>';
+  html += '<p class="hint">For getting the circle rolling early on — pick two or more people who probably know each other and suggest they connect. This never sets a trust rating for anyone; it just makes each person show up in the other\'s "people to rate" list, tagged as suggested by an admin. The actual trust decision always stays theirs.</p>';
+
+  if (!state.friends.length) {
+    html += '<p class="empty">No one has signed up yet.</p>';
+    html += '</div>';
+    return html;
+  }
+
+  const sorted = state.friends.slice().sort((a, b) => a.name.localeCompare(b.name));
+  html += '<div style="max-height:340px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; padding:4px 8px; margin:12px 0;">';
+  sorted.forEach(f => {
+    const circleSize = (f.trustRatings && typeof f.trustRatings === 'object') ? Object.values(f.trustRatings).filter(v => v > 0).length : 0;
+    const trustedByCount = state.friends.filter(other => other.id !== f.id && other.trustRatings && other.trustRatings[f.id] > 0).length;
+    const referrer = f.referredBy ? state.friends.find(r => r.id === f.referredBy) : null;
+    html += '<label style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line); cursor:pointer;">';
+    html += '<span style="display:flex; align-items:center; gap:8px; font-size:14px;"><input type="checkbox" class="matchmaker-select" data-friend-id="' + f.id + '">' + escapeHtml(f.name) + '</span>';
+    html += '<span class="track-record" style="text-align:right; flex-shrink:0;">' + circleSize + ' trusts \u00b7 ' + trustedByCount + ' trusted by' + (referrer ? ' \u00b7 invited by ' + escapeHtml(referrer.name) : '') + '</span>';
+    html += '</label>';
+  });
+  html += '</div>';
+  html += '<div class="actions"><button class="btn btn-primary btn-small" id="matchmaker-connect">Suggest they connect</button></div>';
+  html += '<p id="matchmaker-status" class="rec-status" style="display:none;"></p>';
+
+  const existing = Array.isArray(state.adminConnections) ? state.adminConnections : [];
+  if (existing.length) {
+    html += '<div style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">';
+    html += '<p style="font-weight:600; font-size:13px; margin-bottom:8px;">Suggested connections (' + existing.length + ')</p>';
+    existing.slice().sort((a, b) => b.ts - a.ts).forEach(conn => {
+      const a = state.friends.find(f => f.id === conn.aId);
+      const b = state.friends.find(f => f.id === conn.bId);
+      if (!a || !b) return;
+      html += '<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; font-size:13px;">';
+      html += '<span>' + escapeHtml(a.name) + ' \u2194 ' + escapeHtml(b.name) + '</span>';
+      html += '<button type="button" class="btn-text-link" data-remove-connection="' + conn.id + '" style="background:none; border:none; font-size:12px; color:var(--rust); text-decoration:underline; cursor:pointer; padding:0;">Remove</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
 }
 
 function renderExportCard() {
@@ -3432,6 +3540,7 @@ function renderPage() {
     } else if (currentTab === 'admin' && isCurrentUserAdmin()) {
       html += '<div id="section-admin"></div>';
       if (hasAdminPermission('viewStats')) html += renderAdminStatsCard();
+      if (hasAdminPermission('matchmaking')) html += renderMatchmakingCard();
       if (hasAdminPermission('manageAdmins')) html += renderManageAdminsCard();
       if (hasAdminPermission('cleanup')) { html += renderAccountClaimCard(); html += renderAccountCleanupCard(); }
       if (hasAdminPermission('export')) html += renderExportCard();
@@ -4878,6 +4987,51 @@ function attachHandlers() {
   if (expandCuisineBtn) expandCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = true; render(); });
   const collapseCuisineBtn = document.getElementById('collapse-cuisine-card');
   if (collapseCuisineBtn) collapseCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = false; render(); });
+  const matchmakerConnectBtn = document.getElementById('matchmaker-connect');
+  if (matchmakerConnectBtn) {
+    matchmakerConnectBtn.addEventListener('click', () => {
+      const statusEl = document.getElementById('matchmaker-status');
+      const selectedIds = Array.from(document.querySelectorAll('.matchmaker-select:checked')).map(cb => cb.getAttribute('data-friend-id'));
+      if (selectedIds.length < 2) {
+        if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = 'Select at least two people to connect.'; }
+        return;
+      }
+      if (!Array.isArray(state.adminConnections)) state.adminConnections = [];
+      let addedCount = 0;
+      // Every pairwise combination among the selected people, so checking
+      // a group of 3 suggests all 3 relationships, not just the first two
+      // checked -- matches how an admin actually thinks about it ("these
+      // people all know each other") rather than one pair at a time.
+      for (let i = 0; i < selectedIds.length; i++) {
+        for (let j = i + 1; j < selectedIds.length; j++) {
+          const aId = selectedIds[i], bId = selectedIds[j];
+          const alreadyExists = state.adminConnections.some(c =>
+            (c.aId === aId && c.bId === bId) || (c.aId === bId && c.bId === aId)
+          );
+          if (!alreadyExists) {
+            state.adminConnections.push({ id: uid(), aId, bId, ts: Date.now(), createdByName: (me && me.name) || 'an admin' });
+            addedCount++;
+          }
+        }
+      }
+      if (addedCount) {
+        saveData();
+        render();
+      } else if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Those connections already exist.';
+      }
+    });
+  }
+  document.querySelectorAll('[data-remove-connection]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const connId = btn.getAttribute('data-remove-connection');
+      if (!Array.isArray(state.adminConnections)) return;
+      state.adminConnections = state.adminConnections.filter(c => c.id !== connId);
+      saveData();
+      render();
+    });
+  });
   document.querySelectorAll('[data-jumpstart-toggle]').forEach(cb => {
     cb.addEventListener('change', () => {
       const fid = cb.getAttribute('data-jumpstart-toggle');
