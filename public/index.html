@@ -923,6 +923,31 @@ function findCrossFriendMatch(cityId, restaurantName, excludeFriendId) {
   return best;
 }
 
+// A web/seed pick is "superseded" once a real person (friend or community,
+// doesn't matter who) has actually logged that same restaurant. When that's
+// true, the seed listing shouldn't be shown as its own separate result
+// anymore -- otherwise the same physical restaurant shows up twice in
+// recommendations, once as someone's real rating and once as an unrelated
+// "internet match, not a friend" entry, which is confusing and undercuts the
+// whole point of trust-weighting. This covers the case where someone rates a
+// restaurant that already exists as a seed pick by typing it fresh in the
+// entry form (skipping the "I'm going here" claim button, which is the only
+// path that currently avoids this) -- so it has to be checked by name+city
+// similarity, not by a shared id, since a freshly-typed entry never gets one.
+function seedPickIsSuperseded(pick) {
+  const city = state.cities.find(c => c.name.toLowerCase() === (pick.city || '').toLowerCase());
+  if (!city) return false;
+  const normalizedSeed = normalizeName(pick.restaurant);
+  return state.suggestions.some(s => {
+    if (s.cityId !== city.id || !s.restaurant) return false;
+    const otherNorm = normalizeName(s.restaurant);
+    const dist = levenshtein(normalizedSeed, otherNorm);
+    const maxLen = Math.max(normalizedSeed.length, otherNorm.length);
+    if (maxLen === 0) return false;
+    return (1 - dist / maxLen) >= 0.75;
+  });
+}
+
 // The "canonical group" for scoring purposes is every suggestion sharing a canonicalId.
 // Entries default to being their own group of one (canonicalId === own id) until linked.
 function groupIdFor(entry) {
@@ -5229,7 +5254,9 @@ async function runRecommendation() {
         .sort((a, b) => b._avgForSorting - a._avgForSorting)
         .map(({ _avgForSorting, ...rest }) => rest);
 
-      const webPayload = webSeedPicks.map(p => ({
+      const webPayload = webSeedPicks
+        .filter(p => !seedPickIsSuperseded(p))
+        .map(p => ({
         id: p.id,
         source: "web reviews, not a friend",
         restaurant: p.restaurant,
