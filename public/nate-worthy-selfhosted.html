@@ -1894,9 +1894,7 @@ async function importSeedPicks() {
 
 function setCardExpansionDefaults() {
   if (!me) return;
-  const friend = state.friends.find(f => f.id === me.friendId);
-  const hasTrustRatings = friend && friend.trustRatings && Object.values(friend.trustRatings).some(v => v > 0);
-  trustCardExpanded = !hasTrustRatings;
+  trustCardExpanded = true;
   cuisineCardExpanded = false;
 }
 
@@ -2202,6 +2200,25 @@ function renderCircleNudgeCard() {
     html += '<h2 style="margin-bottom:4px;">' + reciprocityGap.length + (reciprocityGap.length === 1 ? ' person trusts' : ' people trust') + ' you back</h2>';
     html += '<p class="hint">' + escapeHtml(nameList) + ' rated you, but you haven\'t rated ' + (reciprocityGap.length === 1 ? 'them' : 'them back') + ' yet — do it so your picks show up in their recommendations too.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Rate them back</button></div>';
+    html += '</div>';
+    return html;
+  }
+
+  // People your existing connections already trust, that you haven't added
+  // yet. This used to only surface prominently the very first time someone
+  // had any candidates (me.hasUsedJumpstart), then permanently demote to a
+  // small text label near the bottom of the Circle tab -- so as your
+  // connections rated more people over time, nothing ever told you there
+  // was anything new to see. Showing it here, every time there's something
+  // to discover, fixes that without requiring anyone to remember to go
+  // check a tab on their own.
+  const jumpstartInfo = getJumpstartInfo();
+  if (jumpstartInfo && jumpstartInfo.totalCandidateCount > 0) {
+    const count = jumpstartInfo.totalCandidateCount;
+    let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
+    html += '<h2 style="margin-bottom:4px;">' + count + (count === 1 ? ' person your circle trusts isn\'t' : ' people your circle trusts aren\'t') + ' in yours yet</h2>';
+    html += '<p class="hint">Trusted by connections you already have — no need to search for them yourself, just pick who you recognize.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">See who</button></div>';
     html += '</div>';
     return html;
   }
