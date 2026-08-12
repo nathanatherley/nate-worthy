@@ -452,6 +452,7 @@
   .entry-meta { font-size: 12px; color: var(--text-on-paper-dim); margin: 0 0 4px; }
   .entry-note { font-size: 13px; color: var(--text-on-paper); line-height: 1.4; margin: 0 0 4px; }
   .track-record { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--brass-dim); }
+  .best-of-best-stats { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--brass); margin: 4px 0 0; }
   .cost-tag { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass-dim); font-weight: 500; }
   .blended-star-badge {
     font-family: 'IBM Plex Mono', monospace;
@@ -1042,6 +1043,33 @@ function groupWeightedAmbianceScore(entry) {
     weightTotal += w;
   });
   return weightTotal > 0 ? weightedSum / weightTotal : null;
+}
+
+// Same trust-weighted math again, for average cost -- shown alongside
+// taste and ambiance as its own separate number rather than folded into
+// any combined score, since cost isn't a "quality" signal the same way
+// taste and ambiance are.
+function groupWeightedCostScore(entry) {
+  const members = groupMembers(entry).filter(s => s.cost > 0);
+  if (!members.length) return null;
+  let weightedSum = 0, weightTotal = 0;
+  members.forEach(s => {
+    const w = myTrustWeight(s.friendId) || 1;
+    weightedSum += s.cost * w;
+    weightTotal += w;
+  });
+  return weightTotal > 0 ? weightedSum / weightTotal : null;
+}
+
+// The 85% taste / 15% ambiance blend, factored out so both "Best of the
+// best" and the main running list sort by the exact same definition of
+// "quality" -- this only ever drives sort order. What's actually displayed
+// per entry stays the raw taste/ambiance/cost numbers, never this blend.
+function groupWeightedQualityScore(entry) {
+  const tasteScore = groupWeightedScore(entry);
+  if (tasteScore === null) return null;
+  const ambianceScore = groupWeightedAmbianceScore(entry);
+  return ambianceScore !== null ? (tasteScore * 0.85 + ambianceScore * 0.15) : tasteScore;
 }
 
 // "Others who liked this also liked ___" -- for one of your own highly
@@ -3999,22 +4027,23 @@ function getBestOfBestForCity(cityId) {
     const recommenderCount = distinctRecommenders.size;
     const tasteScore = groupWeightedScore(entry);
     const ambianceScore = groupWeightedAmbianceScore(entry);
+    const costScore = groupWeightedCostScore(entry);
 
-    // One real number instead of a strict priority order (recommender
-    // count, THEN taste, THEN ambiance) -- the old approach let headcount
-    // silently outrank actual quality: two lukewarm 3-star recommenders
-    // would beat one enthusiastic 5-star recommender outright, regardless
-    // of how much better the second place actually was. Quality is taste
-    // and ambiance blended (taste weighted higher, since it matters more
-    // to "is this place actually good"), then corroboration is folded in
-    // as a multiplier -- each additional trusted person who agrees adds a
-    // flat 10%, so more corroboration still counts for something real, but
-    // can no longer completely override a clearly higher-rated place. This
-    // is also naturally personal: myTrustWeight() already varies who
-    // "counts" and by how much for the person viewing it, so the same
-    // restaurant can rank differently for two different people based on
-    // whose taste they actually trust.
-    const quality = ambianceScore !== null ? (tasteScore * 0.7 + ambianceScore * 0.3) : (tasteScore || 0);
+    // combinedScore is used ONLY to pick and order the top 3 -- it's never
+    // shown. The 85/15 taste/ambiance blend plus a corroboration
+    // multiplier (each additional trusted person who agrees adds a flat
+    // 10%) decides which places make the cut, since two lukewarm
+    // 3-star recommenders shouldn't silently outrank one enthusiastic
+    // 5-star recommender the way pure headcount did before. But what
+    // actually gets displayed is the raw taste, ambiance, and cost
+    // averages, kept separate -- ambiance matters a lot to some people and
+    // very little to others, so folding it into one number and showing
+    // only that would hide the information people actually need to make
+    // their own call. This is also naturally personal either way:
+    // myTrustWeight() already varies who "counts" and by how much for the
+    // person viewing it, so both the top-3 selection and the averages
+    // themselves can differ for two different people.
+    const quality = groupWeightedQualityScore(entry) || 0;
     const confidenceMultiplier = 1 + 0.1 * (recommenderCount - 1);
     const combinedScore = quality * confidenceMultiplier;
 
@@ -4023,11 +4052,9 @@ function getBestOfBestForCity(cityId) {
       recommenderCount,
       recommenderNames: [...new Set(members.map(m => m.friendName))],
       combinedScore,
-      // Capped at 5 for display, so the badge stays readable on the
-      // familiar 1-5 star scale even when corroboration pushes the raw
-      // combined number above it -- the uncapped value still drives
-      // ordering, only what's shown gets capped.
-      displayScore: Math.min(combinedScore, 5)
+      tasteScore: tasteScore || 0,
+      ambianceScore,
+      costScore
     });
   });
 
@@ -4075,9 +4102,14 @@ function renderBoard() {
     } else if (boardSortMode === 'alpha') {
       scored.sort((a, b) => a.e.restaurant.localeCompare(b.e.restaurant));
     } else {
+      // "Top rated" now sorts by the same 85/15 taste/ambiance blend as
+      // Best of the best, instead of taste alone -- so the two sections
+      // agree on what "top rated" means. Each entry's own displayed
+      // numbers (taste, ambiance, cost) stay exactly as rated; only the
+      // order they appear in changes.
       scored.sort((a, b) => {
-        const asRaw = groupWeightedScore(a.e);
-        const bsRaw = groupWeightedScore(b.e);
+        const asRaw = groupWeightedQualityScore(a.e);
+        const bsRaw = groupWeightedQualityScore(b.e);
         const as = asRaw === null ? -1 : asRaw;
         const bs = bsRaw === null ? -1 : bsRaw;
         if (bs !== as) return bs - as;
@@ -4098,9 +4130,14 @@ function renderBoard() {
         out += '<div class="best-of-best-label">\u{1F3C6} Best of the best</div>';
         bestOfBest.forEach(b => {
           out += '<div class="trend-row">';
-          out += '<div><p class="trend-title">' + escapeHtml(b.entry.restaurant) + '</p>';
-          out += '<p class="track-record">' + (b.recommenderCount > 1 ? b.recommenderCount + ' trusted people' : b.recommenderNames.map(escapeHtml).join(', ')) + '</p></div>';
-          out += '<span class="trend-score">' + b.displayScore.toFixed(1) + '\u2605</span>';
+          out += '<div style="flex:1; min-width:0;"><p class="trend-title">' + escapeHtml(b.entry.restaurant) + '</p>';
+          out += '<p class="track-record">' + (b.recommenderCount > 1 ? b.recommenderCount + ' trusted people' : b.recommenderNames.map(escapeHtml).join(', ')) + '</p>';
+          out += '<p class="best-of-best-stats">';
+          out += '<span title="Average taste">' + b.tasteScore.toFixed(1) + '\u2605 taste</span>';
+          if (b.ambianceScore !== null) out += ' &middot; <span title="Average ambiance">' + b.ambianceScore.toFixed(1) + '\u2605 ambiance</span>';
+          if (b.costScore !== null) out += ' &middot; <span title="Average cost">' + costLabel(Math.round(b.costScore)) + '</span>';
+          out += '</p>';
+          out += '</div>';
           out += '</div>';
         });
         out += '</div>';
