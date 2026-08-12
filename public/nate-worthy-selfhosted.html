@@ -2325,6 +2325,32 @@ function myCircleRatedCount() {
 // does, so the actual trust decision always stays a deliberate, personal
 // one. Excludes anyone already rated or marked "I don't know them," since
 // once a real decision has been made there's nothing left to suggest.
+// True only when BOTH people have already rated each other -- a
+// one-directional rating isn't enough, since the still-unresolved side
+// genuinely benefits from seeing the suggestion. Used both to stop an
+// admin from creating a connection that would do nothing for anyone, and
+// to know when an existing connection has become fully resolved and can
+// be cleared out.
+function isFullyMutualTrust(aId, bId) {
+  const a = state.friends.find(f => f.id === aId);
+  const b = state.friends.find(f => f.id === bId);
+  const aTrustsB = !!(a && a.trustRatings && a.trustRatings[bId] > 0);
+  const bTrustsA = !!(b && b.trustRatings && b.trustRatings[aId] > 0);
+  return aTrustsB && bTrustsA;
+}
+
+// Removes any admin-suggested connection once it's fully mutual on both
+// sides -- otherwise these just accumulate forever in the admin list,
+// making it look busier and staler than it actually is, even though the
+// suggestion isn't doing anything for anyone anymore. Returns whether
+// anything actually changed, so the caller only needs to save when it did.
+function pruneResolvedAdminConnections() {
+  if (!Array.isArray(state.adminConnections)) return false;
+  const before = state.adminConnections.length;
+  state.adminConnections = state.adminConnections.filter(c => !isFullyMutualTrust(c.aId, c.bId));
+  return state.adminConnections.length !== before;
+}
+
 function pendingAdminSuggestionsFor(friendId) {
   if (!friendId || !Array.isArray(state.adminConnections)) return [];
   const myRatings = friendId === (me && me.friendId) ? myTrustRatings() : {};
@@ -5203,6 +5229,10 @@ function attachHandlers() {
       if (Array.isArray(myFriend.pendingToRate)) {
         myFriend.pendingToRate = myFriend.pendingToRate.filter(id => id !== targetId);
       }
+      // This rating might be the one that completes a mutual match on an
+      // admin-suggested connection -- if so, clear it out rather than
+      // leaving a resolved suggestion sitting in the admin list forever.
+      pruneResolvedAdminConnections();
       saveData();
       render();
     });
@@ -5282,6 +5312,8 @@ function attachHandlers() {
       }
       if (!Array.isArray(state.adminConnections)) state.adminConnections = [];
       let addedCount = 0;
+      let skippedMutualCount = 0;
+      let skippedExistingCount = 0;
       // Every pairwise combination among the selected people, so checking
       // a group of 3 suggests all 3 relationships, not just the first two
       // checked -- matches how an admin actually thinks about it ("these
@@ -5292,19 +5324,33 @@ function attachHandlers() {
           const alreadyExists = state.adminConnections.some(c =>
             (c.aId === aId && c.bId === bId) || (c.aId === bId && c.bId === aId)
           );
-          if (!alreadyExists) {
-            state.adminConnections.push({ id: uid(), aId, bId, ts: Date.now(), createdByName: (me && me.name) || 'an admin' });
-            addedCount++;
+          // Both people already trust each other -- suggesting this would
+          // do nothing for either side, since each side's suggestion list
+          // already excludes anyone they've already rated.
+          if (isFullyMutualTrust(aId, bId)) {
+            skippedMutualCount++;
+            continue;
           }
+          if (alreadyExists) {
+            skippedExistingCount++;
+            continue;
+          }
+          state.adminConnections.push({ id: uid(), aId, bId, ts: Date.now(), createdByName: (me && me.name) || 'an admin' });
+          addedCount++;
         }
       }
-      if (addedCount) {
-        saveData();
-        render();
-      } else if (statusEl) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Those connections already exist.';
+      if (addedCount) saveData();
+      if (statusEl) {
+        const notes = [];
+        if (addedCount) notes.push(addedCount + ' connection' + (addedCount === 1 ? '' : 's') + ' suggested.');
+        if (skippedMutualCount) notes.push(skippedMutualCount + ' skipped -- already know each other.');
+        if (skippedExistingCount) notes.push(skippedExistingCount + ' already suggested.');
+        if (notes.length) {
+          statusEl.style.display = 'block';
+          statusEl.textContent = notes.join(' ');
+        }
       }
+      render();
     });
   }
   document.querySelectorAll('[data-remove-connection]').forEach(btn => {
