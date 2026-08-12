@@ -3348,14 +3348,12 @@ function renderRecommendCard() {
       recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
+          const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
+          const blended = blendedStarRating(trustW, suggestion.ratingTaste);
+          const starBadge = blended !== null ? ' <span class="blended-star-badge" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
           html += '<div class="rec-pick rec-pick-friend">';
-          html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="friend-source-tag">Friend pick</span></p>';
-          (function() {
-            const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
-            const blended = blendedStarRating(trustW, suggestion.ratingTaste);
-            const starBadge = blended !== null ? ' <span class="blended-star-badge" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
-            html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from <span class="friend-name">' + escapeHtml(suggestion.friendName) + '</span>' + starBadge + '</p>';
-          })();
+          html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + starBadge + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="friend-source-tag">Friend pick</span></p>';
+          html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from <span class="friend-name">' + escapeHtml(suggestion.friendName) + '</span></p>';
           if (lastGroupModeParticipants) {
             const raters = groupMembers(suggestion).filter(m => lastGroupModeParticipants.has(m.friendId) && m.ratingTaste > 0);
             const names = [...new Set(raters.map(m => m.friendName))];
