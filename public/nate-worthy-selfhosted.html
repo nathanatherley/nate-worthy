@@ -1068,7 +1068,7 @@ function groupWeightedQualityScore(entry) {
   const tasteScore = groupWeightedScore(entry);
   if (tasteScore === null) return null;
   const ambianceScore = groupWeightedAmbianceScore(entry);
-  return ambianceScore !== null ? (tasteScore * 0.85 + ambianceScore * 0.15) : tasteScore;
+  return ambianceScore !== null ? (tasteScore * 0.75 + ambianceScore * 0.25) : tasteScore;
 }
 
 // "Others who liked this also liked ___" -- for one of your own highly
