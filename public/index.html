@@ -40,6 +40,10 @@
     --card-border: rgba(245,240,230,0.22);
   }
   * { box-sizing: border-box; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
   button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible, a:focus-visible {
     outline: 2px solid var(--brass);
     outline-offset: 2px;
@@ -3531,8 +3535,8 @@ function renderShareFavoriteForm() {
   }
 
   html += '<div class="row2">';
-  html += '<div><label for="f-city">City</label><input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '"></div>';
-  html += '<div><label for="f-state">State</label><div class="combobox-wrap"><input type="text" id="f-state" class="combobox-input" list="state-suggestions" placeholder="e.g. FL, or country if outside the US" value="' + escapeHtml(formState.state || '') + '" autocomplete="off"><span class="combobox-chevron" aria-hidden="true">▾</span></div></div>';
+  html += '<div><label for="f-city" class="sr-only">City</label><input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '"></div>';
+  html += '<div><label for="f-state" class="sr-only">State</label><div class="combobox-wrap"><input type="text" id="f-state" class="combobox-input" list="state-suggestions" placeholder="e.g. FL, or country if outside the US" value="' + escapeHtml(formState.state || '') + '" autocomplete="off"><span class="combobox-chevron" aria-hidden="true">▾</span></div></div>';
   html += '</div>';
   html += buildCityDatalist();
   html += buildStateDatalist();
@@ -3541,10 +3545,10 @@ function renderShareFavoriteForm() {
   }
 
   html += '<div class="row2">';
-  html += '<div><label for="f-restaurant">Restaurant</label><input type="text" id="f-restaurant" placeholder="Name" value="' + escapeHtml(formState.restaurant) + '"></div>';
+  html += '<div><label for="f-restaurant" class="sr-only">Restaurant</label><input type="text" id="f-restaurant" placeholder="Restaurant name" value="' + escapeHtml(formState.restaurant) + '"></div>';
   const cuisineIsKnown = MAJOR_CUISINES.includes(formState.cuisine);
   const showOtherField = cuisineOtherMode || (formState.cuisine && !cuisineIsKnown);
-  html += '<div><label for="f-cuisine-select">Cuisine</label>';
+  html += '<div><label for="f-cuisine-select" class="sr-only">Cuisine</label>';
   html += '<select id="f-cuisine-select">';
   html += '<option value=""' + (!formState.cuisine ? ' selected' : '') + '>Choose a cuisine</option>';
   MAJOR_CUISINES.forEach(c => {
@@ -3558,7 +3562,7 @@ function renderShareFavoriteForm() {
   html += '</div>';
   html += '</div>';
 
-  html += '<label for="f-note">What makes it great</label>';
+  html += '<label for="f-note" class="sr-only">What makes it great</label>';
   html += '<textarea id="f-note" placeholder="The dish, the vibe, why you\'d send a friend there">' + escapeHtml(formState.note) + '</textarea>';
 
   html += '<label>Your ratings</label>';
