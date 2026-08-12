@@ -443,6 +443,13 @@
   .entry-note { font-size: 13px; color: var(--text-on-paper); line-height: 1.4; margin: 0 0 4px; }
   .track-record { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--brass-dim); }
   .cost-tag { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass-dim); font-weight: 500; }
+  .blended-star-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brass);
+    margin-left: 4px;
+  }
   .entry-side { flex-shrink: 0; text-align: right; }
   .rate-group { margin-bottom: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
   .rate-group:last-child { margin-bottom: 0; }
@@ -3346,7 +3353,7 @@ function renderRecommendCard() {
           (function() {
             const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
             const blended = blendedStarRating(trustW, suggestion.ratingTaste);
-            const starBadge = blended !== null ? ' <span class="cost-tag" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
+            const starBadge = blended !== null ? ' <span class="blended-star-badge" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
             html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from <span class="friend-name">' + escapeHtml(suggestion.friendName) + '</span>' + starBadge + '</p>';
           })();
           if (lastGroupModeParticipants) {
