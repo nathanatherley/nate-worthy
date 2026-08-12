@@ -2436,6 +2436,21 @@ function myTrustWeight(friendId) {
   return myTrustInfo(friendId).weight;
 }
 
+// A single blended 0-5 star value combining how much you trust the
+// recommender with how highly they rated the restaurant, replacing raw
+// "4/5 trust, 5/5 rating" pairs with one number. Geometric mean rather than
+// a plain average, since a low value on either side should pull the result
+// down more sharply than averaging allows -- a friend you barely trust
+// giving something 5 stars shouldn't read almost the same as a fully
+// trusted friend doing the same. Both inputs are already 1-5, so the
+// result naturally lands back in 1-5 range (sqrt(5*5)=5, sqrt(1*1)=1).
+// This is the same math driving the sort order, so the displayed number
+// and the actual ranking never disagree.
+function blendedStarRating(trustWeight, tasteRating) {
+  if (!(trustWeight > 0) || !(tasteRating > 0)) return null;
+  return Math.sqrt(trustWeight * tasteRating);
+}
+
 function visibleFriendIds() {
   const ids = new Set();
   if (!me) return ids;
@@ -3328,7 +3343,12 @@ function renderRecommendCard() {
           const city = state.cities.find(c => c.id === suggestion.cityId);
           html += '<div class="rec-pick rec-pick-friend">';
           html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="friend-source-tag">Friend pick</span></p>';
-          html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from <span class="friend-name">' + escapeHtml(suggestion.friendName) + '</span></p>';
+          (function() {
+            const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
+            const blended = blendedStarRating(trustW, suggestion.ratingTaste);
+            const starBadge = blended !== null ? ' <span class="cost-tag" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
+            html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from <span class="friend-name">' + escapeHtml(suggestion.friendName) + '</span>' + starBadge + '</p>';
+          })();
           if (lastGroupModeParticipants) {
             const raters = groupMembers(suggestion).filter(m => lastGroupModeParticipants.has(m.friendId) && m.ratingTaste > 0);
             const names = [...new Set(raters.map(m => m.friendName))];
@@ -5850,7 +5870,7 @@ async function runRecommendation() {
     // well-corroborated pick beats a single high rating.
     const scoreFor = (r) => {
       if (r.source === 'friend') {
-        return myTrustWeight(r.suggestion.friendId) * (r.suggestion.ratingTaste || 0);
+        return blendedStarRating(myTrustWeight(r.suggestion.friendId), r.suggestion.ratingTaste) || 0;
       }
       if (r.source === 'community') {
         return (r.communityAvgRating || 0) * r.communityRaterCount;
