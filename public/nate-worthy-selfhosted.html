@@ -452,7 +452,20 @@
   .entry-meta { font-size: 12px; color: var(--text-on-paper-dim); margin: 0 0 4px; }
   .entry-note { font-size: 13px; color: var(--text-on-paper); line-height: 1.4; margin: 0 0 4px; }
   .track-record { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--brass-dim); }
-  .best-of-best-stats { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--brass); margin: 4px 0 0; }
+  .best-of-best-stats { margin: 6px 0 0; }
+  .best-of-best-stat-row { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+  .best-of-best-stat-row:first-child { margin-top: 0; }
+  .best-of-best-stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-on-paper-dim);
+    width: 56px;
+    flex-shrink: 0;
+  }
+  .mini-star-filled { color: var(--rust); font-size: 13px; }
+  .mini-star-empty { color: rgba(245,240,230,0.22); font-size: 13px; }
   .cost-tag { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brass-dim); font-weight: 500; }
   .blended-star-badge {
     font-family: 'IBM Plex Mono', monospace;
@@ -2565,6 +2578,20 @@ function trackLabel(record) {
   return roundHalf(record.score) + ' taste avg overall (' + record.n + ' rated)';
 }
 
+// Read-only star row matching the same filled/empty glyph and color
+// convention as the interactive rating buttons elsewhere (rust when
+// filled, dim when empty), for an average value rather than someone's
+// specific single rating -- rounds to the nearest whole star since the
+// app doesn't otherwise support half-stars anywhere.
+function renderStaticStars(value) {
+  const rounded = Math.round(value || 0);
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += '<span class="' + (rounded >= i ? 'mini-star-filled' : 'mini-star-empty') + '">' + (rounded >= i ? '\u2605' : '\u2606') + '</span>';
+  }
+  return html;
+}
+
 function costLabel(cost) {
   return cost > 0 ? '$'.repeat(cost) : '';
 }
@@ -4132,11 +4159,11 @@ function renderBoard() {
           out += '<div class="trend-row">';
           out += '<div style="flex:1; min-width:0;"><p class="trend-title">' + escapeHtml(b.entry.restaurant) + '</p>';
           out += '<p class="track-record">' + (b.recommenderCount > 1 ? b.recommenderCount + ' trusted people' : b.recommenderNames.map(escapeHtml).join(', ')) + '</p>';
-          out += '<p class="best-of-best-stats">';
-          out += '<span title="Average taste">' + b.tasteScore.toFixed(1) + '\u2605 taste</span>';
-          if (b.ambianceScore !== null) out += ' &middot; <span title="Average ambiance">' + b.ambianceScore.toFixed(1) + '\u2605 ambiance</span>';
-          if (b.costScore !== null) out += ' &middot; <span title="Average cost">' + costLabel(Math.round(b.costScore)) + '</span>';
-          out += '</p>';
+          out += '<div class="best-of-best-stats">';
+          out += '<div class="best-of-best-stat-row" title="Average taste: ' + b.tasteScore.toFixed(1) + '/5"><span class="best-of-best-stat-label">Taste</span>' + renderStaticStars(b.tasteScore) + '</div>';
+          if (b.ambianceScore !== null) out += '<div class="best-of-best-stat-row" title="Average ambiance: ' + b.ambianceScore.toFixed(1) + '/5"><span class="best-of-best-stat-label">Ambiance</span>' + renderStaticStars(b.ambianceScore) + '</div>';
+          if (b.costScore !== null) out += '<div class="best-of-best-stat-row"><span class="best-of-best-stat-label">Cost</span><span class="cost-tag">' + costLabel(Math.round(b.costScore)) + '</span></div>';
+          out += '</div>';
           out += '</div>';
           out += '</div>';
         });
