@@ -5838,13 +5838,29 @@ async function runRecommendation() {
     // request the model can occasionally get wrong (exactly what happened
     // here: a web match outranked a genuine friend recommendation). Sorting
     // explicitly by source tier after parsing makes "friends always come
-    // first" a hard guarantee instead of a hope, while preserving the AI's
-    // own relative ranking within each tier (a stable sort keeps items with
-    // the same tier in the order the AI returned them).
+    // first" a hard guarantee instead of a hope.
+    //
+    // Within the friend tier, ranking now comes from an actual score --
+    // how much you trust the person (1-5) times how highly they rated this
+    // specific restaurant (1-5) -- rather than whatever order the AI
+    // happened to return them in. A highly trusted friend's five-star pick
+    // should reliably outrank a barely trusted friend's three-star pick,
+    // not depend on which one the model listed first. Community picks get
+    // the analogous score: average rating times number of raters, so a
+    // well-corroborated pick beats a single high rating.
+    const scoreFor = (r) => {
+      if (r.source === 'friend') {
+        return myTrustWeight(r.suggestion.friendId) * (r.suggestion.ratingTaste || 0);
+      }
+      if (r.source === 'community') {
+        return (r.communityAvgRating || 0) * r.communityRaterCount;
+      }
+      return 0;
+    };
     const TIER_ORDER = { friend: 0, community: 1, web: 2 };
     recResults = recResults
-      .map((r, idx) => ({ r, idx }))
-      .sort((a, b) => (TIER_ORDER[a.r.source] - TIER_ORDER[b.r.source]) || (a.idx - b.idx))
+      .map((r, idx) => ({ r, idx, score: scoreFor(r) }))
+      .sort((a, b) => (TIER_ORDER[a.r.source] - TIER_ORDER[b.r.source]) || (b.score - a.score) || (a.idx - b.idx))
       .map(x => x.r);
 
     recResultsShownCount = Math.min(5, recResults.length);
