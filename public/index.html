@@ -1027,6 +1027,23 @@ function groupWeightedScore(entry) {
   return weightTotal > 0 ? weightedSum / weightTotal : null;
 }
 
+// Same trust-weighted math as groupWeightedScore, but for ambiance --
+// used only as a tiebreaker for "best of the best" when two places have
+// the same number of recommenders and the same taste score, so ambiance
+// isn't ignored entirely when it's the only thing actually distinguishing
+// two otherwise-tied places.
+function groupWeightedAmbianceScore(entry) {
+  const members = groupMembers(entry).filter(s => s.ratingAmbiance > 0);
+  if (!members.length) return null;
+  let weightedSum = 0, weightTotal = 0;
+  members.forEach(s => {
+    const w = myTrustWeight(s.friendId) || 1;
+    weightedSum += s.ratingAmbiance * w;
+    weightTotal += w;
+  });
+  return weightTotal > 0 ? weightedSum / weightTotal : null;
+}
+
 // "Others who liked this also liked ___" -- for one of your own highly
 // rated entries, find people (anyone in the app, not just your circle --
 // this is about taste overlap, not trust) who also rated this restaurant
@@ -3979,20 +3996,42 @@ function getBestOfBestForCity(cityId) {
 
     const members = groupMembers(entry).filter(m => visibleIds.has(m.friendId) && m.ratingTaste > 0);
     const distinctRecommenders = new Set(members.map(m => m.friendId));
-    const score = groupWeightedScore(entry);
+    const recommenderCount = distinctRecommenders.size;
+    const tasteScore = groupWeightedScore(entry);
+    const ambianceScore = groupWeightedAmbianceScore(entry);
+
+    // One real number instead of a strict priority order (recommender
+    // count, THEN taste, THEN ambiance) -- the old approach let headcount
+    // silently outrank actual quality: two lukewarm 3-star recommenders
+    // would beat one enthusiastic 5-star recommender outright, regardless
+    // of how much better the second place actually was. Quality is taste
+    // and ambiance blended (taste weighted higher, since it matters more
+    // to "is this place actually good"), then corroboration is folded in
+    // as a multiplier -- each additional trusted person who agrees adds a
+    // flat 10%, so more corroboration still counts for something real, but
+    // can no longer completely override a clearly higher-rated place. This
+    // is also naturally personal: myTrustWeight() already varies who
+    // "counts" and by how much for the person viewing it, so the same
+    // restaurant can rank differently for two different people based on
+    // whose taste they actually trust.
+    const quality = ambianceScore !== null ? (tasteScore * 0.7 + ambianceScore * 0.3) : (tasteScore || 0);
+    const confidenceMultiplier = 1 + 0.1 * (recommenderCount - 1);
+    const combinedScore = quality * confidenceMultiplier;
 
     results.push({
       entry,
-      recommenderCount: distinctRecommenders.size,
+      recommenderCount,
       recommenderNames: [...new Set(members.map(m => m.friendName))],
-      score: score !== null ? score : 0
+      combinedScore,
+      // Capped at 5 for display, so the badge stays readable on the
+      // familiar 1-5 star scale even when corroboration pushes the raw
+      // combined number above it -- the uncapped value still drives
+      // ordering, only what's shown gets capped.
+      displayScore: Math.min(combinedScore, 5)
     });
   });
 
-  results.sort((a, b) => {
-    if (b.recommenderCount !== a.recommenderCount) return b.recommenderCount - a.recommenderCount;
-    return b.score - a.score;
-  });
+  results.sort((a, b) => b.combinedScore - a.combinedScore);
 
   return results;
 }
@@ -4061,7 +4100,7 @@ function renderBoard() {
           out += '<div class="trend-row">';
           out += '<div><p class="trend-title">' + escapeHtml(b.entry.restaurant) + '</p>';
           out += '<p class="track-record">' + (b.recommenderCount > 1 ? b.recommenderCount + ' trusted people' : b.recommenderNames.map(escapeHtml).join(', ')) + '</p></div>';
-          out += '<span class="trend-score">' + b.score.toFixed(1) + '\u2605</span>';
+          out += '<span class="trend-score">' + b.displayScore.toFixed(1) + '\u2605</span>';
           out += '</div>';
         });
         out += '</div>';
