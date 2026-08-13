@@ -159,7 +159,7 @@
     margin: 16px 0 6px;
   }
   label:first-of-type { margin-top: 0; }
-  input[type="text"], select, textarea {
+  input[type="text"], input[type="number"], select, textarea {
     width: 100%;
     background: var(--surface);
     border: 1px solid var(--card-border);
@@ -170,7 +170,7 @@
     color: var(--text-on-paper);
     box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.16);
   }
-  input[type="text"]:focus, select:focus, textarea:focus {
+  input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
     outline: none;
     box-shadow: 0 0 0 2px var(--brass);
   }
@@ -713,7 +713,7 @@
 </div>
 
 <script>
-let state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
+let state = { cities: [], friends: [], suggestions: [], adminConnections: [], communities: [] };
 let webSeedPicks = [];
 let selectedCityId = null;
 let confirmationMsg = '';
@@ -768,11 +768,11 @@ async function applyAdminBootstrapIfRequested() {
   }
 }
 
-const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking'];
+const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking', 'communities'];
 const ADMIN_PERMISSION_LABELS = {
   export: 'Export data', restore: 'Restore from backup', seedImport: 'Import seed picks',
   manageAdmins: 'Manage admins', viewStats: 'View app stats', cleanup: 'Clean up accounts',
-  matchmaking: 'Suggest connections between users'
+  matchmaking: 'Suggest connections between users', communities: 'Manage communities'
 };
 
 function getAdminPermissions(friend) {
@@ -1591,6 +1591,7 @@ async function loadData() {
       state.friends = state.friends || [];
       state.suggestions = state.suggestions || [];
       state.adminConnections = state.adminConnections || [];
+      state.communities = state.communities || [];
       // Backfill coordinates for cities that were created before their
       // coordinates existed in the lookup tables (or before a state was
       // required at all) -- without this, a city like Winter Garden, added
@@ -1620,7 +1621,7 @@ async function loadData() {
       });
     }
   } catch (e) {
-    state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
+    state = { cities: [], friends: [], suggestions: [], adminConnections: [], communities: [] };
   }
   if (state.cities.length && !selectedCityId) selectedCityId = state.cities[0].id;
 
@@ -1686,6 +1687,7 @@ let friendSearchQuery = '';
 let friendSearchAddedIds = new Set();
 let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
+let editingSelfReportedCity = false;
 let pendingCleanupConfirm = null;
 let cleanupStatus = '';
 
@@ -2066,6 +2068,7 @@ async function saveIdentity() {
 
 async function forgetIdentity() {
   me = null;
+  editingSelfReportedCity = false;
   formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
   cuisineOtherMode = false;
   recQuery = '';
@@ -3160,6 +3163,48 @@ function attachManageAdminsAddHandlers() {
   });
 }
 
+// This is scaffolding, not the full community management tool -- there's
+// no signup flow yet that actually assigns a new person to a community via
+// their join code (that's a separate, deliberately later piece, since it
+// touches the signup path every future user goes through). What this DOES
+// give you: a real place to define communities and get real join codes to
+// test with, and a data model everything else can build on. joinCount
+// will sit at 0 until the signup flow exists to increment it.
+function renderCommunitiesCard() {
+  let html = '<div class="card">';
+  html += '<h2 style="margin-bottom:4px;">Communities</h2>';
+  html += '<p class="hint">Define a local group (e.g. "Salt Lake City Foodies") with its own join code. Joining via that code isn\'t wired up yet -- this just lets you create and manage the codes themselves.</p>';
+
+  html += '<div style="margin:14px 0; padding:14px; background:var(--surface); border:1px solid var(--card-border); border-radius:10px;">';
+  html += '<input type="text" id="community-name" placeholder="Community name, e.g. Salt Lake City Foodies" style="margin-bottom:8px;">';
+  html += '<input type="text" id="community-city" list="community-city-suggestions" placeholder="Target city" style="margin-bottom:8px;">';
+  html += buildCityDatalist('community-city-suggestions');
+  html += '<input type="text" id="community-code" placeholder="Join code, e.g. SLCFOODIES" style="margin-bottom:8px; text-transform:uppercase;">';
+  html += '<input type="number" id="community-max-joins" placeholder="Max joins (optional)" min="1" style="margin-bottom:8px;">';
+  html += '<button class="btn btn-primary btn-small" id="create-community">Create community</button>';
+  html += '<p id="community-status" class="rec-status" style="display:none;"></p>';
+  html += '</div>';
+
+  const communities = Array.isArray(state.communities) ? state.communities : [];
+  if (!communities.length) {
+    html += '<p class="empty">No communities yet.</p>';
+  } else {
+    communities.slice().sort((a, b) => b.createdAt - a.createdAt).forEach(c => {
+      const capText = c.maxJoins ? c.joinCount + ' / ' + c.maxJoins + ' joined' : c.joinCount + ' joined';
+      html += '<div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid var(--line);">';
+      html += '<div>';
+      html += '<p style="font-weight:500; margin:0;">' + escapeHtml(c.name) + (c.active ? '' : ' <span class="meta-badge meta-badge-warn">retired</span>') + '</p>';
+      html += '<p class="track-record" style="margin-top:2px;">' + escapeHtml(c.targetCity) + ' &middot; code: ' + escapeHtml(c.joinCode) + ' &middot; ' + capText + '</p>';
+      html += '</div>';
+      html += '<button type="button" class="btn-text-link" data-toggle-community="' + c.id + '" style="background:none; border:none; font-size:12px; color:' + (c.active ? 'var(--rust)' : 'var(--brass-dim)') + '; text-decoration:underline; cursor:pointer; padding:0; flex-shrink:0; margin-left:12px;">' + (c.active ? 'Retire' : 'Reactivate') + '</button>';
+      html += '</div>';
+    });
+  }
+
+  html += '</div>';
+  return html;
+}
+
 function renderMatchmakingCard() {
   let html = '<div class="card">';
   html += '<h2 style="margin-bottom:4px;">Suggest connections</h2>';
@@ -3776,6 +3821,24 @@ function renderPage() {
     html += '<button class="switch-link" id="switch-user">Sign out</button>';
     html += '</div></div>';
 
+    // Self-reported city -- a second, honest signal alongside geolocation
+    // (which only knows where your phone is right now, not where you
+    // actually know food). Kept as free text rather than forcing a match
+    // to an existing city record, since the point is a quick self-report,
+    // not another structured data-entry task.
+    if (editingSelfReportedCity) {
+      html += '<div style="display:flex; gap:8px; align-items:center; margin:-8px 0 14px;">';
+      html += '<input type="text" id="self-reported-city-input" list="self-reported-city-suggestions" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="flex:1;">';
+      html += buildCityDatalist('self-reported-city-suggestions');
+      html += '<button class="btn btn-primary btn-small" id="save-self-reported-city">Save</button>';
+      html += '<button class="btn btn-ghost btn-small" id="cancel-self-reported-city">Cancel</button>';
+      html += '</div>';
+    } else if (me.selfReportedCity) {
+      html += '<p class="hint" style="margin:-8px 0 14px;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button></p>';
+    } else {
+      html += '<p class="hint" style="margin:-8px 0 14px;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button></p>';
+    }
+
     html += renderCircleNudgeCard();
     html += renderAdminClaimCard();
     html += renderPlannedVisitsCard();
@@ -3814,6 +3877,7 @@ function renderPage() {
       html += '<div id="section-admin"></div>';
       if (hasAdminPermission('viewStats')) html += renderAdminStatsCard();
       if (hasAdminPermission('matchmaking')) html += renderMatchmakingCard();
+      if (hasAdminPermission('communities')) html += renderCommunitiesCard();
       if (hasAdminPermission('manageAdmins')) html += renderManageAdminsCard();
       if (hasAdminPermission('cleanup')) { html += renderAccountClaimCard(); html += renderAccountCleanupCard(); }
       if (hasAdminPermission('export')) html += renderExportCard();
@@ -4759,12 +4823,12 @@ function updateSelectedCityIdFromForm() {
   selectedCityId = match ? match.id : null;
 }
 
-function buildCityDatalist() {
+function buildCityDatalist(id) {
   const names = new Set();
   state.cities.forEach(c => names.add(c.name));
   Object.keys(US_CITY_COORDS).forEach(k => names.add(titleCase(k)));
   const options = Array.from(names).sort().map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
-  return '<datalist id="city-suggestions">' + options + '</datalist>';
+  return '<datalist id="' + (id || 'city-suggestions') + '">' + options + '</datalist>';
 }
 
 const US_STATE_ABBREVIATIONS = [
@@ -5301,6 +5365,64 @@ function attachHandlers() {
   if (expandCuisineBtn) expandCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = true; render(); });
   const collapseCuisineBtn = document.getElementById('collapse-cuisine-card');
   if (collapseCuisineBtn) collapseCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = false; render(); });
+  const editSelfReportedCityBtn = document.getElementById('edit-self-reported-city');
+  if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; render(); });
+  const cancelSelfReportedCityBtn = document.getElementById('cancel-self-reported-city');
+  if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; render(); });
+  const saveSelfReportedCityBtn = document.getElementById('save-self-reported-city');
+  if (saveSelfReportedCityBtn) {
+    saveSelfReportedCityBtn.addEventListener('click', () => {
+      const input = document.getElementById('self-reported-city-input');
+      const val = (input.value || '').trim();
+      me.selfReportedCity = val || null;
+      editingSelfReportedCity = false;
+      saveIdentity();
+      render();
+    });
+  }
+  const createCommunityBtn = document.getElementById('create-community');
+  if (createCommunityBtn) {
+    createCommunityBtn.addEventListener('click', () => {
+      const statusEl = document.getElementById('community-status');
+      const nameEl = document.getElementById('community-name');
+      const cityEl = document.getElementById('community-city');
+      const codeEl = document.getElementById('community-code');
+      const maxJoinsEl = document.getElementById('community-max-joins');
+      const name = (nameEl.value || '').trim();
+      const targetCity = (cityEl.value || '').trim();
+      const joinCode = (codeEl.value || '').trim().toUpperCase().replace(/\s+/g, '');
+      const maxJoins = maxJoinsEl.value ? parseInt(maxJoinsEl.value, 10) : null;
+      if (!name || !targetCity || !joinCode) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Name, target city, and join code are all required.';
+        return;
+      }
+      if (!Array.isArray(state.communities)) state.communities = [];
+      const codeTaken = state.communities.some(c => c.joinCode === joinCode);
+      if (codeTaken) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'That join code is already in use -- pick a different one.';
+        return;
+      }
+      state.communities.push({
+        id: uid(), name, targetCity, joinCode, active: true,
+        joinCount: 0, maxJoins: maxJoins || null,
+        createdAt: Date.now(), createdByName: (me && me.name) || 'an admin'
+      });
+      saveData();
+      render();
+    });
+  }
+  document.querySelectorAll('[data-toggle-community]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-toggle-community');
+      const community = (state.communities || []).find(c => c.id === id);
+      if (!community) return;
+      community.active = !community.active;
+      saveData();
+      render();
+    });
+  });
   const matchmakerConnectBtn = document.getElementById('matchmaker-connect');
   if (matchmakerConnectBtn) {
     matchmakerConnectBtn.addEventListener('click', () => {
