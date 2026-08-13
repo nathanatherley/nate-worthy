@@ -2653,7 +2653,7 @@ function renderQuickConnectCard() {
 
   let html = '<div class="card">';
   html += '<h2>Fast-track your trust circle</h2>';
-  html += '<p class="hint">' + escapeHtml(inviter.name) + ' already trusts these ' + candidateIds.length + ' people. Add any of them straight to your own trust circle at the same rating ' + escapeHtml(inviter.name) + ' gave them — you can always fine-tune afterward.</p>';
+  html += '<p class="hint">' + escapeHtml(inviter.name) + ' already trusts these ' + candidateIds.length + ' people. Add any of them to your own list to rate yourself -- shown alongside how much ' + escapeHtml(inviter.name) + ' trusts them, for context, but the rating is always your own call.</p>';
 
   candidateIds.forEach(fid => {
     const candidate = state.friends.find(f => f.id === fid);
@@ -2669,7 +2669,7 @@ function renderQuickConnectCard() {
     html += '</div>';
   });
 
-  html += '<div class="actions"><button class="btn btn-primary" id="quickconnect-add">Add selected to my circle</button><button class="btn btn-ghost" id="quickconnect-skip">Skip for now</button></div>';
+  html += '<div class="actions"><button class="btn btn-primary" id="quickconnect-add">Add selected to my list</button><button class="btn btn-ghost" id="quickconnect-skip">Skip for now</button></div>';
   html += '</div>';
   return html;
 }
@@ -5256,11 +5256,11 @@ function attachHandlers() {
     const inviter = state.friends.find(f => f.id === quickConnectInviterId);
     const myFriend = state.friends.find(f => f.id === me.friendId);
     if (inviter && myFriend) {
-      if (!myFriend.trustRatings || typeof myFriend.trustRatings !== 'object') myFriend.trustRatings = {};
+      if (!Array.isArray(myFriend.pendingToRate)) myFriend.pendingToRate = [];
       let addedCount = 0;
       Object.keys(quickConnectSelections).forEach(fid => {
-        if (quickConnectSelections[fid] && inviter.trustRatings[fid] > 0) {
-          myFriend.trustRatings[fid] = inviter.trustRatings[fid];
+        if (quickConnectSelections[fid] && inviter.trustRatings[fid] > 0 && !myFriend.pendingToRate.includes(fid)) {
+          myFriend.pendingToRate.push(fid);
           addedCount++;
         }
       });
