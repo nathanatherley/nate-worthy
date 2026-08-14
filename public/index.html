@@ -763,6 +763,10 @@ let webSeedPicks = [];
 // than baked into the pick objects themselves so backfilling never
 // requires touching DEFAULT_WEB_SEED_PICKS or re-importing anything.
 let seedPickPlaceIds = {};
+// Picks explicitly marked "no match found" during manual review -- kept
+// separate from seedPickPlaceIds since these have no place_id at all,
+// they're a record of "already looked, don't ask again."
+let seedPickSkipped = {};
 let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
@@ -1824,11 +1828,13 @@ async function loadData() {
   applySeedPickPlaceIds();
 }
 
-// Loads the backfill lookup table and overlays it onto whatever
-// webSeedPicks currently holds. Split into two functions rather than one
-// so applySeedPickPlaceIds can also be called right after the backfill
-// tool itself writes new matches, without needing to re-fetch from
-// storage first.
+// Loads the backfill lookup table (and the separate skip-list -- picks
+// explicitly marked "no match" during manual review, so they don't keep
+// coming back into the review queue on every future run) and overlays the
+// place_id half onto whatever webSeedPicks currently holds. Split apart
+// from applySeedPickPlaceIds so that function can also be called right
+// after the backfill tool itself writes new matches, without needing to
+// re-fetch from storage first.
 async function loadSeedPickPlaceIds() {
   try {
     const res = await window.storage.get('seed-pick-place-ids', true);
@@ -1837,6 +1843,12 @@ async function loadSeedPickPlaceIds() {
     // Never been written to yet -- expected until the backfill tool has
     // been run at least once.
     seedPickPlaceIds = {};
+  }
+  try {
+    const res = await window.storage.get('seed-pick-backfill-skipped', true);
+    if (res && res.value) seedPickSkipped = JSON.parse(res.value);
+  } catch (e) {
+    seedPickSkipped = {};
   }
 }
 
@@ -1906,6 +1918,10 @@ let seedBackfillRunning = false;
 let seedBackfillCancelRequested = false;
 let seedBackfillProgress = { checked: 0, total: 0, matched: 0, skipped: 0 };
 let seedBackfillReviewList = []; // items that couldn't be confidently matched, for manual visibility
+let seedReviewResolvingId = null; // id of the review item currently expanded for manual search, or null
+let seedReviewSearchQuery = '';
+let seedReviewSearchResults = [];
+let seedReviewSearchLoading = false;
 
 async function exportAllData() {
   if (exportInProgress) return;
@@ -3792,6 +3808,7 @@ function renderSeedImportCard() {
 // doing on the page.
 function renderSeedBackfillProgressInner() {
   const withPlaceId = webSeedPicks.filter(p => p.placeId).length;
+  const skippedCount = Object.keys(seedPickSkipped).length;
   const total = webSeedPicks.length;
   let html = '';
 
@@ -3800,16 +3817,42 @@ function renderSeedBackfillProgressInner() {
     html += '<p class="hint">Checking ' + checked + ' of ' + runTotal + '… ' + matched + ' matched, ' + skipped + ' need review.</p>';
     html += '<div class="actions"><button class="btn btn-ghost btn-small" id="seed-backfill-stop">Stop</button></div>';
   } else {
-    html += '<p class="hint">' + withPlaceId + ' of ' + total + ' seed picks have a place_id.</p>';
-    html += '<div class="actions"><button class="btn btn-ghost btn-small" id="seed-backfill-run"' + (withPlaceId === total ? ' disabled' : '') + '>' + (withPlaceId === total ? 'All matched' : 'Run backfill') + '</button></div>';
+    const remaining = total - withPlaceId - skippedCount;
+    html += '<p class="hint">' + withPlaceId + ' of ' + total + ' seed picks have a place_id' + (skippedCount ? ' · ' + skippedCount + ' marked no match' : '') + '.</p>';
+    html += '<div class="actions"><button class="btn btn-ghost btn-small" id="seed-backfill-run"' + (remaining === 0 ? ' disabled' : '') + '>' + (remaining === 0 ? 'All resolved' : 'Run backfill') + '</button></div>';
   }
 
   if (!seedBackfillRunning && seedBackfillReviewList.length) {
-    const items = seedBackfillReviewList.map(item =>
-      '<div class="friend-row"><span class="friend-name">' + escapeHtml(item.pick.restaurant) + ' — ' + escapeHtml(item.pick.city) + '</span><span class="track-record">' +
-      (item.foundName ? 'Closest match: "' + escapeHtml(item.foundName) + '" — not confident enough to auto-link' : 'No match found') +
-      '</span></div>'
-    ).join('');
+    const items = seedBackfillReviewList.map(item => {
+      const pickId = item.pick.id;
+      let row = '<div style="padding:10px 0; border-top:1px solid var(--line);">';
+      row += '<div class="friend-row" style="border:none; padding:0;"><span class="friend-name">' + escapeHtml(item.pick.restaurant) + ' — ' + escapeHtml(item.pick.city) + '</span>';
+      row += '<button type="button" class="btn-text-link" data-toggle-resolve-review="' + escapeHtml(pickId) + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">' + (seedReviewResolvingId === pickId ? 'Cancel' : 'Resolve') + '</button></div>';
+      row += '<p class="track-record" style="margin-top:2px;">' + (item.foundName ? 'Closest match: "' + escapeHtml(item.foundName) + '" — not confident enough to auto-link' : 'No match found') + '</p>';
+
+      if (seedReviewResolvingId === pickId) {
+        row += '<div style="margin-top:8px; padding:10px; background:var(--surface); border:1px solid var(--card-border); border-radius:8px;">';
+        row += '<div style="display:flex; gap:8px;"><input type="text" id="seed-review-search-input" value="' + escapeHtml(seedReviewSearchQuery) + '" placeholder="Adjust the search and try again" style="flex:1;"><button type="button" class="btn btn-ghost btn-small" id="seed-review-search-btn">Search</button></div>';
+
+        if (seedReviewSearchLoading) {
+          row += '<p class="hint" style="margin:8px 0 0;">Searching…</p>';
+        } else if (seedReviewSearchResults.length) {
+          row += '<div style="margin-top:8px;">';
+          seedReviewSearchResults.forEach((r, i) => {
+            row += '<div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 0; border-top:1px solid var(--line);">';
+            row += '<div style="min-width:0;"><p style="font-size:13px; margin:0;">' + escapeHtml(r.name) + '</p><p class="track-record" style="margin-top:1px;">' + escapeHtml(r.address || '') + '</p></div>';
+            row += '<button type="button" class="btn btn-ghost btn-small" data-accept-review-result="' + i + '" style="flex-shrink:0;">Use this</button>';
+            row += '</div>';
+          });
+          row += '</div>';
+        }
+        row += '<div class="actions" style="margin-top:8px;"><button type="button" class="btn btn-ghost btn-small" data-skip-review="' + escapeHtml(pickId) + '">No match — skip this one</button></div>';
+        row += '</div>';
+      }
+
+      row += '</div>';
+      return row;
+    }).join('');
     html += renderCollapsibleWrapper('seed-backfill-review', seedBackfillReviewList.length + ' need' + (seedBackfillReviewList.length === 1 ? 's' : '') + ' manual review', items, true);
   }
 
@@ -3828,6 +3871,75 @@ function attachSeedBackfillHandlers() {
   if (runBtn) runBtn.addEventListener('click', runSeedPlaceIdBackfill);
   const stopBtn = document.getElementById('seed-backfill-stop');
   if (stopBtn) stopBtn.addEventListener('click', () => { seedBackfillCancelRequested = true; });
+
+  document.querySelectorAll('[data-toggle-resolve-review]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pickId = btn.getAttribute('data-toggle-resolve-review');
+      const item = seedBackfillReviewList.find(x => x.pick.id === pickId);
+      if (seedReviewResolvingId === pickId) {
+        seedReviewResolvingId = null;
+      } else {
+        seedReviewResolvingId = pickId;
+        seedReviewSearchQuery = item ? item.pick.restaurant + ', ' + item.pick.city : '';
+        seedReviewSearchResults = [];
+      }
+      updateSeedBackfillProgress();
+    });
+  });
+
+  const searchInput = document.getElementById('seed-review-search-input');
+  if (searchInput) searchInput.addEventListener('input', () => { seedReviewSearchQuery = searchInput.value; });
+
+  const searchBtn = document.getElementById('seed-review-search-btn');
+  if (searchBtn) searchBtn.addEventListener('click', async () => {
+    if (!seedReviewSearchQuery.trim()) return;
+    seedReviewSearchLoading = true;
+    updateSeedBackfillProgress();
+    try {
+      const res = await fetch('/api/places/search', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: seedReviewSearchQuery.trim() }),
+      });
+      const data = await res.json();
+      seedReviewSearchResults = (data.places || []).slice(0, 5).map(p => ({
+        id: p.id, name: (p.displayName && p.displayName.text) || '', address: p.formattedAddress || ''
+      }));
+    } catch (e) {
+      console.error('manual review search failed', e);
+      seedReviewSearchResults = [];
+    }
+    seedReviewSearchLoading = false;
+    updateSeedBackfillProgress();
+  });
+
+  document.querySelectorAll('[data-accept-review-result]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const idx = parseInt(btn.getAttribute('data-accept-review-result'), 10);
+      const result = seedReviewSearchResults[idx];
+      const pickId = seedReviewResolvingId;
+      if (!result || !pickId) return;
+      seedPickPlaceIds[pickId] = result.id;
+      const pick = webSeedPicks.find(p => p.id === pickId);
+      if (pick) pick.placeId = result.id;
+      seedBackfillReviewList = seedBackfillReviewList.filter(x => x.pick.id !== pickId);
+      seedReviewResolvingId = null;
+      seedReviewSearchResults = [];
+      try { await window.storage.set('seed-pick-place-ids', JSON.stringify(seedPickPlaceIds), true); } catch (e) { console.error('manual match save failed', e); }
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-skip-review]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pickId = btn.getAttribute('data-skip-review');
+      seedPickSkipped[pickId] = true;
+      seedBackfillReviewList = seedBackfillReviewList.filter(x => x.pick.id !== pickId);
+      seedReviewResolvingId = null;
+      seedReviewSearchResults = [];
+      try { await window.storage.set('seed-pick-backfill-skipped', JSON.stringify(seedPickSkipped), true); } catch (e) { console.error('skip save failed', e); }
+      render();
+    });
+  });
 }
 
 // Uses Text Search (New) rather than the autocomplete/details pair the
@@ -3851,7 +3963,7 @@ async function runSeedPlaceIdBackfill() {
   seedBackfillRunning = true;
   seedBackfillCancelRequested = false;
   seedBackfillReviewList = [];
-  const targets = webSeedPicks.filter(p => !p.placeId);
+  const targets = webSeedPicks.filter(p => !p.placeId && !seedPickSkipped[p.id]);
   seedBackfillProgress = { checked: 0, total: targets.length, matched: 0, skipped: 0 };
   updateSeedBackfillProgress();
 
