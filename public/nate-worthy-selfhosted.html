@@ -952,9 +952,20 @@ function findSimilarCity(typedName) {
   return best;
 }
 
-function findSimilarEntry(friendId, restaurantName) {
-  const normalized = normalizeName(restaurantName);
+function findSimilarEntry(friendId, restaurantName, placeId) {
   const mine = state.suggestions.filter(s => s.friendId === friendId);
+
+  // An exact place_id match is definitive -- it's Google's own unique
+  // identifier for a real-world location, not a guess based on spelling.
+  // Checked before any name-based comparison, and always treated as
+  // "exact" (skips the fuzzy-match confirmation UI) since there's no real
+  // ambiguity left to resolve.
+  if (placeId) {
+    const placeMatch = mine.find(s => s.placeId === placeId);
+    if (placeMatch) return { entry: placeMatch, exact: true, viaPlaceId: true };
+  }
+
+  const normalized = normalizeName(restaurantName);
 
   const exact = mine.find(s => normalizeName(s.restaurant) === normalized);
   if (exact) return { entry: exact, exact: true };
@@ -979,10 +990,19 @@ function findSimilarEntry(friendId, restaurantName) {
 // Cross-friend match: is there an entry from a DIFFERENT friend, in the same city,
 // that looks like the same restaurant? Used to offer merging so trust-weighted
 // scoring doesn't fragment across near-duplicate spellings from different people.
-function findCrossFriendMatch(cityId, restaurantName, excludeFriendId) {
-  const normalized = normalizeName(restaurantName);
+function findCrossFriendMatch(cityId, restaurantName, excludeFriendId, placeId) {
   const others = state.suggestions.filter(s => s.cityId === cityId && s.friendId !== excludeFriendId);
 
+  // Same reasoning as findSimilarEntry: a shared place_id is definitive,
+  // not a guess, so it's checked first and flagged as such -- the caller
+  // uses viaPlaceId to decide whether this needs a confirmation dialog at
+  // all (it doesn't) or can link automatically.
+  if (placeId) {
+    const placeMatch = others.find(s => s.placeId === placeId);
+    if (placeMatch) return { entry: placeMatch, viaPlaceId: true };
+  }
+
+  const normalized = normalizeName(restaurantName);
   let best = null, bestDist = Infinity;
   others.forEach(s => {
     const otherNorm = normalizeName(s.restaurant);
@@ -995,7 +1015,7 @@ function findCrossFriendMatch(cityId, restaurantName, excludeFriendId) {
       best = s;
     }
   });
-  return best;
+  return best ? { entry: best, viaPlaceId: false } : null;
 }
 
 // A web/seed pick is "superseded" once a real person (friend or community,
@@ -6840,8 +6860,8 @@ async function submitSuggestionInner() {
 
   if (formState.taste === 0) { msg.textContent = 'Give it a taste rating — that\'s what tells friends this is worth trying.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
 
-  const context = { cityId, restaurant, cuisine, note };
-  const match = findSimilarEntry(me.friendId, restaurant);
+  const context = { cityId, restaurant, cuisine, note, placeId: formState.placeId || null };
+  const match = findSimilarEntry(me.friendId, restaurant, context.placeId);
 
   if (match && !match.exact) {
     // Fuzzy (not exact) match on your own entries — needs a real decision, shown
@@ -7006,9 +7026,19 @@ async function submitSuggestion() {
 
 async function proceedAfterOwnMergeDecision(existingEntry, context) {
   if (!existingEntry) {
-    const crossMatch = findCrossFriendMatch(context.cityId, context.restaurant, me.friendId);
+    const crossMatch = findCrossFriendMatch(context.cityId, context.restaurant, me.friendId, context.placeId);
     if (crossMatch) {
-      pendingMergeConfirm = { type: 'cross', crossMatch, context };
+      if (crossMatch.viaPlaceId) {
+        // Definite match via Google's place_id -- nothing ambiguous left
+        // to confirm, so link it automatically instead of interrupting
+        // with a dialog that exists specifically for cases where the app
+        // is only guessing from spelling.
+        const canonicalId = crossMatch.entry.canonicalId || crossMatch.entry.id;
+        if (!crossMatch.entry.canonicalId) crossMatch.entry.canonicalId = canonicalId;
+        await finishSubmission(null, canonicalId, context);
+        return;
+      }
+      pendingMergeConfirm = { type: 'cross', crossMatch: crossMatch.entry, context };
       isSubmittingSuggestion = false;
       const submitBtn = document.getElementById('f-submit');
       if (submitBtn) submitBtn.disabled = false;
@@ -7106,6 +7136,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
     existingEntry.cost = formState.cost;
     existingEntry.photoKeys = photoKeys;
     existingEntry.ts = Date.now();
+    if (formState.placeId) existingEntry.placeId = formState.placeId;
     duplicateUpdated = true;
   } else {
     state.suggestions.push({
