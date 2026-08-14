@@ -2189,6 +2189,7 @@ async function saveIdentity() {
 async function forgetIdentity() {
   me = null;
   editingSelfReportedCity = false;
+  cuisineTrustPickerOpenFor = null;
   formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
   cuisineOtherMode = false;
   recQuery = '';
@@ -4429,9 +4430,11 @@ function getBestOfBestForCity(cityId) {
     // very little to others, so folding it into one number and showing
     // only that would hide the information people actually need to make
     // their own call. This is also naturally personal either way:
-    // myTrustWeight() already varies who "counts" and by how much for the
-    // person viewing it, so both the top-3 selection and the averages
-    // themselves can differ for two different people.
+    // myTrustWeightForCuisine() already varies who "counts" and by how
+    // much for the person viewing it (and can vary further per cuisine
+    // when a per-cuisine trust override is set), so both the top-3
+    // selection and the averages themselves can differ for two different
+    // people.
     const quality = groupWeightedQualityScore(entry) || 0;
     const confidenceMultiplier = 1 + 0.1 * (recommenderCount - 1);
     const combinedScore = quality * confidenceMultiplier;
