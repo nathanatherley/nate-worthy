@@ -8,6 +8,13 @@
 //   POST /api/places/details       body: { placeId, sessionToken? }
 //     -> address, phone, website, coordinates for a specific place,
 //        looked up by its place_id
+//   POST /api/places/search        body: { query, lat?, lng? }
+//     -> direct place matches for a FULL known name (e.g. "Zhu Ting Ji,
+//        Salt Lake City"), used for backfilling place_id onto existing
+//        seed data. Autocomplete is the wrong tool for this -- it's built
+//        to guess from partial, in-progress typing, not to resolve a name
+//        you already know in full. Text Search is Google's endpoint for
+//        exactly that.
 //
 // sessionToken groups a whole search (every keystroke, then the final
 // selection) into one billing session instead of charging each keystroke
@@ -100,6 +107,39 @@ router.post('/details', async (req, res) => {
   } catch (e) {
     console.error('places details proxy failed', e);
     res.status(500).json({ error: 'places details proxy failed' });
+  }
+});
+
+// POST /api/places/search  body: { query, lat?, lng? }
+router.post('/search', async (req, res) => {
+  const { query, lat, lng } = req.body;
+  if (!process.env.GOOGLE_PLACES_API_KEY) return res.status(500).json({ error: 'server missing GOOGLE_PLACES_API_KEY' });
+  if (!query || !query.trim()) return res.json({ places: [] });
+
+  const body = { textQuery: query.trim() };
+  if (typeof lat === 'number' && typeof lng === 'number') {
+    body.locationBias = { circle: { center: { latitude: lat, longitude: lng }, radius: 50000.0 } };
+  }
+
+  try {
+    const r = await fetch(`${PLACES_API_BASE}/places:searchText`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
+        // Kept tight, same reasoning as autocomplete's field mask -- just
+        // enough to identify the place and judge whether it's a confident
+        // match, nothing extra.
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress',
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) return res.status(r.status).json(data);
+    res.json(data);
+  } catch (e) {
+    console.error('places search proxy failed', e);
+    res.status(500).json({ error: 'places search proxy failed' });
   }
 });
 

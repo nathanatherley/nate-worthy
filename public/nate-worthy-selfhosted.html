@@ -757,6 +757,12 @@
 <script>
 let state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
 let webSeedPicks = [];
+// Seed picks (both the hardcoded defaults and anything imported) don't
+// carry a place_id of their own -- this is a separate lookup, keyed by
+// seed pick id, populated by the admin backfill tool. Kept apart rather
+// than baked into the pick objects themselves so backfilling never
+// requires touching DEFAULT_WEB_SEED_PICKS or re-importing anything.
+let seedPickPlaceIds = {};
 let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
@@ -1814,6 +1820,30 @@ async function loadData() {
     // picks. The fallback to DEFAULT_WEB_SEED_PICKS above already handles this
     // correctly, so this isn't worth surfacing as an alarming console error.
   }
+  await loadSeedPickPlaceIds();
+  applySeedPickPlaceIds();
+}
+
+// Loads the backfill lookup table and overlays it onto whatever
+// webSeedPicks currently holds. Split into two functions rather than one
+// so applySeedPickPlaceIds can also be called right after the backfill
+// tool itself writes new matches, without needing to re-fetch from
+// storage first.
+async function loadSeedPickPlaceIds() {
+  try {
+    const res = await window.storage.get('seed-pick-place-ids', true);
+    if (res && res.value) seedPickPlaceIds = JSON.parse(res.value);
+  } catch (e) {
+    // Never been written to yet -- expected until the backfill tool has
+    // been run at least once.
+    seedPickPlaceIds = {};
+  }
+}
+
+function applySeedPickPlaceIds() {
+  webSeedPicks.forEach(p => {
+    if (seedPickPlaceIds[p.id]) p.placeId = seedPickPlaceIds[p.id];
+  });
 }
 
 async function saveData(retriesLeft) {
@@ -1872,6 +1902,10 @@ function cancelDataImport() {
 }
 let seedImportStatus = '';
 let seedImportInProgress = false;
+let seedBackfillRunning = false;
+let seedBackfillCancelRequested = false;
+let seedBackfillProgress = { checked: 0, total: 0, matched: 0, skipped: 0 };
+let seedBackfillReviewList = []; // items that couldn't be confidently matched, for manual visibility
 
 async function exportAllData() {
   if (exportInProgress) return;
@@ -2096,6 +2130,8 @@ async function confirmDataImport() {
         }
       }
     } catch (e) { /* no extra seed picks yet, that's fine */ }
+    await loadSeedPickPlaceIds();
+    applySeedPickPlaceIds();
 
     const identityNote = identityOutcome === 'reunited-by-phone' ? ' Your session was reunited with your existing account (matched by phone) — your old entries and trust ratings should now be visible.'
       : identityOutcome === 'reunited-by-name' ? ' Your session was reunited with your existing account (matched by name) — your old entries and trust ratings should now be visible.'
@@ -2198,6 +2234,7 @@ async function importSeedPicks() {
     const defaultIds = new Set(DEFAULT_WEB_SEED_PICKS.map(p => p.id));
     webSeedPicks = DEFAULT_WEB_SEED_PICKS.slice();
     existing.forEach(p => { if (!defaultIds.has(p.id)) webSeedPicks.push(p); });
+    applySeedPickPlaceIds();
 
     seedImportStatus = 'Imported ' + addedCount + ' new and updated ' + updatedCount + ' existing seed picks.' + (errors.length ? ' Skipped ' + errors.length + ' invalid item(s).' : '');
     seedImportText = '';
@@ -3747,6 +3784,142 @@ function renderSeedImportCard() {
   return html;
 }
 
+// Renders just the live progress/results portion, swapped in via a
+// lightweight targeted update while the backfill runs -- not a full
+// render(), since this fires roughly every second or two for a batch that
+// can take several minutes, and re-rendering the whole admin tab that
+// often would be wasteful and could disrupt anything else the admin is
+// doing on the page.
+function renderSeedBackfillProgressInner() {
+  const withPlaceId = webSeedPicks.filter(p => p.placeId).length;
+  const total = webSeedPicks.length;
+  let html = '';
+
+  if (seedBackfillRunning) {
+    const { checked, total: runTotal, matched, skipped } = seedBackfillProgress;
+    html += '<p class="hint">Checking ' + checked + ' of ' + runTotal + '… ' + matched + ' matched, ' + skipped + ' need review.</p>';
+    html += '<div class="actions"><button class="btn btn-ghost btn-small" id="seed-backfill-stop">Stop</button></div>';
+  } else {
+    html += '<p class="hint">' + withPlaceId + ' of ' + total + ' seed picks have a place_id.</p>';
+    html += '<div class="actions"><button class="btn btn-ghost btn-small" id="seed-backfill-run"' + (withPlaceId === total ? ' disabled' : '') + '>' + (withPlaceId === total ? 'All matched' : 'Run backfill') + '</button></div>';
+  }
+
+  if (!seedBackfillRunning && seedBackfillReviewList.length) {
+    const items = seedBackfillReviewList.map(item =>
+      '<div class="friend-row"><span class="friend-name">' + escapeHtml(item.pick.restaurant) + ' — ' + escapeHtml(item.pick.city) + '</span><span class="track-record">' +
+      (item.foundName ? 'Closest match: "' + escapeHtml(item.foundName) + '" — not confident enough to auto-link' : 'No match found') +
+      '</span></div>'
+    ).join('');
+    html += renderCollapsibleWrapper('seed-backfill-review', seedBackfillReviewList.length + ' need' + (seedBackfillReviewList.length === 1 ? 's' : '') + ' manual review', items, true);
+  }
+
+  return html;
+}
+
+function updateSeedBackfillProgress() {
+  const container = document.getElementById('seed-backfill-progress');
+  if (!container) return;
+  container.innerHTML = renderSeedBackfillProgressInner();
+  attachSeedBackfillHandlers();
+}
+
+function attachSeedBackfillHandlers() {
+  const runBtn = document.getElementById('seed-backfill-run');
+  if (runBtn) runBtn.addEventListener('click', runSeedPlaceIdBackfill);
+  const stopBtn = document.getElementById('seed-backfill-stop');
+  if (stopBtn) stopBtn.addEventListener('click', () => { seedBackfillCancelRequested = true; });
+}
+
+// Uses Text Search (New) rather than the autocomplete/details pair the
+// entry form uses -- autocomplete is built to guess from partial,
+// in-progress typing, but every seed pick already has a full, known
+// restaurant name, which is exactly what Text Search is for. Runs
+// sequentially with a short pause between requests (paced, not hammering
+// the API) and saves progress periodically so stopping partway through
+// never loses more than a few minutes of matches. A restaurant name +
+// address returned from Google is checked for real similarity against the
+// seed pick's own name before being trusted -- the confirmation dialog
+// this whole file uses for fuzzy matches doesn't apply here (this runs
+// unattended), so the threshold has to do that judgment call itself:
+// anything below it gets left unmatched and flagged for the admin to look
+// at, rather than silently attaching a possibly-wrong place_id (which
+// duplicate detection now treats as fully definitive -- an incorrect
+// match here would incorrectly auto-merge two different restaurants,
+// which is exactly why this can't be a low-confidence auto-accept).
+async function runSeedPlaceIdBackfill() {
+  if (seedBackfillRunning) return;
+  seedBackfillRunning = true;
+  seedBackfillCancelRequested = false;
+  seedBackfillReviewList = [];
+  const targets = webSeedPicks.filter(p => !p.placeId);
+  seedBackfillProgress = { checked: 0, total: targets.length, matched: 0, skipped: 0 };
+  updateSeedBackfillProgress();
+
+  const CONFIDENCE_THRESHOLD = 0.6;
+  let sinceLastSave = 0;
+
+  for (const pick of targets) {
+    if (seedBackfillCancelRequested) break;
+    try {
+      const query = pick.restaurant + ', ' + pick.city;
+      const res = await fetch('/api/places/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      });
+      const data = await res.json();
+      const top = (data.places || [])[0];
+      if (top && top.id && top.displayName && top.displayName.text) {
+        const a = normalizeName(pick.restaurant);
+        const b = normalizeName(top.displayName.text);
+        const dist = levenshtein(a, b);
+        const maxLen = Math.max(a.length, b.length);
+        const similarity = maxLen > 0 ? 1 - (dist / maxLen) : 0;
+        if (similarity >= CONFIDENCE_THRESHOLD) {
+          seedPickPlaceIds[pick.id] = top.id;
+          pick.placeId = top.id;
+          seedBackfillProgress.matched++;
+          sinceLastSave++;
+        } else {
+          seedBackfillProgress.skipped++;
+          seedBackfillReviewList.push({ pick, foundName: top.displayName.text });
+        }
+      } else {
+        seedBackfillProgress.skipped++;
+        seedBackfillReviewList.push({ pick, foundName: null });
+      }
+    } catch (e) {
+      console.error('backfill lookup failed for', pick.restaurant, e);
+      seedBackfillProgress.skipped++;
+      seedBackfillReviewList.push({ pick, foundName: null });
+    }
+    seedBackfillProgress.checked++;
+    updateSeedBackfillProgress();
+
+    if (sinceLastSave >= 10) {
+      try { await window.storage.set('seed-pick-place-ids', JSON.stringify(seedPickPlaceIds), true); } catch (e) { console.error('backfill save failed', e); }
+      sinceLastSave = 0;
+    }
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  if (sinceLastSave > 0) {
+    try { await window.storage.set('seed-pick-place-ids', JSON.stringify(seedPickPlaceIds), true); } catch (e) { console.error('backfill final save failed', e); }
+  }
+
+  seedBackfillRunning = false;
+  render();
+}
+
+function renderSeedBackfillCard() {
+  let html = '<div class="card">';
+  html += '<h2>Backfill place IDs for seed picks</h2>';
+  html += '<p class="hint">Matches your existing seed restaurants against Google Places so they get a real place_id, the same identifier new entries collect automatically now. Runs a real search per restaurant, so it incurs a small one-time API cost and takes a few minutes for a large batch — safe to stop and resume later, already-matched picks are always skipped on the next run.</p>';
+  html += '<div id="seed-backfill-progress">' + renderSeedBackfillProgressInner() + '</div>';
+  html += '</div>';
+  return html;
+}
+
 function renderCuisineExpertiseCard() {
   if (!me) return '';
   const myFriend = state.friends.find(f => f.id === me.friendId);
@@ -4311,6 +4484,7 @@ function renderPage() {
       if (hasAdminPermission('export')) html += renderExportCard();
       if (hasAdminPermission('restore')) { html += renderAutoBackupsCard(); html += renderDataImportCard(); }
       if (hasAdminPermission('seedImport')) html += renderSeedImportCard();
+      if (hasAdminPermission('seedImport')) html += renderSeedBackfillCard();
     }
   }
 
@@ -5733,6 +5907,7 @@ function attachHandlers() {
   if (seedTextarea) seedTextarea.addEventListener('input', () => { seedImportText = seedTextarea.value; });
   const seedImportBtn = document.getElementById('seed-import-btn');
   if (seedImportBtn) seedImportBtn.addEventListener('click', importSeedPicks);
+  attachSeedBackfillHandlers();
   const seedFileInput = document.getElementById('seed-import-file');
   if (seedFileInput) {
     seedFileInput.addEventListener('change', () => {
