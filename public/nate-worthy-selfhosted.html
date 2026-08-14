@@ -5164,6 +5164,11 @@ function attachHandlers() {
       formState.cuisine = pick.cuisine && pick.cuisine !== 'unspecified' ? pick.cuisine : '';
       cuisineOtherMode = !!(formState.cuisine && !MAJOR_CUISINES.includes(formState.cuisine));
       formState.city = pick.city;
+      // Seed picks never carry a state field -- fill it from a real city
+      // record if one already exists for this name, so the form isn't
+      // silently left in a state that still can't be submitted.
+      const matchingCity = state.cities.find(c => c.name.toLowerCase() === (pick.city || '').toLowerCase());
+      formState.state = matchingCity ? (matchingCity.state || '') : '';
       formState.cost = pick.cost || 0;
       formState.taste = 0;
       formState.ambiance = 0;
@@ -5172,6 +5177,7 @@ function attachHandlers() {
       selectedCityId = null;
       entryFormStartedLogged = true;
       logEvent('entry_form_started', { source: 'claim_seed_pick' });
+      currentTab = 'board';
       render();
       const target = document.getElementById('section-share-favorite');
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -5259,6 +5265,7 @@ function attachHandlers() {
       logEvent('entry_form_started', { source: 'planned_visit' });
       me.plannedVisits = me.plannedVisits.filter(v => v.id !== visitId);
       saveIdentity();
+      currentTab = 'board';
       render();
       const target = document.getElementById('section-share-favorite');
       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
