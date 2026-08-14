@@ -1116,6 +1116,18 @@ function tasteSimilarityScore(friendIdA, friendIdB) {
   return { score, sharedCount };
 }
 
+// Converts a similarity score into an actual displayable percentage. The
+// raw score from tasteSimilarityScore / tasteSimilarityScoreForCuisine is
+// a SUM across every shared rating (deliberately, since that's what makes
+// more corroborating restaurants count for more when ranking candidates)
+// -- so it can exceed 1 and isn't itself a percentage. A genuine "match"
+// figure needs the AVERAGE closeness per shared rating instead. Returns
+// null when there's no shared data at all, never a fabricated number.
+function formatMatchPercent(score, sharedCount) {
+  if (!sharedCount || sharedCount <= 0) return null;
+  return Math.round((score / sharedCount) * 100);
+}
+
 // Same math as tasteSimilarityScore, but restricted to one specific
 // cuisine instead of blending every cuisine together. This is what
 // actually fixes the original problem with the blended version: two
@@ -2606,7 +2618,7 @@ function sameHomeCitySuggestionsFor(friendId, limit) {
     })
     .filter(x => x.sharedCount >= 2);
   scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit || 5).map(x => x.friend);
+  return scored.slice(0, limit || 5);
 }
 
 function allConnectionSuggestionsFor(friendId) {
@@ -2628,10 +2640,25 @@ function allConnectionSuggestionsFor(friendId) {
   });
 
   const homeCity = (friend && friend.homeCityId) ? state.cities.find(c => c.id === friend.homeCityId) : null;
-  sameHomeCitySuggestionsFor(friendId).forEach(f => {
-    if (seen.has(f.id)) return;
-    seen.add(f.id);
-    results.push({ friend: f, label: homeCity ? 'similar taste, in ' + homeCity.name : 'similar taste, near you' });
+  sameHomeCitySuggestionsFor(friendId).forEach(match => {
+    if (seen.has(match.friend.id)) return;
+    seen.add(match.friend.id);
+    // Match percentage always travels with its sample size, never shown
+    // bare -- "83% match" alone implies more confidence than 2 shared
+    // ratings actually supports. Kept compact since this renders as a
+    // small inline badge, not a full sentence -- the number itself and
+    // its sample size are what matter, both visible without needing a
+    // tooltip (this is a mobile-first app; hover text isn't reliable).
+    const matchPercent = formatMatchPercent(match.score, match.sharedCount);
+    const label = matchPercent !== null
+      ? matchPercent + '% match' + (homeCity ? ', in ' + homeCity.name : '') + ' (' + match.sharedCount + ' shared)'
+      : (homeCity ? 'similar taste, in ' + homeCity.name : 'similar taste, near you');
+    results.push({
+      friend: match.friend,
+      label,
+      matchPercent,
+      matchSampleSize: match.sharedCount
+    });
   });
 
   return results;
@@ -4295,11 +4322,15 @@ function renderEntryCard(e, showCityLabel) {
   }
   const coLike = getCoLikeSuggestion(e);
   if (coLike) {
+    const matchPercent = formatMatchPercent(coLike.similarityScore, coLike.sharedRestaurantCount);
     html += '<div class="co-like-suggestion" style="margin-top:10px; padding-top:8px; border-top:1px dashed var(--line);">';
     html += '<p style="font-size:12.5px; color:var(--text-on-paper-dim); margin:0 0 6px;">Others who liked this also liked <strong>' + escapeHtml(coLike.entry.restaurant) + '</strong></p>';
+    if (matchPercent !== null) {
+      html += '<p style="font-size:11.5px; color:var(--brass-dim); margin:0 0 6px;">' + matchPercent + '% match with ' + escapeHtml(coLike.rater.name.split(' ')[0]) + ' on ' + escapeHtml((coLike.entry.cuisine || 'this cuisine').toLowerCase()) + ', based on ' + coLike.sharedRestaurantCount + ' shared rating' + (coLike.sharedRestaurantCount === 1 ? '' : 's') + '</p>';
+    }
     html += '<div class="actions" style="gap:8px;">';
     html += '<button type="button" class="btn btn-ghost btn-small" data-mark-going="friend:' + coLike.entry.id + '">Add to my list</button>';
-    html += '<button type="button" class="btn btn-ghost btn-small" data-add-colike-connection="' + coLike.rater.id + '" title="You\'ve rated ' + coLike.sharedRestaurantCount + ' ' + escapeHtml((coLike.entry.cuisine || 'this cuisine').toLowerCase()) + ' restaurant' + (coLike.sharedRestaurantCount === 1 ? '' : 's') + ' about the same way">Connect with ' + escapeHtml(coLike.rater.name.split(' ')[0]) + '</button>';
+    html += '<button type="button" class="btn btn-ghost btn-small" data-add-colike-connection="' + coLike.rater.id + '">Connect with ' + escapeHtml(coLike.rater.name.split(' ')[0]) + '</button>';
     html += '</div>';
     html += '</div>';
   }
