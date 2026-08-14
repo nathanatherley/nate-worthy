@@ -718,7 +718,7 @@ let webSeedPicks = [];
 let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
-let formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+let formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
 let editingEntryId = null; // set while editing an existing entry rather than creating a new one
 let editKeptPhotoKeys = []; // existing photo keys still kept for the entry being edited (post-removal)
 let photoCache = {};
@@ -755,6 +755,7 @@ let cuisineCardExpanded = false;
 let shareCardMode = 'link';
 let leaderboardCuisine = null;
 let inviterFriendId = null;
+let joiningCommunityCode = null;
 let adminBootstrapRequested = false;
 
 async function applyAdminBootstrapIfRequested() {
@@ -2049,6 +2050,7 @@ async function loadIdentity() {
     if (res && res.value) {
       me = JSON.parse(res.value);
       if (!Array.isArray(me.plannedVisits)) me.plannedVisits = [];
+      if (!Array.isArray(me.cityObservations)) me.cityObservations = [];
       if (typeof me.jumpstartBatchIndex !== 'number') me.jumpstartBatchIndex = 0;
       if (typeof me.hasUsedJumpstart !== 'boolean') me.hasUsedJumpstart = false;
       me.jumpstartBatchIndex = (me.jumpstartBatchIndex || 0) + 1;
@@ -2069,7 +2071,7 @@ async function saveIdentity() {
 async function forgetIdentity() {
   me = null;
   editingSelfReportedCity = false;
-  formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
   cuisineOtherMode = false;
   recQuery = '';
   recResults = null;
@@ -2127,6 +2129,22 @@ function normalizePhone(phone) {
   return (phone || '').replace(/\D/g, '');
 }
 
+// Resolves a join code from the URL against real communities -- checked at
+// the moment of signup, not just at link-click time, so a code that hit
+// its cap or got retired between when a link was shared and when someone
+// actually used it fails safely instead of still working. This, not
+// geolocation, is the actual defense against a leaked code spreading
+// unbounded: a link can travel anywhere, but it stops doing anything once
+// enough people have used it.
+function resolveCommunityByCode(code) {
+  if (!code || !Array.isArray(state.communities)) return null;
+  const normalized = code.trim().toUpperCase();
+  const community = state.communities.find(c => c.joinCode === normalized);
+  if (!community || !community.active) return null;
+  if (community.maxJoins && community.joinCount >= community.maxJoins) return null;
+  return community;
+}
+
 async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
   const first = (firstName || '').trim();
   const mi = (middleInitial || '').trim().replace(/[^a-zA-Z]/g, '').slice(0, 1);
@@ -2144,25 +2162,45 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
     if (existing) existing.phone = phoneDigits;
   }
 
+  const joiningCommunity = resolveCommunityByCode(joiningCommunityCode);
+  let communityWasApplied = false;
+
   if (existing) {
-    me = { friendId: existing.id, name: existing.name, lastVisitTs: Date.now(), plannedVisits: [], jumpstartBatchIndex: 1, hasUsedJumpstart: false };
+    me = { friendId: existing.id, name: existing.name, lastVisitTs: Date.now(), plannedVisits: [], jumpstartBatchIndex: 1, hasUsedJumpstart: false, cityObservations: [] };
     previousVisitTs = Date.now();
     setCardExpansionDefaults();
+    // Someone who already has an account can still land on a community
+    // link later (e.g. invited to a new local group after already using
+    // the app) -- assign it if they don't already belong to one, but never
+    // silently overwrite an existing assignment just because they clicked
+    // a different link once.
+    if (joiningCommunity && !existing.communityId) {
+      existing.communityId = joiningCommunity.id;
+      joiningCommunity.joinCount = (joiningCommunity.joinCount || 0) + 1;
+      communityWasApplied = true;
+      await saveData();
+    }
   } else {
     const id = uid();
     const newFriend = {
       id, name: fullName, firstName: first, middleInitial: mi.toUpperCase(), lastName: last, phone: phoneDigits,
       trustRatings: {}, cuisineExpertise: Array.isArray(cuisines) ? cuisines.slice() : [],
-      referredBy: (inviterFriendId && inviterFriendId !== id) ? inviterFriendId : null
+      referredBy: (inviterFriendId && inviterFriendId !== id) ? inviterFriendId : null,
+      communityId: joiningCommunity ? joiningCommunity.id : null
     };
+    if (joiningCommunity) {
+      joiningCommunity.joinCount = (joiningCommunity.joinCount || 0) + 1;
+      communityWasApplied = true;
+    }
     state.friends.push(newFriend);
     const saved = await saveData();
     if (!saved) {
       state.friends = state.friends.filter(f => f.id !== id);
+      if (joiningCommunity) joiningCommunity.joinCount = Math.max(0, (joiningCommunity.joinCount || 1) - 1);
       signupError = 'Couldn\'t save your account — check your connection and try again.';
       return false;
     }
-    me = { friendId: id, name: fullName, lastVisitTs: Date.now(), plannedVisits: [], jumpstartBatchIndex: 1, hasUsedJumpstart: false };
+    me = { friendId: id, name: fullName, lastVisitTs: Date.now(), plannedVisits: [], jumpstartBatchIndex: 1, hasUsedJumpstart: false, cityObservations: [] };
     previousVisitTs = Date.now();
     trustCardExpanded = true;
     cuisineCardExpanded = false;
@@ -2180,6 +2218,14 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
       }
     }
   }
+
+  // Default self-reported city from the community's target city, as a
+  // convenience -- but never overwrite something the person already told
+  // us themselves.
+  if (communityWasApplied && !me.selfReportedCity) {
+    me.selfReportedCity = joiningCommunity.targetCity;
+  }
+
   signupCuisines = [];
   signupFirstName = '';
   signupMiddleInitial = '';
@@ -2218,12 +2264,49 @@ function tryGeolocate() {
       if (nearest) {
         geoDetectedCityId = nearest.id;
         selectedCityId = nearest.id;
+        recordCityObservation(nearest.id);
         render();
       }
     },
     () => {},
     { timeout: 5000 }
   );
+}
+
+// One observation per calendar day, not per app-open -- otherwise opening
+// the app 10 times during a single day trip would outweigh a full week
+// actually spent at home. Pruned to a rolling 90-day window so the answer
+// can naturally re-settle if someone's real life changes, rather than
+// being stuck forever on wherever they were 8 months ago.
+function recordCityObservation(cityId) {
+  if (!me) return;
+  if (!Array.isArray(me.cityObservations)) me.cityObservations = [];
+  const today = new Date().toISOString().slice(0, 10);
+  if (me.cityObservations.some(o => o.date === today)) return;
+  me.cityObservations.push({ date: today, cityId });
+  const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+  me.cityObservations = me.cityObservations.filter(o => new Date(o.date + 'T00:00:00Z').getTime() >= cutoff);
+  saveIdentity();
+}
+
+// The frequency-based "home city" -- distinct from geoDetectedCityId (the
+// live, single-shot reading used to pre-fill the entry form, which SHOULD
+// reflect wherever you happen to be right now). This is used anywhere the
+// app means "where you actually live," like which city opens by default
+// on My Ratings: a 3-day trip shouldn't be mistaken for home just because
+// it happened to be the most recent reading. Requires at least 3 distinct
+// days logged for a city before it counts as confirmed; below that
+// threshold there isn't enough evidence yet, so it returns null rather
+// than guessing off a single blip.
+function computeHomeCityId() {
+  if (!me || !Array.isArray(me.cityObservations) || !me.cityObservations.length) return null;
+  const tally = {};
+  me.cityObservations.forEach(o => { tally[o.cityId] = (tally[o.cityId] || 0) + 1; });
+  let bestCityId = null, bestCount = 0;
+  Object.keys(tally).forEach(cityId => {
+    if (tally[cityId] > bestCount) { bestCount = tally[cityId]; bestCityId = cityId; }
+  });
+  return bestCount >= 3 ? bestCityId : null;
 }
 
 function isOutsideExpertise(e) {
@@ -2397,6 +2480,39 @@ function sameInviterSuggestionsFor(friendId) {
 // list, each tagged with why it's showing up -- admin suggestions take
 // precedence on the label when both apply, since a person specifically
 // flagging two people is more informative than the generic inviter note.
+// People who share your community, ranked by actual taste overlap rather
+// than surfaced as a blanket roster -- a community can have dozens of
+// members, and suggesting all of them isn't really a suggestion anymore,
+// it's just the membership list. Requires at least 2 shared ratings before
+// someone counts as a real match, same "don't fabricate confidence from
+// nothing" rule used everywhere else in this scoring. This deliberately
+// means a brand-new community member with zero ratings yet won't get
+// anything from this specific source until they've rated a few things --
+// they still benefit from admin-curated and same-inviter suggestions in
+// the meantime, and from the community tier itself, which needs no
+// personal data at all.
+function sameCommunitySuggestionsFor(friendId, limit) {
+  if (!friendId) return [];
+  const friend = state.friends.find(f => f.id === friendId);
+  if (!friend || !friend.communityId) return [];
+  const myRatings = friendId === (me && me.friendId) ? myTrustRatings() : {};
+  const unknownMarks = friend.unknownMarks || {};
+  const communityMates = state.friends.filter(f =>
+    f.id !== friendId &&
+    f.communityId === friend.communityId &&
+    !((myRatings[f.id] || 0) > 0) &&
+    !unknownMarks[f.id]
+  );
+  const scored = communityMates
+    .map(f => {
+      const { score, sharedCount } = tasteSimilarityScore(friendId, f.id);
+      return { friend: f, score, sharedCount };
+    })
+    .filter(x => x.sharedCount >= 2);
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit || 5).map(x => x.friend);
+}
+
 function allConnectionSuggestionsFor(friendId) {
   if (!friendId) return [];
   const results = [];
@@ -2413,6 +2529,13 @@ function allConnectionSuggestionsFor(friendId) {
     if (seen.has(f.id)) return;
     seen.add(f.id);
     results.push({ friend: f, label: inviter ? 'you both know ' + inviter.name : 'invited by the same person' });
+  });
+
+  const community = (friend && friend.communityId) ? state.communities.find(c => c.id === friend.communityId) : null;
+  sameCommunitySuggestionsFor(friendId).forEach(f => {
+    if (seen.has(f.id)) return;
+    seen.add(f.id);
+    results.push({ friend: f, label: community ? 'similar taste, via ' + community.name : 'similar taste, same community' });
   });
 
   return results;
@@ -3173,7 +3296,7 @@ function attachManageAdminsAddHandlers() {
 function renderCommunitiesCard() {
   let html = '<div class="card">';
   html += '<h2 style="margin-bottom:4px;">Communities</h2>';
-  html += '<p class="hint">Define a local group (e.g. "Salt Lake City Foodies") with its own join code. Joining via that code isn\'t wired up yet -- this just lets you create and manage the codes themselves.</p>';
+  html += '<p class="hint">Define a local group (e.g. "Salt Lake City Foodies") with its own join code -- share the link as nate-worthy.com/?community=YOURCODE and new signups through it get tagged to this community automatically.</p>';
 
   html += '<div style="margin:14px 0; padding:14px; background:var(--surface); border:1px solid var(--card-border); border-radius:10px;">';
   html += '<input type="text" id="community-name" placeholder="Community name, e.g. Salt Lake City Foodies" style="margin-bottom:8px;">';
@@ -3191,12 +3314,23 @@ function renderCommunitiesCard() {
   } else {
     communities.slice().sort((a, b) => b.createdAt - a.createdAt).forEach(c => {
       const capText = c.maxJoins ? c.joinCount + ' / ' + c.maxJoins + ' joined' : c.joinCount + ' joined';
-      html += '<div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-top:1px solid var(--line);">';
+      const members = state.friends.filter(f => f.communityId === c.id);
+      html += '<div style="padding:10px 0; border-top:1px solid var(--line);">';
+      html += '<div style="display:flex; align-items:center; justify-content:space-between;">';
       html += '<div>';
       html += '<p style="font-weight:500; margin:0;">' + escapeHtml(c.name) + (c.active ? '' : ' <span class="meta-badge meta-badge-warn">retired</span>') + '</p>';
       html += '<p class="track-record" style="margin-top:2px;">' + escapeHtml(c.targetCity) + ' &middot; code: ' + escapeHtml(c.joinCode) + ' &middot; ' + capText + '</p>';
       html += '</div>';
       html += '<button type="button" class="btn-text-link" data-toggle-community="' + c.id + '" style="background:none; border:none; font-size:12px; color:' + (c.active ? 'var(--rust)' : 'var(--brass-dim)') + '; text-decoration:underline; cursor:pointer; padding:0; flex-shrink:0; margin-left:12px;">' + (c.active ? 'Retire' : 'Reactivate') + '</button>';
+      html += '</div>';
+      if (members.length) {
+        html += renderCollapsibleWrapper(
+          'community-members-' + c.id,
+          members.length + ' member' + (members.length === 1 ? '' : 's'),
+          members.map(m => '<div class="friend-row"><span class="friend-name">' + escapeHtml(m.name) + '</span></div>').join(''),
+          true
+        );
+      }
       html += '</div>';
     });
   }
@@ -3329,15 +3463,15 @@ function renderCuisineExpertiseCard() {
   if (!cuisineCardExpanded) {
     let summary = '<div class="card collapsed-card" id="cuisine-card-summary">';
     summary += '<div class="collapsed-row">';
-    summary += '<div><h2 style="margin-bottom:2px;">Your cuisine specialties</h2><p class="track-record">' + (mine.size ? Array.from(mine).join(', ') : 'Not set') + '</p></div>';
+    summary += '<div><h2 style="margin-bottom:2px;">Cuisines you like</h2><p class="track-record">' + (mine.size ? Array.from(mine).join(', ') : 'Not set') + '</p></div>';
     summary += '<button class="btn btn-ghost btn-small" id="expand-cuisine-card">Edit</button>';
     summary += '</div></div>';
     return summary;
   }
 
   let html = '<div class="card">';
-  html += '<div class="collapsed-row" style="margin-bottom:2px;"><h2 style="margin-bottom:0;">Your cuisine specialties</h2><button class="btn btn-ghost btn-small" id="collapse-cuisine-card">Done</button></div>';
-  html += '<p class="hint">Optional — mark the cuisines you\'re actually confident recommending. If you pick any, entries you post outside these get a small note on the board so friends know it\'s outside your usual wheelhouse. Leave it blank if you\'d rather not specify.</p>';
+  html += '<div class="collapsed-row" style="margin-bottom:2px;"><h2 style="margin-bottom:0;">Cuisines you like</h2><button class="btn btn-ghost btn-small" id="collapse-cuisine-card">Done</button></div>';
+  html += '<p class="hint">Optional — pick the cuisines you actually like eating. This helps tailor your recommendations, and if you post an entry outside these, it gets a small note on the board so friends know it\'s outside what you usually go for. Leave it blank if you\'d rather not specify.</p>';
   html += '<div class="cuisine-chip-row">';
   MAJOR_CUISINES.forEach(c => {
     const selected = mine.has(c);
@@ -3504,7 +3638,7 @@ function renderRecommendCard() {
     if (!recResults.length) {
       html += '<p class="rec-status">Nothing matches that well yet — maybe ask friends to add some picks first.</p>';
     } else {
-      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount }) => {
+      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedCommunity }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
           const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
@@ -3545,8 +3679,8 @@ function renderRecommendCard() {
           const city = state.cities.find(c => c.id === first.cityId);
           const ratingLabel = communityAvgRating !== null ? communityAvgRating.toFixed(1) + '/5' : 'not yet rated';
           const raterLabel = communityRaterCount + (communityRaterCount === 1 ? ' community pick' : ' community picks');
-          html += '<div class="rec-pick">';
-          html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span></p>';
+          html += '<div class="rec-pick' + (sharedCommunity ? ' rec-pick-friend' : '') + '">';
+          html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span>' + (sharedCommunity ? '<span class="friend-source-tag">via ' + escapeHtml(sharedCommunity.name) + '</span>' : '') + '</p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(first.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
           (function() {
@@ -3892,6 +4026,15 @@ function renderPage() {
     html += '<p class="hint">This app runs on Claude (Anthropic\'s AI) — that\'s what powers the "What sounds good?" recommendation feature specifically. A free Claude account is required for that part to work; without it, the AI recommendations just won\'t run, though you can still browse and add your own picks either way.</p>';
     html += '<p class="hint">If signing into Claude just now sent you somewhere other than back here, click the Claude logo/icon in the corner — that should bring you back to this app.</p>';
 
+    (function() {
+      const previewCommunity = resolveCommunityByCode(joiningCommunityCode);
+      if (previewCommunity) {
+        html += '<p class="hint" style="color:var(--brass); font-weight:500;">You\'re joining via ' + escapeHtml(previewCommunity.name) + '.</p>';
+      } else if (joiningCommunityCode) {
+        html += '<p class="hint">That invite link isn\'t active anymore, but you can still sign up below.</p>';
+      }
+    })();
+
     html += '<div class="row2">';
     html += '<div><label for="signin-first">First name</label><input type="text" id="signin-first" placeholder="First" value="' + escapeHtml(signupFirstName) + '"></div>';
     html += '<div><label for="signin-mi">Middle initial (optional)</label><input type="text" id="signin-mi" placeholder="M" maxlength="1" value="' + escapeHtml(signupMiddleInitial) + '"></div>';
@@ -3905,8 +4048,8 @@ function renderPage() {
       html += '<p class="msg msg-duplicate" style="margin-top:8px;">' + escapeHtml(signupError) + '</p>';
     }
 
-    html += '<label>Cuisines you\'re confident recommending (optional)</label>';
-    html += '<p class="hint" style="margin-top:-4px;">Select cuisines you feel comfortable rating. Skip this entirely if you\'d rather not say — you can always set it later.</p>';
+    html += '<label>Cuisines you like to eat (optional)</label>';
+    html += '<p class="hint" style="margin-top:-4px;">Helps us get your recommendations right from day one. Skip this entirely if you\'d rather not say — you can always set it later.</p>';
     html += '<div class="cuisine-chip-row">';
     MAJOR_CUISINES.forEach(c => {
       const selected = signupCuisines.includes(c);
@@ -4118,16 +4261,19 @@ function renderBoardControls(totalVisible, newSinceCount) {
 // recommended a place first, then by trust-weighted rating as the tiebreaker —
 // a place two people you trust independently vouched for beats a place only
 // one person rated highly, same consensus philosophy as group-pick planning.
-// A city starts expanded only if it's your current city (from geolocation),
-// and starts collapsed otherwise -- rather than the old behavior of every
-// city being expanded until you individually collapsed it, which became an
-// unreadable wall of entries as more cities accumulated. manuallyToggledCities
-// records a one-time override per city (tap once to flip away from its
-// default state); it doesn't store true/false, just "this city differs from
-// its default," so the default itself can change (e.g. your current city
-// changes) without stale explicit states fighting it.
+// A city starts expanded only if it's your home city -- computed from a
+// rolling history of daily location observations (see computeHomeCityId),
+// not a single live reading, so a short trip doesn't get mistaken for
+// where you actually live -- and starts collapsed otherwise, rather than
+// the old behavior of every city being expanded until you individually
+// collapsed it, which became an unreadable wall of entries as more cities
+// accumulated. manuallyToggledCities records a one-time override per city
+// (tap once to flip away from its default state); it doesn't store
+// true/false, just "this city differs from its default," so the default
+// itself can change (e.g. your home city changes) without stale explicit
+// states fighting it.
 function isCityCollapsed(cityId) {
-  const defaultExpanded = (cityId === geoDetectedCityId);
+  const defaultExpanded = (cityId === computeHomeCityId());
   const overridden = manuallyToggledCities.has(cityId);
   const effectiveExpanded = overridden ? !defaultExpanded : defaultExpanded;
   return !effectiveExpanded;
@@ -4201,14 +4347,15 @@ function renderBoard() {
   let totalVisible = 0;
   let out = '';
 
-  // Current city always leads, since it's the one already expanded by
+  // Home city always leads, since it's the one already expanded by
   // default -- everything else follows in alphabetical order rather than
   // insertion order (the order cities happened to be created in the
   // database), which was effectively random from a user's point of view
   // and made the collapsed list below it feel unpredictable to scan.
+  const homeCityId = computeHomeCityId();
   const orderedCities = state.cities.slice().sort((a, b) => {
-    if (a.id === geoDetectedCityId) return -1;
-    if (b.id === geoDetectedCityId) return 1;
+    if (a.id === homeCityId) return -1;
+    if (b.id === homeCityId) return 1;
     return a.name.localeCompare(b.name);
   });
 
@@ -4956,12 +5103,13 @@ function attachHandlers() {
     btn.addEventListener('click', () => {
       if (!me) return;
       const [sourceType, sourceId] = btn.getAttribute('data-mark-going').split(':');
-      let restaurant, city, cuisine, cost;
+      let restaurant, city, cuisine, cost, sourceFriendId = null, sourceFriendName = null, sourceRating = null;
       if (sourceType === 'friend') {
         const s = state.suggestions.find(x => x.id === sourceId);
         if (!s) return;
         const cityObj = state.cities.find(c => c.id === s.cityId);
         restaurant = s.restaurant; city = cityObj ? cityObj.name : ''; cuisine = s.cuisine; cost = s.cost;
+        sourceFriendId = s.friendId; sourceFriendName = s.friendName; sourceRating = s.ratingTaste || null;
       } else {
         const p = webSeedPicks.find(x => x.id === sourceId);
         if (!p) return;
@@ -4974,7 +5122,17 @@ function attachHandlers() {
         btn.disabled = true;
         return;
       }
-      me.plannedVisits.push({ id: uid(), restaurant, city: city || '', cuisine: cuisine || '', cost: cost || 0, markedAt: Date.now() });
+      // Recording where this recommendation came from -- otherwise, by the
+      // time someone actually goes and rates it, there's no way to ever
+      // tell whether the recommendation was any good. This is groundwork,
+      // not a feature with its own UI yet: it just means the data exists
+      // to eventually ask "do trust-weighted picks actually pan out better
+      // than community ones," instead of the connection being silently
+      // discarded the moment something is marked as planned.
+      me.plannedVisits.push({
+        id: uid(), restaurant, city: city || '', cuisine: cuisine || '', cost: cost || 0, markedAt: Date.now(),
+        sourceType, sourceFriendId, sourceFriendName, sourceRating
+      });
       saveIdentity();
       btn.textContent = 'Added \u2713';
       btn.disabled = true;
@@ -4997,6 +5155,9 @@ function attachHandlers() {
       formState.ambiance = 0;
       formState.note = '';
       formState.photos = [];
+      formState.recommendationSource = (visit.sourceType === 'friend' && visit.sourceFriendId)
+        ? { sourceFriendId: visit.sourceFriendId, sourceFriendName: visit.sourceFriendName, sourceRating: visit.sourceRating }
+        : null;
       selectedCityId = null;
       entryFormStartedLogged = true;
       logEvent('entry_form_started', { source: 'planned_visit' });
@@ -6122,11 +6283,28 @@ async function runRecommendation() {
         if (communityMatches.length) {
           const rated = communityMatches.filter(e => e.ratingTaste > 0);
           const avgRating = rated.length ? (rated.reduce((sum, e) => sum + e.ratingTaste, 0) / rated.length) : null;
+          // Does any rater here share the viewer's community? If so, this
+          // pick gets tagged and ranked above otherwise-equal stranger
+          // picks -- someone from your own local group is a meaningfully
+          // stronger signal than a total stranger, even though neither is
+          // someone you've personally rated. Stays within the existing
+          // community tier rather than becoming a separate 4th tier.
+          const myFriendRecord = state.friends.find(f => f.id === me.friendId);
+          const myCommunityId = myFriendRecord ? myFriendRecord.communityId : null;
+          let sharedCommunity = null;
+          if (myCommunityId) {
+            const raterFromMyCommunity = communityMatches.find(s => {
+              const rater = state.friends.find(f => f.id === s.friendId);
+              return rater && rater.communityId === myCommunityId;
+            });
+            if (raterFromMyCommunity) sharedCommunity = state.communities.find(c => c.id === myCommunityId) || null;
+          }
           return {
             source: 'community',
             communityGroup: communityMatches,
             communityAvgRating: avgRating,
             communityRaterCount: communityMatches.length,
+            sharedCommunity,
             reason: p.reason
           };
         }
@@ -6161,7 +6339,8 @@ async function runRecommendation() {
         return blendedStarRating(myTrustWeight(r.suggestion.friendId), r.suggestion.ratingTaste) || 0;
       }
       if (r.source === 'community') {
-        return (r.communityAvgRating || 0) * r.communityRaterCount;
+        const base = (r.communityAvgRating || 0) * r.communityRaterCount;
+        return r.sharedCommunity ? base * 1.5 : base;
       }
       return 0;
     };
@@ -6290,7 +6469,8 @@ function startEditingEntry(entryId) {
     taste: entry.ratingTaste || 0,
     ambiance: entry.ratingAmbiance || 0,
     cost: entry.cost || 0,
-    photos: []
+    photos: [],
+    recommendationSource: null
   };
   cuisineOtherMode = !!(formState.cuisine && !MAJOR_CUISINES.includes(formState.cuisine));
   render();
@@ -6301,7 +6481,7 @@ function startEditingEntry(entryId) {
 function cancelEditingEntry() {
   editingEntryId = null;
   editKeptPhotoKeys = [];
-  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', state: (state.cities.find(c => c.id === selectedCityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', state: (state.cities.find(c => c.id === selectedCityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
   cuisineOtherMode = false;
   render();
 }
@@ -6382,7 +6562,7 @@ async function submitEntryEdit() {
     editingEntryId = null;
     editKeptPhotoKeys = [];
     isSubmittingSuggestion = false;
-    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
     cuisineOtherMode = false;
     render();
 
@@ -6525,20 +6705,30 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
       restaurant, cuisine, note, ts: Date.now(),
       ratingTaste: formState.taste, ratingAmbiance: formState.ambiance, cost: formState.cost,
       photoKeys: photoKeys,
-      canonicalId: crossFriendCanonicalId
+      canonicalId: crossFriendCanonicalId,
+      recommendationSource: formState.recommendationSource || null
     });
   }
 
   selectedCityId = cityId;
-  confirmationMsg = duplicateUpdated
-    ? 'An entry for "' + restaurant + '" already exists under your name — it was updated with your new ratings and note instead of creating a duplicate.'
-    : 'Shared — see it in the board below.';
+  const recSource = formState.recommendationSource;
+  if (!duplicateUpdated && recSource && recSource.sourceFriendId && recSource.sourceRating) {
+    const diff = Math.abs(formState.taste - recSource.sourceRating);
+    const firstName = (recSource.sourceFriendName || 'they').split(' ')[0];
+    confirmationMsg = diff <= 1
+      ? 'Shared — and close to what ' + firstName + ' rated it (' + recSource.sourceRating + '\u2605 vs your ' + formState.taste + '\u2605).'
+      : 'Shared — you rated this differently than ' + firstName + ' did (' + recSource.sourceRating + '\u2605 vs your ' + formState.taste + '\u2605). Good to know for next time.';
+  } else {
+    confirmationMsg = duplicateUpdated
+      ? 'An entry for "' + restaurant + '" already exists under your name — it was updated with your new ratings and note instead of creating a duplicate.'
+      : 'Shared — see it in the board below.';
+  }
   await saveData();
   logEvent('entry_form_submitted', { wasDuplicateUpdate: duplicateUpdated });
   entryFormStartedLogged = false;
   isSubmittingSuggestion = false;
   isDuplicateEntryMsg = duplicateUpdated;
-  formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [] };
+  formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
   cuisineOtherMode = false;
   render();
 
@@ -6581,6 +6771,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   try {
     const params = new URLSearchParams(window.location.search);
     inviterFriendId = params.get('ref') || null;
+    joiningCommunityCode = params.get('community') || null;
     adminBootstrapRequested = params.get('admin') === 'setup';
   } catch (e) { inviterFriendId = null; }
   await loadData();
