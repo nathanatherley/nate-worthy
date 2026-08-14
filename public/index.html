@@ -1033,7 +1033,7 @@ function groupWeightedScore(entry) {
   if (!members.length) return null;
   let weightedSum = 0, weightTotal = 0;
   members.forEach(s => {
-    const w = myTrustWeight(s.friendId) || 1;
+    const w = myTrustWeightForCuisine(s.friendId, s.cuisine) || 1;
     weightedSum += s.ratingTaste * w;
     weightTotal += w;
   });
@@ -1050,7 +1050,7 @@ function groupWeightedAmbianceScore(entry) {
   if (!members.length) return null;
   let weightedSum = 0, weightTotal = 0;
   members.forEach(s => {
-    const w = myTrustWeight(s.friendId) || 1;
+    const w = myTrustWeightForCuisine(s.friendId, s.cuisine) || 1;
     weightedSum += s.ratingAmbiance * w;
     weightTotal += w;
   });
@@ -1066,7 +1066,7 @@ function groupWeightedCostScore(entry) {
   if (!members.length) return null;
   let weightedSum = 0, weightTotal = 0;
   members.forEach(s => {
-    const w = myTrustWeight(s.friendId) || 1;
+    const w = myTrustWeightForCuisine(s.friendId, s.cuisine) || 1;
     weightedSum += s.cost * w;
     weightTotal += w;
   });
@@ -1723,6 +1723,7 @@ async function loadData() {
         if (typeof f.referredBy === 'undefined') f.referredBy = null;
         if (typeof f.isAdmin !== 'boolean') f.isAdmin = false;
         if (typeof f.homeCityId === 'undefined') f.homeCityId = null;
+        if (!f.cuisineTrustOverrides || typeof f.cuisineTrustOverrides !== 'object') f.cuisineTrustOverrides = {};
       });
     }
   } catch (e) {
@@ -1793,6 +1794,7 @@ let friendSearchAddedIds = new Set();
 let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
+let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
 let pendingCleanupConfirm = null;
 let cleanupStatus = '';
 
@@ -2743,6 +2745,26 @@ function myTrustWeight(friendId) {
   return myTrustInfo(friendId).weight;
 }
 
+// Same as myTrustWeight, but checks for a per-cuisine override first --
+// trusting someone 5/5 overall doesn't mean their taste is equally
+// reliable in every cuisine, and this is what lets that distinction
+// actually affect scoring rather than just showing an "off-cuisine"
+// warning badge that never changed any numbers. Overrides only apply to
+// DIRECT trust relationships (degree 1) -- second-degree "via a mutual
+// connection" trust doesn't get cuisine-specific overrides, since that
+// would mean chaining an override through an intermediary too, which is
+// real added complexity for a genuinely rare case.
+function myTrustWeightForCuisine(friendId, cuisine) {
+  const info = myTrustInfo(friendId);
+  if (info.weight <= 0 || !cuisine || info.degree !== 1) return info.weight;
+  const myFriend = state.friends.find(f => f.id === (me && me.friendId));
+  if (!myFriend || !myFriend.cuisineTrustOverrides) return info.weight;
+  const overridesForFriend = myFriend.cuisineTrustOverrides[friendId];
+  if (!overridesForFriend) return info.weight;
+  const override = overridesForFriend[cuisine.toLowerCase()];
+  return (typeof override === 'number' && override > 0) ? override : info.weight;
+}
+
 // A single blended 0-5 star value combining how much you trust the
 // recommender with how highly they rated the restaurant, replacing raw
 // "4/5 trust, 5/5 rating" pairs with one number. Geometric mean rather than
@@ -3691,7 +3713,7 @@ function renderRecommendCard() {
       recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedHomeCity }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
-          const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
+          const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeightForCuisine(suggestion.friendId, suggestion.cuisine);
           const blended = blendedStarRating(trustW, suggestion.ratingTaste);
           const starBadge = blended !== null ? ' <span class="blended-star-badge" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
           html += '<div class="rec-pick rec-pick-friend">';
@@ -4211,15 +4233,20 @@ function renderEntryCard(e, showCityLabel) {
   html += '<p class="entry-title">' + escapeHtml(e.restaurant) + (e.ts > previousVisitTs ? ' <span class="new-badge">NEW</span>' : '') + (e.cost ? ' <span class="cost-tag">' + costLabel(e.cost) + '</span>' : '') + (e.friendId === me.friendId ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit</button> <button class="del-btn" data-delete-suggestion="' + e.id + '" title="Delete this entry" aria-label="Delete ' + escapeHtml(e.restaurant) + '">&times;</button>' : (isCurrentUserAdmin() ? ' <button class="btn-text-link" data-edit-entry="' + e.id + '" title="Edit as admin -- fix content, remove inappropriate material, add photos" style="background:none; border:none; font-size:12px; color:var(--rust); text-decoration:underline; cursor:pointer; padding:0; margin-left:4px;">Edit (admin)</button>' : '')) + '</p>';
   html += (function() {
     const trustInfo = e.friendId !== me.friendId ? myTrustInfo(e.friendId) : null;
+    const displayTrustWeight = trustInfo ? myTrustWeightForCuisine(e.friendId, e.cuisine) : 0;
     const trustLabel = trustInfo
-      ? ' · ' + '\u2605'.repeat(trustInfo.weight) + '\u2606'.repeat(5 - trustInfo.weight) + (trustInfo.degree === 2 ? ' via ' + escapeHtml(trustInfo.via) : '')
+      ? ' · ' + '\u2605'.repeat(displayTrustWeight) + '\u2606'.repeat(5 - displayTrustWeight) + (trustInfo.degree === 2 ? ' via ' + escapeHtml(trustInfo.via) : '')
       : '';
     const members = groupMembers(e).filter(m => m.id !== e.id && visibleFriendIds().has(m.friendId));
     const linkedBadge = members.length
       ? ' <span class="meta-badge" title="Also recommended by ' + members.map(m => escapeHtml(m.friendName)).join(', ') + '">+' + members.length + '</span>'
       : '';
-    const outsideBadge = isOutsideExpertise(e)
-      ? ' <span class="meta-badge meta-badge-warn" title="' + escapeHtml(e.friendName) + ' doesn\'t usually recommend ' + escapeHtml(e.cuisine || 'this cuisine') + '">off-cuisine</span>'
+    const cuisineKey = e.friendId + '|' + (e.cuisine || '').toLowerCase();
+    // The off-cuisine badge is now clickable -- it's the natural moment to
+    // reconsider trust for this specific cuisine, not just be warned about
+    // it. Only shown as clickable for other people's entries, not your own.
+    const outsideBadge = (isOutsideExpertise(e) && e.friendId !== me.friendId)
+      ? ' <button type="button" class="meta-badge meta-badge-warn" data-toggle-cuisine-trust="' + escapeHtml(cuisineKey) + '" style="cursor:pointer; border:none; font: inherit;" title="' + escapeHtml(e.friendName) + ' doesn\'t usually recommend ' + escapeHtml(e.cuisine || 'this cuisine') + ' — tap to adjust how much you trust them specifically here">off-cuisine</button>'
       : '';
     const staleBadge = stale
       ? ' <span class="meta-badge meta-badge-warn" title="Last confirmed over a year ago">stale</span>'
@@ -4229,7 +4256,28 @@ function renderEntryCard(e, showCityLabel) {
       const c = state.cities.find(ct => ct.id === e.cityId);
       cityLabelPart = c ? ' — ' + escapeHtml(c.name) : '';
     }
-    return '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + cityLabelPart + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + '</p>';
+    let out = '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + cityLabelPart + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + '</p>';
+
+    if (cuisineTrustPickerOpenFor === cuisineKey && e.friendId !== me.friendId) {
+      const myFriendRecord = state.friends.find(f => f.id === me.friendId);
+      const overrides = (myFriendRecord && myFriendRecord.cuisineTrustOverrides && myFriendRecord.cuisineTrustOverrides[e.friendId]) || {};
+      const currentOverride = overrides[(e.cuisine || '').toLowerCase()] || 0;
+      const generalWeight = myTrustWeight(e.friendId);
+      const previewWeight = currentOverride || generalWeight;
+      out += '<div class="cuisine-trust-picker" style="margin:6px 0; padding:10px; background:var(--surface); border:1px solid var(--card-border); border-radius:8px;">';
+      out += '<p style="font-size:12px; color:var(--text-on-paper-dim); margin:0 0 6px;">Trust ' + escapeHtml(e.friendName.split(' ')[0]) + ' on ' + escapeHtml(e.cuisine || 'this cuisine') + ' specifically:</p>';
+      out += '<div class="rate-dots" style="justify-content:flex-start;">';
+      for (let i = 1; i <= 5; i++) {
+        out += '<button type="button" class="rate-star' + (previewWeight >= i ? ' filled' : '') + '" data-set-cuisine-trust="' + escapeHtml(cuisineKey) + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(e.friendName) + ' on ' + escapeHtml(e.cuisine || 'this cuisine') + ' ' + i + ' of 5 stars">' + (previewWeight >= i ? '\u2605' : '\u2606') + '</button>';
+      }
+      out += '</div>';
+      out += currentOverride > 0
+        ? '<button type="button" class="btn-text-link" data-reset-cuisine-trust="' + escapeHtml(cuisineKey) + '" style="background:none; border:none; font-size:11px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:6px 0 0;">Reset to overall trust (' + generalWeight + '/5)</button>'
+        : '<p style="font-size:11px; color:var(--text-on-paper-dim); margin:6px 0 0;">Currently using your overall trust in them (' + generalWeight + '/5).</p>';
+      out += '</div>';
+    }
+
+    return out;
   })();
   if (e.note) html += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
   const pooledPhotos = pooledPhotosForRestaurant(e);
@@ -5641,6 +5689,53 @@ function attachHandlers() {
       render();
     });
   }
+  document.querySelectorAll('[data-toggle-cuisine-trust]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-toggle-cuisine-trust');
+      cuisineTrustPickerOpenFor = (cuisineTrustPickerOpenFor === key) ? null : key;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-set-cuisine-trust]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-set-cuisine-trust');
+      const val = parseInt(btn.getAttribute('data-val'), 10);
+      const separatorIdx = key.indexOf('|');
+      const friendId = key.slice(0, separatorIdx);
+      const cuisineLower = key.slice(separatorIdx + 1);
+      const myFriend = state.friends.find(f => f.id === me.friendId);
+      if (!myFriend) return;
+      if (!myFriend.cuisineTrustOverrides) myFriend.cuisineTrustOverrides = {};
+      if (!myFriend.cuisineTrustOverrides[friendId]) myFriend.cuisineTrustOverrides[friendId] = {};
+      const current = myFriend.cuisineTrustOverrides[friendId][cuisineLower] || 0;
+      // Tapping the same star again clears the override back to "use
+      // overall trust" -- same toggle-off pattern used for regular star
+      // ratings elsewhere in the app.
+      if (current === val) {
+        delete myFriend.cuisineTrustOverrides[friendId][cuisineLower];
+      } else {
+        myFriend.cuisineTrustOverrides[friendId][cuisineLower] = val;
+      }
+      saveData();
+      cuisineTrustPickerOpenFor = null;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-reset-cuisine-trust]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-reset-cuisine-trust');
+      const separatorIdx = key.indexOf('|');
+      const friendId = key.slice(0, separatorIdx);
+      const cuisineLower = key.slice(separatorIdx + 1);
+      const myFriend = state.friends.find(f => f.id === me.friendId);
+      if (myFriend && myFriend.cuisineTrustOverrides && myFriend.cuisineTrustOverrides[friendId]) {
+        delete myFriend.cuisineTrustOverrides[friendId][cuisineLower];
+        saveData();
+      }
+      cuisineTrustPickerOpenFor = null;
+      render();
+    });
+  });
   const matchmakerConnectBtn = document.getElementById('matchmaker-connect');
   if (matchmakerConnectBtn) {
     matchmakerConnectBtn.addEventListener('click', () => {
@@ -6150,11 +6245,14 @@ async function runRecommendation() {
             ? suggester.cuisineExpertise.join(', ')
             : 'not specified';
           const trustInfo = s.friendId === me.friendId ? { weight: 5, degree: 0, via: null } : myTrustInfo(s.friendId);
+          const cuisineTrustW = s.friendId === me.friendId ? 5 : myTrustWeightForCuisine(s.friendId, s.cuisine);
           const trustDescription = trustInfo.degree === 0
             ? '5/5 (this is you)'
             : trustInfo.degree === 2
               ? trustInfo.weight + '/5 (indirect — via ' + trustInfo.via + ', a mutual connection, not someone you rated directly)'
-              : trustInfo.weight + '/5 (direct)';
+              : cuisineTrustW !== trustInfo.weight
+                ? cuisineTrustW + '/5 (direct, but specifically adjusted for ' + (s.cuisine || 'this cuisine') + ' — usually trusted ' + trustInfo.weight + '/5 overall)'
+                : trustInfo.weight + '/5 (direct)';
 
           const cityName = city ? city.name : 'unknown';
           const nearbyCities = city ? citiesWithinRadius(cityName, city.state, allCandidateCityNames) : [];
@@ -6422,7 +6520,7 @@ async function runRecommendation() {
     // well-corroborated pick beats a single high rating.
     const scoreFor = (r) => {
       if (r.source === 'friend') {
-        return blendedStarRating(myTrustWeight(r.suggestion.friendId), r.suggestion.ratingTaste) || 0;
+        return blendedStarRating(myTrustWeightForCuisine(r.suggestion.friendId, r.suggestion.cuisine), r.suggestion.ratingTaste) || 0;
       }
       if (r.source === 'community') {
         const base = (r.communityAvgRating || 0) * r.communityRaterCount;
