@@ -1858,6 +1858,77 @@ function applySeedPickPlaceIds() {
   });
 }
 
+// Restaurant details (address/phone/website), shown for any restaurant
+// with a place_id, wherever it's displayed -- My Ratings entries, and all
+// three Discover tiers. Fetched live via /api/places/details each time,
+// never written into state.suggestions/webSeedPicks/any persisted
+// storage, since only place_id itself is permitted to be cached
+// indefinitely under Google's terms. placeDetailsCache is a plain
+// in-memory object that resets on every page load -- it exists purely so
+// expanding/collapsing/re-expanding the same restaurant a few times in
+// one sitting doesn't re-fetch each time, not as a substitute for real
+// storage. Keyed by place_id, so the same restaurant shown in two
+// different places on the page (e.g. as both a friend pick and a web
+// pick) correctly shares one fetch and one expand state.
+const PLACE_DETAILS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+let placeDetailsCache = {};
+let expandedPlaceDetailsIds = new Set();
+
+async function fetchPlaceDetailsCached(placeId) {
+  const now = Date.now();
+  const cached = placeDetailsCache[placeId];
+  if (cached && cached.data && (now - cached.fetchedAt) < PLACE_DETAILS_CACHE_MS) return cached.data;
+  if (cached && cached.loading) return null; // already in flight; the caller that started it will re-render
+
+  placeDetailsCache[placeId] = { loading: true, data: null, fetchedAt: now };
+  try {
+    const res = await fetch('/api/places/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ placeId }),
+    });
+    const data = await res.json();
+    const details = {
+      address: data.formattedAddress || null,
+      phone: data.nationalPhoneNumber || null,
+      website: data.websiteUri || null,
+    };
+    placeDetailsCache[placeId] = { loading: false, data: details, fetchedAt: Date.now() };
+    return details;
+  } catch (e) {
+    console.error('place details fetch failed', e);
+    placeDetailsCache[placeId] = { loading: false, data: null, fetchedAt: Date.now(), error: true };
+    return null;
+  }
+}
+
+function renderPlaceDetailsToggle(placeId) {
+  if (!placeId) return '';
+  const isExpanded = expandedPlaceDetailsIds.has(placeId);
+  let html = '<button type="button" class="btn-text-link" data-toggle-place-details="' + escapeHtml(placeId) + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-top:6px; display:inline-block;">' + (isExpanded ? 'Hide details' : 'View address & phone') + '</button>';
+  if (isExpanded) {
+    html += '<div style="margin-top:6px;">' + renderPlaceDetailsContent(placeId) + '</div>';
+  }
+  return html;
+}
+
+function renderPlaceDetailsContent(placeId) {
+  const cached = placeDetailsCache[placeId];
+  if (!cached || cached.loading) return '<p class="hint">Loading…</p>';
+  if (cached.error || !cached.data) return '<p class="hint">Couldn\'t load details right now.</p>';
+  const { address, phone, website } = cached.data;
+  if (!address && !phone && !website) return '<p class="hint">No additional details available.</p>';
+  let html = '<div style="font-size:12.5px; color:var(--text-on-paper-dim); line-height:1.7;">';
+  if (address) {
+    const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address) + '&query_place_id=' + encodeURIComponent(placeId);
+    html += '<div><a href="' + mapsUrl + '" target="_blank" rel="noopener">' + escapeHtml(address) + '</a></div>';
+  }
+  if (phone) html += '<div><a href="tel:' + escapeHtml(phone.replace(/[^\d+]/g, '')) + '">' + escapeHtml(phone) + '</a></div>';
+  if (website) html += '<div><a href="' + escapeHtml(website) + '" target="_blank" rel="noopener">Website</a></div>';
+  html += '</div>';
+  return html;
+}
+
 async function saveData(retriesLeft) {
   if (typeof retriesLeft !== 'number') retriesLeft = 2;
   try {
@@ -4252,6 +4323,7 @@ function renderRecommendCard() {
           if (suggestion.friendId !== me.friendId) {
             html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '" style="margin-top:8px;">I\'m going here</button>';
           }
+          if (suggestion.placeId) html += renderPlaceDetailsToggle(suggestion.placeId);
           html += '</div>';
         } else if (source === 'community') {
           const first = communityGroup[0];
@@ -4279,6 +4351,7 @@ function renderRecommendCard() {
             }
           })();
           html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(first.id) + '">I\'m going here</button>';
+          if (first.placeId) html += renderPlaceDetailsToggle(first.placeId);
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
@@ -4289,6 +4362,7 @@ function renderRecommendCard() {
           html += '<button class="btn btn-ghost btn-small" data-claim-seed="' + escapeHtml(webPick.id) + '">Rate this yourself</button>';
           html += '<button class="btn btn-ghost btn-small" data-mark-going="web:' + escapeHtml(webPick.id) + '">I\'m going here</button>';
           html += '</div>';
+          if (webPick.placeId) html += renderPlaceDetailsToggle(webPick.placeId);
           html += '</div>';
         }
       });
@@ -4788,6 +4862,7 @@ function renderEntryCard(e, showCityLabel) {
     return out;
   })();
   if (e.note) html += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
+  if (e.placeId) html += renderPlaceDetailsToggle(e.placeId);
   const pooledPhotos = pooledPhotosForRestaurant(e);
   if (pooledPhotos.length) {
     html += '<div class="entry-photos">';
@@ -6212,6 +6287,23 @@ function attachHandlers() {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-toggle-cuisine-trust');
       cuisineTrustPickerOpenFor = (cuisineTrustPickerOpenFor === key) ? null : key;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-toggle-place-details]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const placeId = btn.getAttribute('data-toggle-place-details');
+      if (expandedPlaceDetailsIds.has(placeId)) {
+        expandedPlaceDetailsIds.delete(placeId);
+        render();
+        return;
+      }
+      expandedPlaceDetailsIds.add(placeId);
+      render();
+      await fetchPlaceDetailsCached(placeId);
+      // Re-render regardless of whether this exact call resolved the fetch
+      // or another already-in-flight one did -- either way, the cache now
+      // holds whatever it's going to hold.
       render();
     });
   });
