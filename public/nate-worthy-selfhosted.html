@@ -1447,7 +1447,27 @@ const US_CITY_COORDS = {
   "melbourne": [-37.81, 144.96], "toronto": [43.65, -79.38], "vancouver": [49.28, -123.12],
   "mexico city": [19.43, -99.13], "cancun": [21.16, -86.85], "rio de janeiro": [-22.91, -43.17],
   "buenos aires": [-34.60, -58.38], "lisbon": [38.72, -9.14], "athens": [37.98, 23.73],
-  "dublin": [53.35, -6.26], "cape town": [-33.92, 18.42], "marrakech": [31.63, -7.99]
+  "dublin": [53.35, -6.26], "cape town": [-33.92, 18.42], "marrakech": [31.63, -7.99],
+  // Utah suburbs -- added as a targeted, quick fix so geolocation and
+  // nearby-city radius matching actually work for the specific suburbs
+  // seed restaurant data was sourced for, rather than everyone in these
+  // areas silently resolving to the generic "Salt Lake City" pin. This is
+  // a stopgap: a hand-maintained list like this doesn't scale to every
+  // suburb nationwide, which is exactly what the planned Google Places
+  // integration is meant to solve properly later -- this just covers the
+  // immediate Utah launch in the meantime.
+  "sandy": [40.5649, -111.8389], "draper": [40.5247, -111.8638], "murray": [40.6669, -111.8879],
+  "holladay": [40.6663, -111.8241], "south jordan": [40.5622, -111.9297], "riverton": [40.5219, -111.9391],
+  "herriman": [40.5136, -112.0327], "west valley city": [40.6916, -112.0011], "taylorsville": [40.6677, -111.9388],
+  "midvale": [40.6111, -111.8995], "millcreek": [40.6873, -111.8388], "cottonwood heights": [40.6197, -111.8153],
+  "kearns": [40.6522, -112.0102], "bluffdale": [40.4863, -111.9377], "magna": [40.7091, -112.1021],
+  "west jordan": [40.6097, -111.9391], "logan": [41.7370, -111.8338], "st. george": [37.0965, -113.5684],
+  "orem": [40.2969, -111.6946], "pleasant grove": [40.3641, -111.7385], "spanish fork": [40.1150, -111.6546],
+  "springville": [40.1652, -111.6113], "saratoga springs": [40.3488, -111.9041], "eagle mountain": [40.3147, -112.0177],
+  "kaysville": [41.0352, -111.9391], "clearfield": [41.1102, -112.0263], "centerville": [40.9163, -111.8722],
+  "north salt lake": [40.8480, -111.9066], "woods cross": [40.8869, -111.8963], "lehi": [40.3916, -111.8508],
+  "american fork": [40.3769, -111.7958], "layton": [41.0602, -111.9711], "farmington": [40.9805, -111.8873],
+  "bountiful": [40.8894, -111.8808]
 };
 
 // A handful of explicitly state-qualified entries for the classic
@@ -1471,6 +1491,16 @@ const STATE_QUALIFIED_COORDS = {
   "winter garden,fl": [28.5654, -81.5862], "windermere,fl": [28.4931, -81.5326],
   "ocoee,fl": [28.5694, -81.5387], "apopka,fl": [28.6934, -81.5322],
   "clermont,fl": [28.5494, -81.7729],
+  // Syracuse, UT specifically needs to be state-qualified rather than added
+  // to the plain US_CITY_COORDS table, since "syracuse" already resolves
+  // there to Syracuse, NY -- adding it unqualified would silently break
+  // that existing entry. One narrow tradeoff worth knowing: the seed-pick
+  // nearby-city radius matching pathway calls lookupCoords with no state
+  // value at all, so it won't pick up this qualified entry -- but real
+  // entries (which always carry an actual typed state) and geolocation
+  // (built from real per-city records, not this static table) both
+  // resolve correctly regardless.
+  "syracuse,ut": [41.0894, -112.0656],
 };
 function lookupCoords(name, stateAbbrev) {
   const key = name.trim().toLowerCase().replace(/[.,]/g, '');
@@ -1619,6 +1649,7 @@ async function loadData() {
         if (typeof f.phone !== 'string') f.phone = null;
         if (typeof f.referredBy === 'undefined') f.referredBy = null;
         if (typeof f.isAdmin !== 'boolean') f.isAdmin = false;
+        if (typeof f.homeCityId === 'undefined') f.homeCityId = null;
       });
     }
   } catch (e) {
@@ -2287,6 +2318,7 @@ function recordCityObservation(cityId) {
   const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
   me.cityObservations = me.cityObservations.filter(o => new Date(o.date + 'T00:00:00Z').getTime() >= cutoff);
   saveIdentity();
+  syncMyHomeCityToSharedRecord();
 }
 
 // The frequency-based "home city" -- distinct from geoDetectedCityId (the
@@ -2307,6 +2339,32 @@ function computeHomeCityId() {
     if (tally[cityId] > bestCount) { bestCount = tally[cityId]; bestCityId = cityId; }
   });
   return bestCount >= 3 ? bestCityId : null;
+}
+
+// Everything above (cityObservations, computeHomeCityId) lives in each
+// person's own private identity storage -- nobody else's session can read
+// it, which means as far as matching between two different people goes,
+// it doesn't exist yet. This writes the *resolved conclusion* (which city,
+// not the daily movement history behind it) onto the shared friend
+// record, since that's the only place another person's session could ever
+// read it from. Frequency-confirmed geolocation wins when available;
+// self-reported city fills in before there's enough history for that
+// (matched against real city records only -- an unresolved free-text
+// self-report doesn't produce a usable id here). Only writes when the
+// value actually changed, so this doesn't trigger a save on every render.
+function syncMyHomeCityToSharedRecord() {
+  if (!me) return;
+  const myFriend = state.friends.find(f => f.id === me.friendId);
+  if (!myFriend) return;
+  let effectiveHomeCityId = computeHomeCityId();
+  if (!effectiveHomeCityId && me.selfReportedCity) {
+    const matched = findExistingCity(me.selfReportedCity, null);
+    if (matched) effectiveHomeCityId = matched.id;
+  }
+  if (myFriend.homeCityId !== effectiveHomeCityId) {
+    myFriend.homeCityId = effectiveHomeCityId;
+    saveData();
+  }
 }
 
 function isOutsideExpertise(e) {
@@ -2513,6 +2571,36 @@ function sameCommunitySuggestionsFor(friendId, limit) {
   return scored.slice(0, limit || 5).map(x => x.friend);
 }
 
+// Same idea as sameCommunitySuggestionsFor, but keyed on home city instead
+// of community membership -- this is the one that actually reaches
+// everyone, since most people will never arrive through a community join
+// link at all, but everyone has (or will eventually have) a resolved home
+// city. Community suggestions stay as their own separate source rather
+// than being replaced, since a shared community is still a meaningfully
+// stronger signal than just sharing a city when it's actually present --
+// this just stops that being the only path to a local match.
+function sameHomeCitySuggestionsFor(friendId, limit) {
+  if (!friendId) return [];
+  const friend = state.friends.find(f => f.id === friendId);
+  if (!friend || !friend.homeCityId) return [];
+  const myRatings = friendId === (me && me.friendId) ? myTrustRatings() : {};
+  const unknownMarks = friend.unknownMarks || {};
+  const localCandidates = state.friends.filter(f =>
+    f.id !== friendId &&
+    f.homeCityId === friend.homeCityId &&
+    !((myRatings[f.id] || 0) > 0) &&
+    !unknownMarks[f.id]
+  );
+  const scored = localCandidates
+    .map(f => {
+      const { score, sharedCount } = tasteSimilarityScore(friendId, f.id);
+      return { friend: f, score, sharedCount };
+    })
+    .filter(x => x.sharedCount >= 2);
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, limit || 5).map(x => x.friend);
+}
+
 function allConnectionSuggestionsFor(friendId) {
   if (!friendId) return [];
   const results = [];
@@ -2536,6 +2624,13 @@ function allConnectionSuggestionsFor(friendId) {
     if (seen.has(f.id)) return;
     seen.add(f.id);
     results.push({ friend: f, label: community ? 'similar taste, via ' + community.name : 'similar taste, same community' });
+  });
+
+  const homeCity = (friend && friend.homeCityId) ? state.cities.find(c => c.id === friend.homeCityId) : null;
+  sameHomeCitySuggestionsFor(friendId).forEach(f => {
+    if (seen.has(f.id)) return;
+    seen.add(f.id);
+    results.push({ friend: f, label: homeCity ? 'similar taste, in ' + homeCity.name : 'similar taste, near you' });
   });
 
   return results;
@@ -3638,7 +3733,7 @@ function renderRecommendCard() {
     if (!recResults.length) {
       html += '<p class="rec-status">Nothing matches that well yet — maybe ask friends to add some picks first.</p>';
     } else {
-      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedCommunity }) => {
+      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedCommunity, sharedHomeCity }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
           const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
@@ -3679,8 +3774,9 @@ function renderRecommendCard() {
           const city = state.cities.find(c => c.id === first.cityId);
           const ratingLabel = communityAvgRating !== null ? communityAvgRating.toFixed(1) + '/5' : 'not yet rated';
           const raterLabel = communityRaterCount + (communityRaterCount === 1 ? ' community pick' : ' community picks');
-          html += '<div class="rec-pick' + (sharedCommunity ? ' rec-pick-friend' : '') + '">';
-          html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span>' + (sharedCommunity ? '<span class="friend-source-tag">via ' + escapeHtml(sharedCommunity.name) + '</span>' : '') + '</p>';
+          const localTagLabel = sharedCommunity ? ('via ' + sharedCommunity.name) : (sharedHomeCity ? ('in ' + sharedHomeCity.name) : null);
+          html += '<div class="rec-pick' + (localTagLabel ? ' rec-pick-friend' : '') + '">';
+          html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span>' + (localTagLabel ? '<span class="friend-source-tag">' + escapeHtml(localTagLabel) + '</span>' : '') + '</p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(first.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
           (function() {
@@ -5538,6 +5634,7 @@ function attachHandlers() {
       me.selfReportedCity = val || null;
       editingSelfReportedCity = false;
       saveIdentity();
+      syncMyHomeCityToSharedRecord();
       render();
     });
   }
@@ -6283,15 +6380,20 @@ async function runRecommendation() {
         if (communityMatches.length) {
           const rated = communityMatches.filter(e => e.ratingTaste > 0);
           const avgRating = rated.length ? (rated.reduce((sum, e) => sum + e.ratingTaste, 0) / rated.length) : null;
-          // Does any rater here share the viewer's community? If so, this
-          // pick gets tagged and ranked above otherwise-equal stranger
-          // picks -- someone from your own local group is a meaningfully
-          // stronger signal than a total stranger, even though neither is
-          // someone you've personally rated. Stays within the existing
-          // community tier rather than becoming a separate 4th tier.
+          // Does any rater here share the viewer's community, or -- since
+          // most people will never have a formal community at all -- at
+          // least their home city? Either way this pick gets tagged and
+          // ranked above otherwise-equal stranger picks, since someone
+          // local is a meaningfully stronger signal than a total stranger,
+          // even though neither is someone you've personally rated. Stays
+          // within the existing community tier rather than becoming a
+          // separate 4th tier. Community match takes priority for the tag
+          // when both are present, since it's the more specific signal.
           const myFriendRecord = state.friends.find(f => f.id === me.friendId);
           const myCommunityId = myFriendRecord ? myFriendRecord.communityId : null;
+          const myHomeCityId = myFriendRecord ? myFriendRecord.homeCityId : null;
           let sharedCommunity = null;
+          let sharedHomeCity = null;
           if (myCommunityId) {
             const raterFromMyCommunity = communityMatches.find(s => {
               const rater = state.friends.find(f => f.id === s.friendId);
@@ -6299,12 +6401,20 @@ async function runRecommendation() {
             });
             if (raterFromMyCommunity) sharedCommunity = state.communities.find(c => c.id === myCommunityId) || null;
           }
+          if (!sharedCommunity && myHomeCityId) {
+            const raterFromMyCity = communityMatches.find(s => {
+              const rater = state.friends.find(f => f.id === s.friendId);
+              return rater && rater.homeCityId === myHomeCityId;
+            });
+            if (raterFromMyCity) sharedHomeCity = state.cities.find(c => c.id === myHomeCityId) || null;
+          }
           return {
             source: 'community',
             communityGroup: communityMatches,
             communityAvgRating: avgRating,
             communityRaterCount: communityMatches.length,
             sharedCommunity,
+            sharedHomeCity,
             reason: p.reason
           };
         }
@@ -6340,7 +6450,7 @@ async function runRecommendation() {
       }
       if (r.source === 'community') {
         const base = (r.communityAvgRating || 0) * r.communityRaterCount;
-        return r.sharedCommunity ? base * 1.5 : base;
+        return (r.sharedCommunity || r.sharedHomeCity) ? base * 1.5 : base;
       }
       return 0;
     };
@@ -6776,6 +6886,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   } catch (e) { inviterFriendId = null; }
   await loadData();
   await loadIdentity();
+  if (me) syncMyHomeCityToSharedRecord();
 
   await applyAdminBootstrapIfRequested();
 
