@@ -397,6 +397,36 @@
     padding: 2px 6px;
     margin-left: 6px;
   }
+  .place-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin-top: 4px;
+    background: var(--surface);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .place-autocomplete-row {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .place-autocomplete-row:last-child { border-bottom: none; }
+  .place-autocomplete-row:hover, .place-autocomplete-row:focus {
+    background: rgba(46,139,139,0.12);
+    outline: none;
+  }
+  .place-autocomplete-main { font-size: 14px; color: var(--text-on-paper); margin: 0; }
+  .place-autocomplete-secondary { font-size: 12px; color: var(--text-on-paper-dim); margin: 2px 0 0; }
+  .place-details-preview {
+    font-size: 12px;
+    color: var(--brass-dim);
+    margin: 6px 0 0;
+  }
   .rec-pick-friend {
     border-left: 4px solid var(--brass);
     padding-left: 16px;
@@ -730,7 +760,7 @@ let webSeedPicks = [];
 let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
-let formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
+let formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
 let editingEntryId = null; // set while editing an existing entry rather than creating a new one
 let editKeptPhotoKeys = []; // existing photo keys still kept for the entry being edited (post-removal)
 let photoCache = {};
@@ -1807,6 +1837,11 @@ let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
 let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
+let placeAutocompleteSuggestions = [];
+let placeAutocompleteSessionToken = null; // groups a whole search into one billing session; null between searches
+let placeAutocompleteDebounceTimer = null;
+let placeAutocompleteLoading = false;
+let placeDetailsPreview = null; // transient, on-screen only -- never written into the saved entry
 let pendingCleanupConfirm = null;
 let cleanupStatus = '';
 
@@ -2190,8 +2225,9 @@ async function forgetIdentity() {
   me = null;
   editingSelfReportedCity = false;
   cuisineTrustPickerOpenFor = null;
-  formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
+  formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
   cuisineOtherMode = false;
+  resetPlaceAutocompleteState();
   recQuery = '';
   recResults = null;
   recResultsShownCount = 5;
@@ -2983,6 +3019,144 @@ function updateFriendSearchResults() {
   const visibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds]);
   container.innerHTML = renderFriendSearchResults(others, visibleIds, unknownMarks);
   attachFriendSearchHandlers();
+}
+
+// Renders either the live suggestion dropdown, a brief "searching" state,
+// or -- once someone's picked a match -- a small confirmation line showing
+// the real address Google returned. That confirmation is purely on-screen;
+// it's never written into formState or the saved entry, since only
+// place_id is safe to store forever under Google's current terms.
+function renderPlaceAutocompleteResults() {
+  if (placeAutocompleteLoading) {
+    return '<p class="place-details-preview">Searching…</p>';
+  }
+  if (placeAutocompleteSuggestions.length) {
+    let html = '<div class="place-autocomplete-dropdown">';
+    placeAutocompleteSuggestions.forEach((p, i) => {
+      const main = (p.structuredFormat && p.structuredFormat.mainText && p.structuredFormat.mainText.text) || (p.text && p.text.text) || '';
+      const secondary = (p.structuredFormat && p.structuredFormat.secondaryText && p.structuredFormat.secondaryText.text) || '';
+      html += '<div class="place-autocomplete-row" data-select-place="' + i + '" role="button" tabindex="0">';
+      html += '<p class="place-autocomplete-main">' + escapeHtml(main) + '</p>';
+      if (secondary) html += '<p class="place-autocomplete-secondary">' + escapeHtml(secondary) + '</p>';
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+  if (placeDetailsPreview) {
+    return '<p class="place-details-preview">\u2713 Matched: ' + escapeHtml(placeDetailsPreview.address) + '</p>';
+  }
+  return '';
+}
+
+function updatePlaceAutocompleteResults() {
+  const container = document.getElementById('place-autocomplete-results');
+  if (!container) return;
+  container.innerHTML = renderPlaceAutocompleteResults();
+  attachPlaceAutocompleteHandlers();
+}
+
+function attachPlaceAutocompleteHandlers() {
+  document.querySelectorAll('[data-select-place]').forEach(row => {
+    const handler = () => selectPlaceAutocompleteSuggestion(parseInt(row.getAttribute('data-select-place'), 10));
+    row.addEventListener('click', handler);
+    row.addEventListener('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); handler(); } });
+  });
+}
+
+// Debounced so a request only fires once someone pauses typing, not on
+// every keystroke -- both for cost (fewer autocomplete calls) and so the
+// UI isn't fetching mid-word. 300ms is short enough to still feel live.
+function schedulePlaceAutocomplete(value) {
+  clearTimeout(placeAutocompleteDebounceTimer);
+  const trimmed = value.trim();
+  if (trimmed.length < 3) {
+    placeAutocompleteSuggestions = [];
+    placeAutocompleteLoading = false;
+    updatePlaceAutocompleteResults();
+    return;
+  }
+  placeAutocompleteLoading = true;
+  updatePlaceAutocompleteResults();
+  placeAutocompleteDebounceTimer = setTimeout(() => fetchPlaceAutocomplete(trimmed), 300);
+}
+
+async function fetchPlaceAutocomplete(value) {
+  // A fresh session token starts here if one isn't already active -- it
+  // stays the same across every keystroke in this search, and gets closed
+  // out by the /details call on selection (see selectPlaceAutocompleteSuggestion).
+  if (!placeAutocompleteSessionToken) {
+    placeAutocompleteSessionToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (uid() + uid());
+  }
+  const body = { input: value, sessionToken: placeAutocompleteSessionToken };
+  const cityCoords = getCityCoords(formState.city, formState.state);
+  if (cityCoords) { body.lat = cityCoords[0]; body.lng = cityCoords[1]; }
+
+  try {
+    const res = await fetch('/api/places/autocomplete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    placeAutocompleteSuggestions = (data.suggestions || []).map(s => s.placePrediction).filter(Boolean);
+  } catch (e) {
+    console.error('places autocomplete failed', e);
+    // Fails silently into "no suggestions" rather than an error message --
+    // manual typing still works fine either way, this is a convenience on
+    // top of it, not a requirement to add a restaurant.
+    placeAutocompleteSuggestions = [];
+  }
+  placeAutocompleteLoading = false;
+  updatePlaceAutocompleteResults();
+}
+
+async function selectPlaceAutocompleteSuggestion(idx) {
+  const prediction = placeAutocompleteSuggestions[idx];
+  if (!prediction) return;
+  const main = (prediction.structuredFormat && prediction.structuredFormat.mainText && prediction.structuredFormat.mainText.text) || (prediction.text && prediction.text.text) || '';
+  formState.restaurant = main;
+  formState.placeId = prediction.placeId || null;
+  const restaurantInput = document.getElementById('f-restaurant');
+  if (restaurantInput) restaurantInput.value = main;
+
+  placeAutocompleteSuggestions = [];
+  placeDetailsPreview = null;
+  updatePlaceAutocompleteResults();
+
+  // Closing the session here (not on every keystroke) is what actually
+  // gets this billed as one session instead of per-character, and gets
+  // real address/phone/website back to show as a quick "did we find the
+  // right place" confirmation -- purely on-screen, never written into
+  // formState.placeId's sibling fields or the saved entry.
+  const sessionToken = placeAutocompleteSessionToken;
+  placeAutocompleteSessionToken = null; // ready for a fresh token on the next search
+  if (!formState.placeId) return;
+
+  try {
+    const res = await fetch('/api/places/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ placeId: formState.placeId, sessionToken }),
+    });
+    const data = await res.json();
+    placeDetailsPreview = data && data.formattedAddress ? { address: data.formattedAddress } : null;
+  } catch (e) {
+    console.error('place details lookup failed', e);
+    placeDetailsPreview = null;
+  }
+  updatePlaceAutocompleteResults();
+}
+
+// Called from the formState resets and after a successful submission, so
+// a fresh entry never starts with a stale suggestion list or session token
+// left over from whatever was typed before.
+function resetPlaceAutocompleteState() {
+  placeAutocompleteSuggestions = [];
+  placeAutocompleteSessionToken = null;
+  placeAutocompleteLoading = false;
+  placeDetailsPreview = null;
+  clearTimeout(placeAutocompleteDebounceTimer);
 }
 
 function attachFriendSearchHandlers() {
@@ -3929,7 +4103,7 @@ function renderShareFavoriteForm() {
   }
 
   html += '<div class="row2">';
-  html += '<div><label for="f-restaurant" class="sr-only">Restaurant</label><input type="text" id="f-restaurant" placeholder="Restaurant name" value="' + escapeHtml(formState.restaurant) + '"></div>';
+  html += '<div style="position:relative;"><label for="f-restaurant" class="sr-only">Restaurant</label><input type="text" id="f-restaurant" placeholder="Restaurant name" autocomplete="off" value="' + escapeHtml(formState.restaurant) + '"><div id="place-autocomplete-results"></div></div>';
   const cuisineIsKnown = MAJOR_CUISINES.includes(formState.cuisine);
   const showOtherField = cuisineOtherMode || (formState.cuisine && !cuisineIsKnown);
   html += '<div><label for="f-cuisine-select" class="sr-only">Cuisine</label>';
@@ -5252,6 +5426,8 @@ function attachHandlers() {
       formState.ambiance = 0;
       formState.note = '';
       formState.photos = [];
+      formState.placeId = null;
+      resetPlaceAutocompleteState();
       selectedCityId = null;
       entryFormStartedLogged = true;
       logEvent('entry_form_started', { source: 'claim_seed_pick' });
@@ -5338,6 +5514,8 @@ function attachHandlers() {
       formState.recommendationSource = (visit.sourceType === 'friend' && visit.sourceFriendId)
         ? { sourceFriendId: visit.sourceFriendId, sourceFriendName: visit.sourceFriendName, sourceRating: visit.sourceRating }
         : null;
+      formState.placeId = null;
+      resetPlaceAutocompleteState();
       selectedCityId = null;
       entryFormStartedLogged = true;
       logEvent('entry_form_started', { source: 'planned_visit' });
@@ -5903,7 +6081,15 @@ function attachHandlers() {
     stateInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
   }
   const restaurantInput = document.getElementById('f-restaurant');
-  if (restaurantInput) restaurantInput.addEventListener('input', () => { formState.restaurant = restaurantInput.value; logEntryFormStartedOnce(); });
+  if (restaurantInput) restaurantInput.addEventListener('input', () => {
+    formState.restaurant = restaurantInput.value;
+    // Typing manually after a selection invalidates that match -- the name
+    // no longer necessarily corresponds to the place that was picked.
+    formState.placeId = null;
+    placeDetailsPreview = null;
+    logEntryFormStartedOnce();
+    schedulePlaceAutocomplete(restaurantInput.value);
+  });
   const cuisineSelect = document.getElementById('f-cuisine-select');
   if (cuisineSelect) {
     cuisineSelect.addEventListener('change', () => {
@@ -6688,9 +6874,11 @@ function startEditingEntry(entryId) {
     ambiance: entry.ratingAmbiance || 0,
     cost: entry.cost || 0,
     photos: [],
-    recommendationSource: null
+    recommendationSource: null,
+    placeId: null
   };
   cuisineOtherMode = !!(formState.cuisine && !MAJOR_CUISINES.includes(formState.cuisine));
+  resetPlaceAutocompleteState();
   render();
   const target = document.getElementById('section-share-favorite');
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -6699,8 +6887,9 @@ function startEditingEntry(entryId) {
 function cancelEditingEntry() {
   editingEntryId = null;
   editKeptPhotoKeys = [];
-  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', state: (state.cities.find(c => c.id === selectedCityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
+  formState = { city: (state.cities.find(c => c.id === selectedCityId) || {}).name || '', state: (state.cities.find(c => c.id === selectedCityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
   cuisineOtherMode = false;
+  resetPlaceAutocompleteState();
   render();
 }
 
@@ -6780,8 +6969,9 @@ async function submitEntryEdit() {
     editingEntryId = null;
     editKeptPhotoKeys = [];
     isSubmittingSuggestion = false;
-    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
+    formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
     cuisineOtherMode = false;
+    resetPlaceAutocompleteState();
     render();
 
     const boardEl = document.querySelector('[data-city-id="' + cityId + '"]');
@@ -6924,7 +7114,8 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
       ratingTaste: formState.taste, ratingAmbiance: formState.ambiance, cost: formState.cost,
       photoKeys: photoKeys,
       canonicalId: crossFriendCanonicalId,
-      recommendationSource: formState.recommendationSource || null
+      recommendationSource: formState.recommendationSource || null,
+      placeId: formState.placeId || null
     });
   }
 
@@ -6946,8 +7137,9 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   entryFormStartedLogged = false;
   isSubmittingSuggestion = false;
   isDuplicateEntryMsg = duplicateUpdated;
-  formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null };
+  formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
   cuisineOtherMode = false;
+  resetPlaceAutocompleteState();
   render();
 
   const boardEl = document.querySelector('[data-city-id="' + cityId + '"]');

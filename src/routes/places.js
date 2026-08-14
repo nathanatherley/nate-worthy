@@ -3,11 +3,19 @@
 // same pattern as the Anthropic proxy in recommend.js.
 //
 // Two endpoints:
-//   POST /api/places/autocomplete  body: { input, lat?, lng? }
+//   POST /api/places/autocomplete  body: { input, lat?, lng?, sessionToken? }
 //     -> live suggestions as someone types a restaurant name
-//   POST /api/places/details       body: { placeId }
+//   POST /api/places/details       body: { placeId, sessionToken? }
 //     -> address, phone, website, coordinates for a specific place,
 //        looked up by its place_id
+//
+// sessionToken groups a whole search (every keystroke, then the final
+// selection) into one billing session instead of charging each keystroke
+// separately -- the frontend generates a fresh token when someone starts
+// typing, sends it with every autocomplete call during that search, then
+// sends the SAME token on the /details call that closes it out. A search
+// that never ends in a selection (someone types then gives up) still bills
+// per-keystroke regardless, since there's no Details call to close it.
 //
 // place_id is the only piece of this that's safe to store forever --
 // address/phone/website are NOT permitted to be cached long-term under
@@ -26,7 +34,7 @@ const PLACES_API_BASE = 'https://places.googleapis.com/v1';
 
 // POST /api/places/autocomplete
 router.post('/autocomplete', async (req, res) => {
-  const { input, lat, lng } = req.body;
+  const { input, lat, lng, sessionToken } = req.body;
   if (!process.env.GOOGLE_PLACES_API_KEY) return res.status(500).json({ error: 'server missing GOOGLE_PLACES_API_KEY' });
   if (!input || !input.trim()) return res.json({ suggestions: [] });
 
@@ -34,6 +42,7 @@ router.post('/autocomplete', async (req, res) => {
     input: input.trim(),
     includedPrimaryTypes: ['restaurant', 'food', 'cafe', 'bakery', 'bar'],
   };
+  if (sessionToken) body.sessionToken = sessionToken;
   // Bias (not restrict) results toward the city the person is already
   // adding an entry for, when we know it -- a bias still allows other
   // matches through, it just ranks nearby ones higher, which is what you
@@ -68,12 +77,14 @@ router.post('/autocomplete', async (req, res) => {
 
 // POST /api/places/details  body: { placeId }
 router.post('/details', async (req, res) => {
-  const { placeId } = req.body;
+  const { placeId, sessionToken } = req.body;
   if (!process.env.GOOGLE_PLACES_API_KEY) return res.status(500).json({ error: 'server missing GOOGLE_PLACES_API_KEY' });
   if (!placeId || typeof placeId !== 'string') return res.status(400).json({ error: 'placeId required' });
 
+  const sessionParam = sessionToken ? `?sessionToken=${encodeURIComponent(sessionToken)}` : '';
+
   try {
-    const r = await fetch(`${PLACES_API_BASE}/places/${encodeURIComponent(placeId)}`, {
+    const r = await fetch(`${PLACES_API_BASE}/places/${encodeURIComponent(placeId)}${sessionParam}`, {
       method: 'GET',
       headers: {
         'X-Goog-Api-Key': process.env.GOOGLE_PLACES_API_KEY,
