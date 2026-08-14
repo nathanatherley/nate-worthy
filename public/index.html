@@ -329,6 +329,18 @@
     padding: 20px 22px;
     margin-bottom: 16px;
   }
+  .nested-suburbs {
+    margin: -8px 0 16px 22px;
+    padding-left: 16px;
+    border-left: 2px solid var(--card-border);
+  }
+  .postcard-nested {
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .postcard-nested:last-child { margin-bottom: 0; }
+  .postcard-nested .postmark { width: 34px; height: 34px; font-size: 11px; border-width: 1px; }
+  .postcard-nested .postcard-head h3 { font-size: 16px; }
   .postcard-head {
     display: flex;
     justify-content: space-between;
@@ -713,7 +725,7 @@
 </div>
 
 <script>
-let state = { cities: [], friends: [], suggestions: [], adminConnections: [], communities: [] };
+let state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
 let webSeedPicks = [];
 let selectedCityId = null;
 let confirmationMsg = '';
@@ -755,7 +767,6 @@ let cuisineCardExpanded = false;
 let shareCardMode = 'link';
 let leaderboardCuisine = null;
 let inviterFriendId = null;
-let joiningCommunityCode = null;
 let adminBootstrapRequested = false;
 
 async function applyAdminBootstrapIfRequested() {
@@ -769,11 +780,11 @@ async function applyAdminBootstrapIfRequested() {
   }
 }
 
-const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking', 'communities'];
+const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking'];
 const ADMIN_PERMISSION_LABELS = {
   export: 'Export data', restore: 'Restore from backup', seedImport: 'Import seed picks',
   manageAdmins: 'Manage admins', viewStats: 'View app stats', cleanup: 'Clean up accounts',
-  matchmaking: 'Suggest connections between users', communities: 'Manage communities'
+  matchmaking: 'Suggest connections between users'
 };
 
 function getAdminPermissions(friend) {
@@ -1622,7 +1633,6 @@ async function loadData() {
       state.friends = state.friends || [];
       state.suggestions = state.suggestions || [];
       state.adminConnections = state.adminConnections || [];
-      state.communities = state.communities || [];
       // Backfill coordinates for cities that were created before their
       // coordinates existed in the lookup tables (or before a state was
       // required at all) -- without this, a city like Winter Garden, added
@@ -1653,7 +1663,7 @@ async function loadData() {
       });
     }
   } catch (e) {
-    state = { cities: [], friends: [], suggestions: [], adminConnections: [], communities: [] };
+    state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
   }
   if (state.cities.length && !selectedCityId) selectedCityId = state.cities[0].id;
 
@@ -2160,22 +2170,6 @@ function normalizePhone(phone) {
   return (phone || '').replace(/\D/g, '');
 }
 
-// Resolves a join code from the URL against real communities -- checked at
-// the moment of signup, not just at link-click time, so a code that hit
-// its cap or got retired between when a link was shared and when someone
-// actually used it fails safely instead of still working. This, not
-// geolocation, is the actual defense against a leaked code spreading
-// unbounded: a link can travel anywhere, but it stops doing anything once
-// enough people have used it.
-function resolveCommunityByCode(code) {
-  if (!code || !Array.isArray(state.communities)) return null;
-  const normalized = code.trim().toUpperCase();
-  const community = state.communities.find(c => c.joinCode === normalized);
-  if (!community || !community.active) return null;
-  if (community.maxJoins && community.joinCount >= community.maxJoins) return null;
-  return community;
-}
-
 async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
   const first = (firstName || '').trim();
   const mi = (middleInitial || '').trim().replace(/[^a-zA-Z]/g, '').slice(0, 1);
@@ -2193,41 +2187,21 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
     if (existing) existing.phone = phoneDigits;
   }
 
-  const joiningCommunity = resolveCommunityByCode(joiningCommunityCode);
-  let communityWasApplied = false;
-
   if (existing) {
     me = { friendId: existing.id, name: existing.name, lastVisitTs: Date.now(), plannedVisits: [], jumpstartBatchIndex: 1, hasUsedJumpstart: false, cityObservations: [] };
     previousVisitTs = Date.now();
     setCardExpansionDefaults();
-    // Someone who already has an account can still land on a community
-    // link later (e.g. invited to a new local group after already using
-    // the app) -- assign it if they don't already belong to one, but never
-    // silently overwrite an existing assignment just because they clicked
-    // a different link once.
-    if (joiningCommunity && !existing.communityId) {
-      existing.communityId = joiningCommunity.id;
-      joiningCommunity.joinCount = (joiningCommunity.joinCount || 0) + 1;
-      communityWasApplied = true;
-      await saveData();
-    }
   } else {
     const id = uid();
     const newFriend = {
       id, name: fullName, firstName: first, middleInitial: mi.toUpperCase(), lastName: last, phone: phoneDigits,
       trustRatings: {}, cuisineExpertise: Array.isArray(cuisines) ? cuisines.slice() : [],
-      referredBy: (inviterFriendId && inviterFriendId !== id) ? inviterFriendId : null,
-      communityId: joiningCommunity ? joiningCommunity.id : null
+      referredBy: (inviterFriendId && inviterFriendId !== id) ? inviterFriendId : null
     };
-    if (joiningCommunity) {
-      joiningCommunity.joinCount = (joiningCommunity.joinCount || 0) + 1;
-      communityWasApplied = true;
-    }
     state.friends.push(newFriend);
     const saved = await saveData();
     if (!saved) {
       state.friends = state.friends.filter(f => f.id !== id);
-      if (joiningCommunity) joiningCommunity.joinCount = Math.max(0, (joiningCommunity.joinCount || 1) - 1);
       signupError = 'Couldn\'t save your account — check your connection and try again.';
       return false;
     }
@@ -2248,13 +2222,6 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
         }
       }
     }
-  }
-
-  // Default self-reported city from the community's target city, as a
-  // convenience -- but never overwrite something the person already told
-  // us themselves.
-  if (communityWasApplied && !me.selfReportedCity) {
-    me.selfReportedCity = joiningCommunity.targetCity;
   }
 
   signupCuisines = [];
@@ -2549,36 +2516,12 @@ function sameInviterSuggestionsFor(friendId) {
 // they still benefit from admin-curated and same-inviter suggestions in
 // the meantime, and from the community tier itself, which needs no
 // personal data at all.
-function sameCommunitySuggestionsFor(friendId, limit) {
-  if (!friendId) return [];
-  const friend = state.friends.find(f => f.id === friendId);
-  if (!friend || !friend.communityId) return [];
-  const myRatings = friendId === (me && me.friendId) ? myTrustRatings() : {};
-  const unknownMarks = friend.unknownMarks || {};
-  const communityMates = state.friends.filter(f =>
-    f.id !== friendId &&
-    f.communityId === friend.communityId &&
-    !((myRatings[f.id] || 0) > 0) &&
-    !unknownMarks[f.id]
-  );
-  const scored = communityMates
-    .map(f => {
-      const { score, sharedCount } = tasteSimilarityScore(friendId, f.id);
-      return { friend: f, score, sharedCount };
-    })
-    .filter(x => x.sharedCount >= 2);
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit || 5).map(x => x.friend);
-}
-
-// Same idea as sameCommunitySuggestionsFor, but keyed on home city instead
-// of community membership -- this is the one that actually reaches
-// everyone, since most people will never arrive through a community join
-// link at all, but everyone has (or will eventually have) a resolved home
-// city. Community suggestions stay as their own separate source rather
-// than being replaced, since a shared community is still a meaningfully
-// stronger signal than just sharing a city when it's actually present --
-// this just stops that being the only path to a local match.
+// People who share your home city, ranked by actual taste overlap rather
+// than surfaced as a blanket roster -- a city can have dozens of people in
+// it, and suggesting all of them isn't really a suggestion anymore, it's
+// just the population list. Requires at least 2 shared ratings before
+// someone counts as a real match, same "don't fabricate confidence from
+// nothing" rule used everywhere else in this scoring.
 function sameHomeCitySuggestionsFor(friendId, limit) {
   if (!friendId) return [];
   const friend = state.friends.find(f => f.id === friendId);
@@ -2617,13 +2560,6 @@ function allConnectionSuggestionsFor(friendId) {
     if (seen.has(f.id)) return;
     seen.add(f.id);
     results.push({ friend: f, label: inviter ? 'you both know ' + inviter.name : 'invited by the same person' });
-  });
-
-  const community = (friend && friend.communityId) ? state.communities.find(c => c.id === friend.communityId) : null;
-  sameCommunitySuggestionsFor(friendId).forEach(f => {
-    if (seen.has(f.id)) return;
-    seen.add(f.id);
-    results.push({ friend: f, label: community ? 'similar taste, via ' + community.name : 'similar taste, same community' });
   });
 
   const homeCity = (friend && friend.homeCityId) ? state.cities.find(c => c.id === friend.homeCityId) : null;
@@ -3388,52 +3324,6 @@ function attachManageAdminsAddHandlers() {
 // give you: a real place to define communities and get real join codes to
 // test with, and a data model everything else can build on. joinCount
 // will sit at 0 until the signup flow exists to increment it.
-function renderCommunitiesCard() {
-  let html = '<div class="card">';
-  html += '<h2 style="margin-bottom:4px;">Communities</h2>';
-  html += '<p class="hint">Define a local group (e.g. "Salt Lake City Foodies") with its own join code -- share the link as nate-worthy.com/?community=YOURCODE and new signups through it get tagged to this community automatically.</p>';
-
-  html += '<div style="margin:14px 0; padding:14px; background:var(--surface); border:1px solid var(--card-border); border-radius:10px;">';
-  html += '<input type="text" id="community-name" placeholder="Community name, e.g. Salt Lake City Foodies" style="margin-bottom:8px;">';
-  html += '<input type="text" id="community-city" list="community-city-suggestions" placeholder="Target city" style="margin-bottom:8px;">';
-  html += buildCityDatalist('community-city-suggestions');
-  html += '<input type="text" id="community-code" placeholder="Join code, e.g. SLCFOODIES" style="margin-bottom:8px; text-transform:uppercase;">';
-  html += '<input type="number" id="community-max-joins" placeholder="Max joins (optional)" min="1" style="margin-bottom:8px;">';
-  html += '<button class="btn btn-primary btn-small" id="create-community">Create community</button>';
-  html += '<p id="community-status" class="rec-status" style="display:none;"></p>';
-  html += '</div>';
-
-  const communities = Array.isArray(state.communities) ? state.communities : [];
-  if (!communities.length) {
-    html += '<p class="empty">No communities yet.</p>';
-  } else {
-    communities.slice().sort((a, b) => b.createdAt - a.createdAt).forEach(c => {
-      const capText = c.maxJoins ? c.joinCount + ' / ' + c.maxJoins + ' joined' : c.joinCount + ' joined';
-      const members = state.friends.filter(f => f.communityId === c.id);
-      html += '<div style="padding:10px 0; border-top:1px solid var(--line);">';
-      html += '<div style="display:flex; align-items:center; justify-content:space-between;">';
-      html += '<div>';
-      html += '<p style="font-weight:500; margin:0;">' + escapeHtml(c.name) + (c.active ? '' : ' <span class="meta-badge meta-badge-warn">retired</span>') + '</p>';
-      html += '<p class="track-record" style="margin-top:2px;">' + escapeHtml(c.targetCity) + ' &middot; code: ' + escapeHtml(c.joinCode) + ' &middot; ' + capText + '</p>';
-      html += '</div>';
-      html += '<button type="button" class="btn-text-link" data-toggle-community="' + c.id + '" style="background:none; border:none; font-size:12px; color:' + (c.active ? 'var(--rust)' : 'var(--brass-dim)') + '; text-decoration:underline; cursor:pointer; padding:0; flex-shrink:0; margin-left:12px;">' + (c.active ? 'Retire' : 'Reactivate') + '</button>';
-      html += '</div>';
-      if (members.length) {
-        html += renderCollapsibleWrapper(
-          'community-members-' + c.id,
-          members.length + ' member' + (members.length === 1 ? '' : 's'),
-          members.map(m => '<div class="friend-row"><span class="friend-name">' + escapeHtml(m.name) + '</span></div>').join(''),
-          true
-        );
-      }
-      html += '</div>';
-    });
-  }
-
-  html += '</div>';
-  return html;
-}
-
 function renderMatchmakingCard() {
   let html = '<div class="card">';
   html += '<h2 style="margin-bottom:4px;">Suggest connections</h2>';
@@ -3733,7 +3623,7 @@ function renderRecommendCard() {
     if (!recResults.length) {
       html += '<p class="rec-status">Nothing matches that well yet — maybe ask friends to add some picks first.</p>';
     } else {
-      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedCommunity, sharedHomeCity }) => {
+      recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedHomeCity }) => {
         if (source === 'friend') {
           const city = state.cities.find(c => c.id === suggestion.cityId);
           const trustW = suggestion.friendId === me.friendId ? 5 : myTrustWeight(suggestion.friendId);
@@ -3774,7 +3664,7 @@ function renderRecommendCard() {
           const city = state.cities.find(c => c.id === first.cityId);
           const ratingLabel = communityAvgRating !== null ? communityAvgRating.toFixed(1) + '/5' : 'not yet rated';
           const raterLabel = communityRaterCount + (communityRaterCount === 1 ? ' community pick' : ' community picks');
-          const localTagLabel = sharedCommunity ? ('via ' + sharedCommunity.name) : (sharedHomeCity ? ('in ' + sharedHomeCity.name) : null);
+          const localTagLabel = sharedHomeCity ? ('in ' + sharedHomeCity.name) : null;
           html += '<div class="rec-pick' + (localTagLabel ? ' rec-pick-friend' : '') + '">';
           html += '<p class="rec-pick-title">' + escapeHtml(first.restaurant) + (first.cost ? ' <span class="cost-tag">' + costLabel(first.cost) + '</span>' : '') + '<span class="community-source-tag">Community, ' + escapeHtml(ratingLabel) + ' (' + raterLabel + ')</span>' + (localTagLabel ? '<span class="friend-source-tag">' + escapeHtml(localTagLabel) + '</span>' : '') + '</p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(first.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + '</p>';
@@ -4107,7 +3997,6 @@ function renderPage() {
       html += '<div id="section-admin"></div>';
       if (hasAdminPermission('viewStats')) html += renderAdminStatsCard();
       if (hasAdminPermission('matchmaking')) html += renderMatchmakingCard();
-      if (hasAdminPermission('communities')) html += renderCommunitiesCard();
       if (hasAdminPermission('manageAdmins')) html += renderManageAdminsCard();
       if (hasAdminPermission('cleanup')) { html += renderAccountClaimCard(); html += renderAccountCleanupCard(); }
       if (hasAdminPermission('export')) html += renderExportCard();
@@ -4121,15 +4010,6 @@ function renderPage() {
     html += '<h2>Who are you</h2>';
     html += '<p class="hint">This app runs on Claude (Anthropic\'s AI) — that\'s what powers the "What sounds good?" recommendation feature specifically. A free Claude account is required for that part to work; without it, the AI recommendations just won\'t run, though you can still browse and add your own picks either way.</p>';
     html += '<p class="hint">If signing into Claude just now sent you somewhere other than back here, click the Claude logo/icon in the corner — that should bring you back to this app.</p>';
-
-    (function() {
-      const previewCommunity = resolveCommunityByCode(joiningCommunityCode);
-      if (previewCommunity) {
-        html += '<p class="hint" style="color:var(--brass); font-weight:500;">You\'re joining via ' + escapeHtml(previewCommunity.name) + '.</p>';
-      } else if (joiningCommunityCode) {
-        html += '<p class="hint">That invite link isn\'t active anymore, but you can still sign up below.</p>';
-      }
-    })();
 
     html += '<div class="row2">';
     html += '<div><label for="signin-first">First name</label><input type="text" id="signin-first" placeholder="First" value="' + escapeHtml(signupFirstName) + '"></div>';
@@ -4428,6 +4308,64 @@ function getBestOfBestForCity(cityId) {
   return results;
 }
 
+// Renders one city's own postcard: header, best-of-best, and its entries.
+// Extracted out of renderBoard so the exact same rendering can be used for
+// both a top-level city and a suburb nested under a parent -- a suburb
+// isn't a lesser version of a city block, it's the same block, just placed
+// differently.
+function renderCityBlock(city, visibleIds, isNested) {
+  let entries = state.suggestions.filter(s => s.cityId === city.id && visibleIds.has(s.friendId));
+  if (hideMyEntries) entries = entries.filter(e => e.friendId !== me.friendId);
+  if (showOnlyNew) entries = entries.filter(e => e.ts > previousVisitTs);
+  if (!entries.length) return { html: '', count: 0 };
+
+  const scored = entries.map(e => ({ e, record: friendTrackRecord(e.friendId, e.cuisine), weight: myTrustWeight(e.friendId) || 1 }));
+  if (boardSortMode === 'recent') {
+    scored.sort((a, b) => b.e.ts - a.e.ts);
+  } else if (boardSortMode === 'alpha') {
+    scored.sort((a, b) => a.e.restaurant.localeCompare(b.e.restaurant));
+  } else {
+    scored.sort((a, b) => {
+      const asRaw = groupWeightedQualityScore(a.e);
+      const bsRaw = groupWeightedQualityScore(b.e);
+      const as = asRaw === null ? -1 : asRaw;
+      const bs = bsRaw === null ? -1 : bsRaw;
+      if (bs !== as) return bs - as;
+      return b.e.ts - a.e.ts;
+    });
+  }
+
+  const isCollapsed = isCityCollapsed(city.id);
+  let html = '';
+  // A nested suburb doesn't need its own "(~Salt Lake City)" annotation --
+  // it's already visually placed under Salt Lake City, restating that in
+  // text would be redundant.
+  const nearbyMajor = isNested ? null : nearbyMajorCityFor(city);
+  const nearbyMajorNote = nearbyMajor ? ' <span class="near-major-city">(~' + escapeHtml(nearbyMajor) + ')</span>' : '';
+  html += '<div class="postcard' + (isNested ? ' postcard-nested' : '') + '" data-city-id="' + city.id + '">';
+  html += '<div class="postcard-head postcard-head-clickable" data-toggle-city="' + city.id + '" role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + escapeHtml(city.name) + '"><div class="head-left"><div class="postmark">' + escapeHtml(city.name.slice(0,3).toUpperCase()) + '</div><h3>' + escapeHtml(city.name) + nearbyMajorNote + '</h3></div><span class="count">' + entries.length + ' spot' + (entries.length === 1 ? '' : 's') + ' ' + (isCollapsed ? '\u25b8' : '\u25be') + '</span></div>';
+
+  if (!isCollapsed) {
+    const bestOfBest = getBestOfBestForCity(city.id).slice(0, 3);
+    if (bestOfBest.length) {
+      html += '<div class="best-of-best">';
+      html += '<div class="best-of-best-label">\u{1F3C6} Best of the best</div>';
+      bestOfBest.forEach(b => {
+        html += '<div class="trend-row" style="align-items:flex-start;">';
+        html += '<div style="flex:1; min-width:0;"><p class="trend-title">' + escapeHtml(b.entry.restaurant) + '</p>';
+        html += '<p class="track-record">' + (b.recommenderCount > 1 ? b.recommenderCount + ' trusted people' : b.recommenderNames.map(escapeHtml).join(', ')) + '</p>';
+        html += '</div>';
+        html += renderReadOnlyRatingSide(b.tasteScore, b.ambianceScore, b.costScore);
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    scored.forEach(({ e }) => { html += renderEntryCard(e, false); });
+  }
+  html += '</div>';
+  return { html, count: entries.length };
+}
+
 function renderBoard() {
   if (!state.cities.length) {
     return '';
@@ -4435,78 +4373,71 @@ function renderBoard() {
   const visibleIds = visibleFriendIds();
   const newSinceCount = state.suggestions.filter(s => visibleIds.has(s.friendId) && s.ts > previousVisitTs).length;
 
-  // Browse by city. Your current city (if detected) opens
-  // expanded by default; every other city starts collapsed to a single
-  // summary row (see isCityCollapsed), so the page stays short even as
-  // more cities accumulate, instead of stacking every city's full entry
-  // list on one endless scroll.
   let totalVisible = 0;
   let out = '';
 
-  // Home city always leads, since it's the one already expanded by
-  // default -- everything else follows in alphabetical order rather than
-  // insertion order (the order cities happened to be created in the
-  // database), which was effectively random from a user's point of view
-  // and made the collapsed list below it feel unpredictable to scan.
+  // Only cities that actually have visible entries participate in either
+  // the top-level list or the parent/child grouping below -- a city with
+  // zero visible entries was already being skipped entirely before this
+  // change, and a suburb should never get folded under a "parent" that
+  // itself has nothing in it.
+  const citiesWithEntries = state.cities.filter(city => {
+    let entries = state.suggestions.filter(s => s.cityId === city.id && visibleIds.has(s.friendId));
+    if (hideMyEntries) entries = entries.filter(e => e.friendId !== me.friendId);
+    if (showOnlyNew) entries = entries.filter(e => e.ts > previousVisitTs);
+    return entries.length > 0;
+  });
+
+  // As more suburb-level cities get real data (Sandy, Midvale, Draper,
+  // Kearns...), showing each as its own equal-weight top-level entry turns
+  // the page into an unreadable wall of near-duplicate metro-area cities.
+  // Fold suburbs into their parent metro instead, using the same
+  // nearbyMajorCityFor distance logic already used for the "(~City)"
+  // annotation -- but only when that parent city itself has real entries
+  // to anchor it, never nesting under an empty, invisible "parent."
+  const cityByLowerName = {};
+  citiesWithEntries.forEach(c => { cityByLowerName[c.name.trim().toLowerCase()] = c; });
+  const childrenByParentId = {};
+  const parentIdForChild = {};
+  citiesWithEntries.forEach(city => {
+    const nearbyMajorName = nearbyMajorCityFor(city);
+    if (!nearbyMajorName) return;
+    const parent = cityByLowerName[nearbyMajorName.trim().toLowerCase()];
+    if (!parent || parent.id === city.id) return;
+    if (!childrenByParentId[parent.id]) childrenByParentId[parent.id] = [];
+    childrenByParentId[parent.id].push(city);
+    parentIdForChild[city.id] = parent.id;
+  });
+  const childCityIds = new Set(Object.keys(parentIdForChild));
+
+  // Home city always leads. If the home city turns out to BE a suburb
+  // (e.g. Midvale), it won't render as its own top-level entry anymore --
+  // it'll be nested under its parent -- so the parent is what should lead
+  // instead, since that's where the home city will actually appear.
   const homeCityId = computeHomeCityId();
-  const orderedCities = state.cities.slice().sort((a, b) => {
-    if (a.id === homeCityId) return -1;
-    if (b.id === homeCityId) return 1;
+  const homePriorityId = (homeCityId && childCityIds.has(homeCityId)) ? parentIdForChild[homeCityId] : homeCityId;
+  const orderedCities = citiesWithEntries.slice().sort((a, b) => {
+    if (a.id === homePriorityId) return -1;
+    if (b.id === homePriorityId) return 1;
     return a.name.localeCompare(b.name);
   });
 
   orderedCities.forEach(city => {
-    let entries = state.suggestions.filter(s => s.cityId === city.id && visibleIds.has(s.friendId));
-    if (hideMyEntries) entries = entries.filter(e => e.friendId !== me.friendId);
-    if (showOnlyNew) entries = entries.filter(e => e.ts > previousVisitTs);
-    if (!entries.length) return;
-    totalVisible += entries.length;
+    if (childCityIds.has(city.id)) return; // rendered nested under its parent below, not as its own top-level entry
+    const rendered = renderCityBlock(city, visibleIds, false);
+    if (!rendered.html) return;
+    totalVisible += rendered.count;
+    out += rendered.html;
 
-    const scored = entries.map(e => ({ e, record: friendTrackRecord(e.friendId, e.cuisine), weight: myTrustWeight(e.friendId) || 1 }));
-    if (boardSortMode === 'recent') {
-      scored.sort((a, b) => b.e.ts - a.e.ts);
-    } else if (boardSortMode === 'alpha') {
-      scored.sort((a, b) => a.e.restaurant.localeCompare(b.e.restaurant));
-    } else {
-      // "Top rated" now sorts by the same 85/15 taste/ambiance blend as
-      // Best of the best, instead of taste alone -- so the two sections
-      // agree on what "top rated" means. Each entry's own displayed
-      // numbers (taste, ambiance, cost) stay exactly as rated; only the
-      // order they appear in changes.
-      scored.sort((a, b) => {
-        const asRaw = groupWeightedQualityScore(a.e);
-        const bsRaw = groupWeightedQualityScore(b.e);
-        const as = asRaw === null ? -1 : asRaw;
-        const bs = bsRaw === null ? -1 : bsRaw;
-        if (bs !== as) return bs - as;
-        return b.e.ts - a.e.ts;
+    const children = childrenByParentId[city.id];
+    if (children && children.length) {
+      out += '<div class="nested-suburbs">';
+      children.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(child => {
+        const childRendered = renderCityBlock(child, visibleIds, true);
+        if (childRendered.html) { totalVisible += childRendered.count; out += childRendered.html; }
       });
+      out += '</div>';
     }
-
-    const isCollapsed = isCityCollapsed(city.id);
-    out += '<div class="postcard" data-city-id="' + city.id + '">';
-    const nearbyMajor = nearbyMajorCityFor(city);
-    const nearbyMajorNote = nearbyMajor ? ' <span class="near-major-city">(~' + escapeHtml(nearbyMajor) + ')</span>' : '';
-    out += '<div class="postcard-head postcard-head-clickable" data-toggle-city="' + city.id + '" role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + escapeHtml(city.name) + '"><div class="head-left"><div class="postmark">' + escapeHtml(city.name.slice(0,3).toUpperCase()) + '</div><h3>' + escapeHtml(city.name) + nearbyMajorNote + '</h3></div><span class="count">' + entries.length + ' spot' + (entries.length === 1 ? '' : 's') + ' ' + (isCollapsed ? '\u25b8' : '\u25be') + '</span></div>';
-
-    if (!isCollapsed) {
-      const bestOfBest = getBestOfBestForCity(city.id).slice(0, 3);
-      if (bestOfBest.length) {
-        out += '<div class="best-of-best">';
-        out += '<div class="best-of-best-label">\u{1F3C6} Best of the best</div>';
-        bestOfBest.forEach(b => {
-          out += '<div class="trend-row" style="align-items:flex-start;">';
-          out += '<div style="flex:1; min-width:0;"><p class="trend-title">' + escapeHtml(b.entry.restaurant) + '</p>';
-          out += '<p class="track-record">' + (b.recommenderCount > 1 ? b.recommenderCount + ' trusted people' : b.recommenderNames.map(escapeHtml).join(', ')) + '</p>';
-          out += '</div>';
-          out += renderReadOnlyRatingSide(b.tasteScore, b.ambianceScore, b.costScore);
-          out += '</div>';
-        });
-        out += '</div>';
-      }
-      scored.forEach(({ e }) => { out += renderEntryCard(e, false); });
-    }
-    out += '</div>';
   });
 
   if (!out) {
@@ -5645,49 +5576,6 @@ function attachHandlers() {
       render();
     });
   }
-  const createCommunityBtn = document.getElementById('create-community');
-  if (createCommunityBtn) {
-    createCommunityBtn.addEventListener('click', () => {
-      const statusEl = document.getElementById('community-status');
-      const nameEl = document.getElementById('community-name');
-      const cityEl = document.getElementById('community-city');
-      const codeEl = document.getElementById('community-code');
-      const maxJoinsEl = document.getElementById('community-max-joins');
-      const name = (nameEl.value || '').trim();
-      const targetCity = (cityEl.value || '').trim();
-      const joinCode = (codeEl.value || '').trim().toUpperCase().replace(/\s+/g, '');
-      const maxJoins = maxJoinsEl.value ? parseInt(maxJoinsEl.value, 10) : null;
-      if (!name || !targetCity || !joinCode) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'Name, target city, and join code are all required.';
-        return;
-      }
-      if (!Array.isArray(state.communities)) state.communities = [];
-      const codeTaken = state.communities.some(c => c.joinCode === joinCode);
-      if (codeTaken) {
-        statusEl.style.display = 'block';
-        statusEl.textContent = 'That join code is already in use -- pick a different one.';
-        return;
-      }
-      state.communities.push({
-        id: uid(), name, targetCity, joinCode, active: true,
-        joinCount: 0, maxJoins: maxJoins || null,
-        createdAt: Date.now(), createdByName: (me && me.name) || 'an admin'
-      });
-      saveData();
-      render();
-    });
-  }
-  document.querySelectorAll('[data-toggle-community]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-toggle-community');
-      const community = (state.communities || []).find(c => c.id === id);
-      if (!community) return;
-      community.active = !community.active;
-      saveData();
-      render();
-    });
-  });
   const matchmakerConnectBtn = document.getElementById('matchmaker-connect');
   if (matchmakerConnectBtn) {
     matchmakerConnectBtn.addEventListener('click', () => {
@@ -6387,28 +6275,16 @@ async function runRecommendation() {
         if (communityMatches.length) {
           const rated = communityMatches.filter(e => e.ratingTaste > 0);
           const avgRating = rated.length ? (rated.reduce((sum, e) => sum + e.ratingTaste, 0) / rated.length) : null;
-          // Does any rater here share the viewer's community, or -- since
-          // most people will never have a formal community at all -- at
-          // least their home city? Either way this pick gets tagged and
-          // ranked above otherwise-equal stranger picks, since someone
-          // local is a meaningfully stronger signal than a total stranger,
-          // even though neither is someone you've personally rated. Stays
-          // within the existing community tier rather than becoming a
-          // separate 4th tier. Community match takes priority for the tag
-          // when both are present, since it's the more specific signal.
+          // Does any rater here share the viewer's home city? If so, this
+          // pick gets tagged and ranked above otherwise-equal stranger
+          // picks, since someone local is a meaningfully stronger signal
+          // than a total stranger, even though neither is someone you've
+          // personally rated. Stays within the existing community tier
+          // rather than becoming a separate 4th tier.
           const myFriendRecord = state.friends.find(f => f.id === me.friendId);
-          const myCommunityId = myFriendRecord ? myFriendRecord.communityId : null;
           const myHomeCityId = myFriendRecord ? myFriendRecord.homeCityId : null;
-          let sharedCommunity = null;
           let sharedHomeCity = null;
-          if (myCommunityId) {
-            const raterFromMyCommunity = communityMatches.find(s => {
-              const rater = state.friends.find(f => f.id === s.friendId);
-              return rater && rater.communityId === myCommunityId;
-            });
-            if (raterFromMyCommunity) sharedCommunity = state.communities.find(c => c.id === myCommunityId) || null;
-          }
-          if (!sharedCommunity && myHomeCityId) {
+          if (myHomeCityId) {
             const raterFromMyCity = communityMatches.find(s => {
               const rater = state.friends.find(f => f.id === s.friendId);
               return rater && rater.homeCityId === myHomeCityId;
@@ -6420,7 +6296,6 @@ async function runRecommendation() {
             communityGroup: communityMatches,
             communityAvgRating: avgRating,
             communityRaterCount: communityMatches.length,
-            sharedCommunity,
             sharedHomeCity,
             reason: p.reason
           };
@@ -6457,7 +6332,7 @@ async function runRecommendation() {
       }
       if (r.source === 'community') {
         const base = (r.communityAvgRating || 0) * r.communityRaterCount;
-        return (r.sharedCommunity || r.sharedHomeCity) ? base * 1.5 : base;
+        return r.sharedHomeCity ? base * 1.5 : base;
       }
       return 0;
     };
@@ -6888,7 +6763,6 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   try {
     const params = new URLSearchParams(window.location.search);
     inviterFriendId = params.get('ref') || null;
-    joiningCommunityCode = params.get('community') || null;
     adminBootstrapRequested = params.get('admin') === 'setup';
   } catch (e) { inviterFriendId = null; }
   await loadData();
