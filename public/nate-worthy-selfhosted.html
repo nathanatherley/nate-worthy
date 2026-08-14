@@ -863,6 +863,7 @@ let groupPickSearchQuery = '';
 let lastGroupModeParticipants = null;
 let recLoading = false;
 let recError = '';
+let lastQueryWasNearMeFiltered = false;
 let recResults = null;
 let recResultsShownCount = 5;
 let boardSortMode = 'rating';
@@ -3621,7 +3622,9 @@ function renderRecommendCard() {
   if (recResults !== null) {
     html += '<div class="rec-results">';
     if (!recResults.length) {
-      html += '<p class="rec-status">Nothing matches that well yet — maybe ask friends to add some picks first.</p>';
+      html += '<p class="rec-status">' + (lastQueryWasNearMeFiltered
+        ? 'Nothing within 10 miles of you yet — try dropping "nearby" from your question, or ask friends to add picks closer by.'
+        : 'Nothing matches that well yet — maybe ask friends to add some picks first.') + '</p>';
     } else {
       recResults.slice(0, recResultsShownCount).forEach(({ source, suggestion, webPick, reason, communityGroup, communityAvgRating, communityRaterCount, sharedHomeCity }) => {
         if (source === 'friend') {
@@ -6033,6 +6036,7 @@ async function runRecommendation() {
   recQuery = '';
   recLoading = true;
   recError = '';
+  lastQueryWasNearMeFiltered = false;
   render();
 
   try {
@@ -6075,7 +6079,7 @@ async function runRecommendation() {
         ])
       ];
 
-      const friendPayload = candidateSuggestions
+      let friendPayload = candidateSuggestions
         .map(s => {
           const city = state.cities.find(c => c.id === s.cityId);
           const record = friendTrackRecord(s.friendId, s.cuisine);
@@ -6135,7 +6139,7 @@ async function runRecommendation() {
         if (!communityGroups[gid]) communityGroups[gid] = [];
         communityGroups[gid].push(s);
       });
-      const communityPayload = Object.entries(communityGroups)
+      let communityPayload = Object.entries(communityGroups)
         .map(([gid, entries]) => {
           const first = entries[0];
           const city = state.cities.find(c => c.id === first.cityId);
@@ -6161,7 +6165,7 @@ async function runRecommendation() {
         .sort((a, b) => b._avgForSorting - a._avgForSorting)
         .map(({ _avgForSorting, ...rest }) => rest);
 
-      const webPayload = webSeedPicks
+      let webPayload = webSeedPicks
         .filter(p => !seedPickIsSuperseded(p))
         .map(p => ({
         id: p.id,
@@ -6173,6 +6177,34 @@ async function runRecommendation() {
         cost: p.cost ? '$'.repeat(p.cost) : 'unknown',
         note: p.note
       }));
+
+      // "Near me" queries should mean it, literally -- someone standing in
+      // Midvale asking for "Chinese food nearby me" shouldn't get results
+      // from Bountiful or Kaysville, 20+ miles away, just because nothing
+      // closer happened to be in the data. Previously this was left
+      // entirely to the AI's own judgment, with only a loose "nearby
+      // cities" annotation as a hint it was free to ignore -- this is a
+      // hard filter enforced here instead, using real coordinates, before
+      // the AI ever sees results outside the range at all.
+      const NEARBY_QUERY_MILES = 10;
+      const impliesNearMe = /\b(near\s*me|nearby(\s*me)?|close\s*to\s*me|around\s*me|by\s*me)\b/i.test(query);
+      if (impliesNearMe) {
+        const originCityId = geoDetectedCityId || computeHomeCityId();
+        const originCity = originCityId ? state.cities.find(c => c.id === originCityId) : null;
+        const originCoords = originCity ? getCityCoords(originCity.name, originCity.state) : null;
+        if (originCoords) {
+          const isWithinRange = (cityName) => {
+            const coords = getCityCoords(cityName, null);
+            if (!coords) return false;
+            const miles = distKm(originCoords[0], originCoords[1], coords[0], coords[1]) * 0.621371;
+            return miles <= NEARBY_QUERY_MILES;
+          };
+          friendPayload = friendPayload.filter(item => isWithinRange(item.city));
+          communityPayload = communityPayload.filter(item => isWithinRange(item.city));
+          webPayload = webPayload.filter(item => isWithinRange(item.city));
+          lastQueryWasNearMeFiltered = true;
+        }
+      }
 
       const personalPayload = friendPayload.concat(communityPayload);
 
