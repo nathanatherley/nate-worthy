@@ -4390,7 +4390,7 @@ function renderRecommendCard() {
           const blended = blendedStarRating(trustW, suggestion.ratingTaste);
           const starBadge = blended !== null ? ' <span class="blended-star-badge" title="Blends how much you trust ' + escapeHtml(suggestion.friendName) + ' with how highly they rated this place">' + blended.toFixed(1) + '\u2605</span>' : '';
           html += '<div class="rec-pick rec-pick-friend">';
-          html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + starBadge + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="friend-source-tag">Friend pick</span></p>';
+          html += '<p class="rec-pick-title">' + escapeHtml(suggestion.restaurant) + starBadge + (suggestion.cost ? ' <span class="cost-tag">' + costLabel(suggestion.cost) + '</span>' : '') + '<span class="friend-source-tag">' + (suggestion.friendId === me.friendId ? 'Your pick' : 'Friend pick') + '</span></p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(suggestion.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — from <span class="friend-name">' + escapeHtml(suggestion.friendName) + '</span></p>';
           if (lastGroupModeParticipants) {
             const raters = groupMembers(suggestion).filter(m => lastGroupModeParticipants.has(m.friendId) && m.ratingTaste > 0);
