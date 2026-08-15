@@ -767,6 +767,13 @@ let seedPickPlaceIds = {};
 // separate from seedPickPlaceIds since these have no place_id at all,
 // they're a record of "already looked, don't ask again."
 let seedPickSkipped = {};
+// Population baselines + per-person shrinkage scores, computed
+// server-side (item 8) -- loaded once at startup, not persisted client-
+// side beyond the current session. null until it's loaded, or if the
+// admin has never run "Recompute population stats" yet.
+let cuisineShrinkageData = null;
+let cuisineStatsRecomputing = false;
+let cuisineStatsStatus = '';
 let selectedCityId = null;
 let confirmationMsg = '';
 let isDuplicateEntryMsg = false;
@@ -1259,10 +1266,20 @@ function getCoLikeSuggestion(entry) {
   // a Mexican restaurant surfaced here just because a well-matched person
   // loved it. This is checked before ranking, not after, so a floored-out
   // candidate never even gets a chance to be picked as "the" suggestion.
+  //
+  // When someone has NO ratings of their own in a cuisine, myOwnCuisineAverage
+  // returns null and previously that meant no floor applied at all -- exactly
+  // the sparse-data gap item 8 (shrinkage-to-population) exists to close.
+  // Falling back to the shrinkage-adjusted score gives a population-informed
+  // floor instead of none, without ever fabricating a number when nobody
+  // anywhere has rated that cuisine either.
   const PERSONAL_CUISINE_FLOOR = 3;
   const candidates = Object.values(byGroup).filter(group => {
     const myAvg = myOwnCuisineAverage(me.friendId, group.entry.cuisine);
-    return myAvg === null || myAvg >= PERSONAL_CUISINE_FLOOR;
+    if (myAvg !== null) return myAvg >= PERSONAL_CUISINE_FLOOR;
+    const shrunk = shrunkCuisineAverage(me.friendId, group.entry.cuisine);
+    if (shrunk !== null) return shrunk >= PERSONAL_CUISINE_FLOOR;
+    return true;
   });
 
   const ranked = candidates.sort((a, b) => b.raterIds.size - a.raterIds.size);
@@ -1856,6 +1873,106 @@ function applySeedPickPlaceIds() {
   webSeedPicks.forEach(p => {
     if (seedPickPlaceIds[p.id]) p.placeId = seedPickPlaceIds[p.id];
   });
+}
+
+// Restaurant details (address/phone/website), shown for any restaurant
+// with a place_id, wherever it's displayed -- My Ratings entries, and all
+// three Discover tiers. Fetched live via /api/places/details each time,
+// never written into state.suggestions/webSeedPicks/any persisted
+// storage, since only place_id itself is permitted to be cached
+// indefinitely under Google's terms. placeDetailsCache is a plain
+// in-memory object that resets on every page load -- it exists purely so
+// expanding/collapsing/re-expanding the same restaurant a few times in
+// one sitting doesn't re-fetch each time, not as a substitute for real
+// storage. Keyed by place_id, so the same restaurant shown in two
+// different places on the page (e.g. as both a friend pick and a web
+// pick) correctly shares one fetch and one expand state.
+const PLACE_DETAILS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
+let placeDetailsCache = {};
+let expandedPlaceDetailsIds = new Set();
+
+async function fetchPlaceDetailsCached(placeId) {
+  const now = Date.now();
+  const cached = placeDetailsCache[placeId];
+  if (cached && cached.data && (now - cached.fetchedAt) < PLACE_DETAILS_CACHE_MS) return cached.data;
+  if (cached && cached.loading) return null; // already in flight; the caller that started it will re-render
+
+  placeDetailsCache[placeId] = { loading: true, data: null, fetchedAt: now };
+  try {
+    const res = await fetch('/api/places/details', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ placeId }),
+    });
+    const data = await res.json();
+    const details = {
+      address: data.formattedAddress || null,
+      phone: data.nationalPhoneNumber || null,
+      website: data.websiteUri || null,
+    };
+    placeDetailsCache[placeId] = { loading: false, data: details, fetchedAt: Date.now() };
+    return details;
+  } catch (e) {
+    console.error('place details fetch failed', e);
+    placeDetailsCache[placeId] = { loading: false, data: null, fetchedAt: Date.now(), error: true };
+    return null;
+  }
+}
+
+function renderPlaceDetailsToggle(placeId) {
+  if (!placeId) return '';
+  const isExpanded = expandedPlaceDetailsIds.has(placeId);
+  let html = '<button type="button" class="btn-text-link" data-toggle-place-details="' + escapeHtml(placeId) + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-top:6px; display:inline-block;">' + (isExpanded ? 'Hide details' : 'View address & phone') + '</button>';
+  if (isExpanded) {
+    html += '<div style="margin-top:6px;">' + renderPlaceDetailsContent(placeId) + '</div>';
+  }
+  return html;
+}
+
+function renderPlaceDetailsContent(placeId) {
+  const cached = placeDetailsCache[placeId];
+  if (!cached || cached.loading) return '<p class="hint">Loading…</p>';
+  if (cached.error || !cached.data) return '<p class="hint">Couldn\'t load details right now.</p>';
+  const { address, phone, website } = cached.data;
+  if (!address && !phone && !website) return '<p class="hint">No additional details available.</p>';
+  let html = '<div style="font-size:12.5px; color:var(--text-on-paper-dim); line-height:1.7;">';
+  if (address) {
+    const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address) + '&query_place_id=' + encodeURIComponent(placeId);
+    html += '<div><a href="' + mapsUrl + '" target="_blank" rel="noopener">' + escapeHtml(address) + '</a></div>';
+  }
+  if (phone) html += '<div><a href="tel:' + escapeHtml(phone.replace(/[^\d+]/g, '')) + '">' + escapeHtml(phone) + '</a></div>';
+  if (website) html += '<div><a href="' + escapeHtml(website) + '" target="_blank" rel="noopener">Website</a></div>';
+  html += '</div>';
+  return html;
+}
+
+// Item 8: shrinkage-to-population statistics. Loaded once at startup,
+// cached client-side for the session -- fine to be a little stale, since
+// this is a background-computed signal, not something that needs to
+// reflect the very latest rating someone just submitted a second ago.
+async function loadCuisineShrinkageData() {
+  try {
+    const res = await fetch('/api/stats/cuisine-shrinkage');
+    if (res.ok) cuisineShrinkageData = await res.json();
+  } catch (e) {
+    console.error('cuisine shrinkage load failed', e);
+    cuisineShrinkageData = null;
+  }
+}
+
+// A person's shrinkage-adjusted score for a cuisine -- their own average
+// blended with the population baseline, weighted by their own sample
+// size. Returns null (not a fabricated number) if the stats haven't been
+// computed yet, or if this specific person+cuisine pair has never been
+// rated by anyone at all (nothing to blend toward). This is meant as a
+// FALLBACK signal specifically for sparse personal data -- callers should
+// still prefer someone's own raw average (myOwnCuisineAverage) when they
+// have enough of their own ratings to trust outright.
+function shrunkCuisineAverage(friendId, cuisine) {
+  if (!cuisineShrinkageData || !friendId || !cuisine) return null;
+  const cuisineLower = cuisine.toLowerCase();
+  const row = (cuisineShrinkageData.personShrinkage || []).find(r => r.friend_id === friendId && r.cuisine === cuisineLower);
+  return row ? Number(row.shrunk_score) : null;
 }
 
 async function saveData(retriesLeft) {
@@ -4032,6 +4149,41 @@ function renderSeedBackfillCard() {
   return html;
 }
 
+// This runs manually rather than on a real schedule -- Railway doesn't
+// give a zero-effort way to run a recurring background job within this
+// same service, and at this app's current scale (data changes slowly,
+// a small user base) a real cron setup would mostly just be re-running
+// against unchanged data. A button the admin presses when it's actually
+// worth refreshing is the pragmatic version of "batch job" for now; a
+// real schedule is a small, self-contained upgrade later if it's ever
+// worth it.
+function renderCuisineStatsCard() {
+  let html = '<div class="card">';
+  html += '<h2>Population cuisine statistics</h2>';
+  html += '<p class="hint">Computes, for each cuisine, the average rating across everyone -- then blends each person\'s own per-cuisine average toward that population figure, weighted by how many ratings they actually have. This is what lets someone with little or no rating history in a cuisine still get a reasonable personal floor, instead of no floor at all. Trust from people you know stays the strongest signal either way -- this only extends recommendations into cuisines you haven\'t personally weighed in on much yet.</p>';
+  html += '<div id="cuisine-stats-status">' + renderCuisineStatsStatusInner() + '</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderCuisineStatsStatusInner() {
+  let html = '';
+  if (cuisineStatsRecomputing) {
+    html += '<p class="hint">Recomputing…</p>';
+  } else {
+    if (cuisineShrinkageData && cuisineShrinkageData.updatedAt) {
+      const cuisineCount = (cuisineShrinkageData.populationBaselines || []).length;
+      const pairCount = (cuisineShrinkageData.personShrinkage || []).length;
+      html += '<p class="hint">Last computed ' + timeAgo(new Date(cuisineShrinkageData.updatedAt).getTime()) + ' — ' + cuisineCount + ' cuisine' + (cuisineCount === 1 ? '' : 's') + ', ' + pairCount + ' person/cuisine pair' + (pairCount === 1 ? '' : 's') + '.</p>';
+    } else {
+      html += '<p class="hint">Not computed yet.</p>';
+    }
+    html += '<div class="actions"><button class="btn btn-ghost btn-small" id="cuisine-stats-recompute">Recompute population stats</button></div>';
+    if (cuisineStatsStatus) html += '<p class="msg msg-success">' + escapeHtml(cuisineStatsStatus) + '</p>';
+  }
+  return html;
+}
+
 function renderCuisineExpertiseCard() {
   if (!me) return '';
   const myFriend = state.friends.find(f => f.id === me.friendId);
@@ -4252,6 +4404,7 @@ function renderRecommendCard() {
           if (suggestion.friendId !== me.friendId) {
             html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '" style="margin-top:8px;">I\'m going here</button>';
           }
+          if (suggestion.placeId) html += renderPlaceDetailsToggle(suggestion.placeId);
           html += '</div>';
         } else if (source === 'community') {
           const first = communityGroup[0];
@@ -4279,6 +4432,7 @@ function renderRecommendCard() {
             }
           })();
           html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(first.id) + '">I\'m going here</button>';
+          if (first.placeId) html += renderPlaceDetailsToggle(first.placeId);
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
@@ -4289,6 +4443,7 @@ function renderRecommendCard() {
           html += '<button class="btn btn-ghost btn-small" data-claim-seed="' + escapeHtml(webPick.id) + '">Rate this yourself</button>';
           html += '<button class="btn btn-ghost btn-small" data-mark-going="web:' + escapeHtml(webPick.id) + '">I\'m going here</button>';
           html += '</div>';
+          if (webPick.placeId) html += renderPlaceDetailsToggle(webPick.placeId);
           html += '</div>';
         }
       });
@@ -4597,6 +4752,7 @@ function renderPage() {
       if (hasAdminPermission('restore')) { html += renderAutoBackupsCard(); html += renderDataImportCard(); }
       if (hasAdminPermission('seedImport')) html += renderSeedImportCard();
       if (hasAdminPermission('seedImport')) html += renderSeedBackfillCard();
+      if (hasAdminPermission('seedImport')) html += renderCuisineStatsCard();
     }
   }
 
@@ -4788,6 +4944,7 @@ function renderEntryCard(e, showCityLabel) {
     return out;
   })();
   if (e.note) html += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
+  if (e.placeId) html += renderPlaceDetailsToggle(e.placeId);
   const pooledPhotos = pooledPhotosForRestaurant(e);
   if (pooledPhotos.length) {
     html += '<div class="entry-photos">';
@@ -6020,6 +6177,27 @@ function attachHandlers() {
   const seedImportBtn = document.getElementById('seed-import-btn');
   if (seedImportBtn) seedImportBtn.addEventListener('click', importSeedPicks);
   attachSeedBackfillHandlers();
+  const cuisineStatsRecomputeBtn = document.getElementById('cuisine-stats-recompute');
+  if (cuisineStatsRecomputeBtn) cuisineStatsRecomputeBtn.addEventListener('click', async () => {
+    cuisineStatsRecomputing = true;
+    cuisineStatsStatus = '';
+    render();
+    try {
+      const res = await fetch('/api/stats/recompute', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        cuisineStatsStatus = 'Recomputed: ' + data.cuisines + ' cuisines, ' + data.personCuisinePairs + ' person/cuisine pairs.';
+        await loadCuisineShrinkageData();
+      } else {
+        cuisineStatsStatus = 'Recompute failed: ' + (data.error || 'unknown error');
+      }
+    } catch (e) {
+      console.error('recompute failed', e);
+      cuisineStatsStatus = 'Recompute failed — check your connection and try again.';
+    }
+    cuisineStatsRecomputing = false;
+    render();
+  });
   const seedFileInput = document.getElementById('seed-import-file');
   if (seedFileInput) {
     seedFileInput.addEventListener('change', () => {
@@ -6212,6 +6390,23 @@ function attachHandlers() {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-toggle-cuisine-trust');
       cuisineTrustPickerOpenFor = (cuisineTrustPickerOpenFor === key) ? null : key;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-toggle-place-details]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const placeId = btn.getAttribute('data-toggle-place-details');
+      if (expandedPlaceDetailsIds.has(placeId)) {
+        expandedPlaceDetailsIds.delete(placeId);
+        render();
+        return;
+      }
+      expandedPlaceDetailsIds.add(placeId);
+      render();
+      await fetchPlaceDetailsCached(placeId);
+      // Re-render regardless of whether this exact call resolved the fetch
+      // or another already-in-flight one did -- either way, the cache now
+      // holds whatever it's going to hold.
       render();
     });
   });
@@ -7503,7 +7698,10 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   } catch (e) { inviterFriendId = null; }
   await loadData();
   await loadIdentity();
-  if (me) syncMyHomeCityToSharedRecord();
+  if (me) {
+    syncMyHomeCityToSharedRecord();
+    loadCuisineShrinkageData().then(() => render());
+  }
 
   await applyAdminBootstrapIfRequested();
 
