@@ -3410,7 +3410,7 @@ function renderTrustCard() {
 
   let html = '<div class="card">';
   html += '<div class="collapsed-row" style="margin-bottom:2px;"><h2 style="margin-bottom:0;">Your trust circle</h2>' + (trustedCount > 0 ? '<button class="btn btn-ghost btn-small" id="collapse-trust-card">Done</button>' : '') + '</div>';
-  html += '<p class="hint">Rate how much you trust each person\'s taste, 1 to 5 stars. Your board, rankings, and recommendations only pull from people rated here — plus your own entries — and more-trusted people\'s picks rank higher. Not everyone you invite has to be fully trusted, and your ratings are yours alone; nobody else is affected by them.</p>';
+  html += '<p class="hint">Rate how much you trust each person\'s taste, 1 to 5 stars. It weights how much their ratings count toward your board and recommendations. Ratings are private — only you see them.</p>';
 
   let jumpstartHtml = '';
   const jumpstartInfo = getJumpstartInfo();
@@ -4338,7 +4338,7 @@ function renderRecommendCard() {
   }
   html += '<p class="hint">' + (isFollowUp
     ? 'Want to adjust that? Ask for something like "cheaper" or "not that one" and it\'ll refine from the same options.'
-    : 'Describe what you\'re after — cuisine, price, where you are — and this pulls the best matches from your trust circle\'s picks.') + '</p>';
+    : 'What are you craving? Cuisine, price, location — this pulls the best matches for you.') + '</p>';
   html += '<textarea id="rec-query" placeholder="' + (isFollowUp ? 'e.g. something cheaper, or not that one' : 'e.g. Chinese food, $$, nearby downtown Salt Lake') + '">' + escapeHtml(recQuery) + '</textarea>';
 
   const submitLabel = recLoading ? 'Thinking…' : (isFollowUp ? (lastGroupModeParticipants ? 'Refine group picks' : 'Refine') : (isGroupMode ? 'Find group picks' : 'Find suggestions'));
@@ -4492,7 +4492,7 @@ function renderShareCard() {
   }
 
   if (!me || shareCardMode === 'link') {
-    html += '<p class="hint">' + (me ? 'This link is tagged with your account, so anyone who joins through it can quickly add people from your trust circle to their own. ' : '') + 'This only works if everyone adds and rates spots — send this link to the fellow foodies whose taste you trust.</p>';
+    html += '<p class="hint">' + (me ? 'This link is tagged with you, so anyone who joins can quickly add people from your circle too. ' : '') + 'Send it to the fellow foodies whose taste you trust.</p>';
     html += '<div class="share-row">';
     html += '<input type="text" id="share-link" readonly value="' + escapeHtml(shareUrl) + '">';
     html += '<button class="btn btn-ghost btn-small" id="copy-link-btn">Copy link</button>';
