@@ -732,7 +732,7 @@
       </svg>
       <div>
         <h1>Nate<span class="wordmark-dash">-</span>Worthy</h1>
-        <p>A running list of genuinely good places to eat, city by city — the kind of finds you'd actually send a friend to, not just anywhere you've eaten.</p>
+        <p>Genuinely good places to eat, found by people you trust and AI that knows your taste.</p>
       </div>
     </div>
   </div>
@@ -2467,6 +2467,13 @@ async function forgetIdentity() {
   signupStartedLogged = false;
   entryFormStartedLogged = false;
   try { await window.storage.delete('my-identity', false); } catch (e) {}
+  // "Sign out" should actually sign out -- clearing just the local app
+  // identity (above) left the real authentication session fully valid,
+  // so reloading the app would skip straight past sign-in and land back
+  // on the name-entry screen instead of asking for an email again. This
+  // is what actually ends the session server-side.
+  try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+  sessionEmail = null;
   render();
 }
 
