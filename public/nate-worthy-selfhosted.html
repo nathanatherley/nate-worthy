@@ -2466,11 +2466,18 @@ async function forgetIdentity() {
   signupError = '';
   signupStartedLogged = false;
   entryFormStartedLogged = false;
-  try { await window.storage.delete('my-identity', false); } catch (e) {}
-  // "Sign out" should actually sign out -- clearing just the local app
-  // identity (above) left the real authentication session fully valid,
-  // so reloading the app would skip straight past sign-in and land back
-  // on the name-entry screen instead of asking for an email again. This
+  // Deliberately NOT deleting the 'my-identity' key here. It's a personal
+  // storage key, already scoped server-side to this real authenticated
+  // account (owner_user_id) -- not just sitting in this browser. Leaving
+  // it in place is what lets loadIdentity() automatically restore who you
+  // are the next time this same email signs in, with no name/phone
+  // re-entry needed. Deleting it (the previous behavior) forced a full
+  // "who are you" re-entry on every single re-login, even though the
+  // account verification alone should have been enough to recognize you.
+  //
+  // "Sign out" should still actually sign out, though -- clearing the
+  // local app identity alone left the real authentication session fully
+  // valid, so reloading would skip straight past sign-in entirely. This
   // is what actually ends the session server-side.
   try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
   sessionEmail = null;
