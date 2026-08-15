@@ -729,6 +729,7 @@
         <line x1="15" y1="14" x2="15" y2="22" stroke="#2E8B8B" stroke-width="1.3" stroke-linecap="round"/>
         <line x1="21" y1="14" x2="21" y2="22" stroke="#2E8B8B" stroke-width="1.3" stroke-linecap="round"/>
         <path d="M32 14 C32 20 35 20 35 26 L35 38" fill="none" stroke="#2E8B8B" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="26" cy="26" r="2" fill="#E07856"/>
       </svg>
       <div>
         <h1>Nate<span class="wordmark-dash">-</span>Worthy</h1>
@@ -4336,10 +4337,10 @@ function renderRecommendCard() {
   if (me && !isFollowUp && Object.values(myTrustRatings()).filter(v => v > 0).length === 0) {
     html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(224,120,86,0.25); border: 1px solid rgba(224,120,86,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — recommendations only pull from people you actually trust. Head to the Circle tab and rate a few people to start seeing real results here.</p>';
   }
-  html += '<p class="hint">' + (isFollowUp
-    ? 'Want to adjust that? Ask for something like "cheaper" or "not that one" and it\'ll refine from the same options.'
-    : 'What are you craving? Cuisine, price, location — this pulls the best matches for you.') + '</p>';
-  html += '<textarea id="rec-query" placeholder="' + (isFollowUp ? 'e.g. something cheaper, or not that one' : 'e.g. Chinese food, $$, nearby downtown Salt Lake') + '">' + escapeHtml(recQuery) + '</textarea>';
+  if (isFollowUp) {
+    html += '<p class="hint">Want to adjust that? Ask for something like "cheaper" or "not that one" and it\'ll refine from the same options.</p>';
+  }
+  html += '<textarea id="rec-query" placeholder="' + (isFollowUp ? 'e.g. something cheaper, or not that one' : 'What are you craving? Cuisine, $$, location — this pulls the best matches for you.') + '">' + escapeHtml(recQuery) + '</textarea>';
 
   const submitLabel = recLoading ? 'Thinking…' : (isFollowUp ? (lastGroupModeParticipants ? 'Refine group picks' : 'Refine') : (isGroupMode ? 'Find group picks' : 'Find suggestions'));
   html += '<div class="actions"><button class="btn btn-primary" id="rec-submit"' + (recLoading ? ' disabled' : '') + '>' + submitLabel + '</button>';
