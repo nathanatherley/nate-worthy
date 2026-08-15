@@ -4,10 +4,10 @@
 <script src="/db-client.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nate-Worthy — genuinely good restaurants</title>
-<meta name="description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
+<title>Nate-Worthy — for foodies who trust their circle</title>
+<meta name="description" content="For foodies. Built on trust. Enhanced by AI. Not random internet reviews.">
 <meta property="og:title" content="Nate-Worthy">
-<meta property="og:description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
+<meta property="og:description" content="For foodies. Built on trust. Enhanced by AI. Not random internet reviews.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://nate-worthy.com/og-image.jpg">
 <meta property="og:image:width" content="1200">
@@ -15,11 +15,11 @@
 <meta property="og:url" content="https://nate-worthy.com">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Nate-Worthy">
-<meta name="twitter:description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
+<meta name="twitter:description" content="For foodies. Built on trust. Enhanced by AI. Not random internet reviews.">
 <meta name="twitter:image" content="https://nate-worthy.com/og-image.jpg">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Nate-Worthy">
-<meta name="twitter:description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
+<meta name="twitter:description" content="For foodies. Built on trust. Enhanced by AI. Not random internet reviews.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -732,7 +732,7 @@
       </svg>
       <div>
         <h1>Nate<span class="wordmark-dash">-</span>Worthy</h1>
-        <p>Genuinely good places to eat, found by people you trust and AI that knows your taste.</p>
+        <p>For foodies. Built on trust. Enhanced by AI.</p>
       </div>
     </div>
   </div>
@@ -2919,7 +2919,7 @@ function renderCircleNudgeCard() {
   // doesn't yet know who to look for.
   if (ratedCount === 0 && adminSuggestions.length === 0) {
     let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
-    html += '<h2 style="margin-bottom:4px;">Add people you trust</h2>';
+    html += '<h2 style="margin-bottom:4px;">Add people whose taste you trust</h2>';
     html += '<p class="hint">Trust is what makes this different from a generic review site — rate a few people\'s taste (1 to 5 stars) and their picks count the most in what you see. You\'ll still get solid community and web picks either way, but nothing beats a friend whose taste you know.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Go rate people</button></div>';
     html += '</div>';
@@ -3438,7 +3438,7 @@ function renderTrustCard() {
   if (showJumpstartAtTop) html += jumpstartHtml;
 
   if (!others.length) {
-    html += '<p class="empty">No one else has joined yet — once friends sign in, they\'ll appear here to rate.</p>';
+    html += '<p class="empty">No fellow foodies have joined yet — once friends sign in, they\'ll appear here to rate.</p>';
   } else {
     const myFriendRecord = state.friends.find(f => f.id === me.friendId);
     const unknownMarks = (myFriendRecord && myFriendRecord.unknownMarks) || {};
@@ -4492,7 +4492,7 @@ function renderShareCard() {
   }
 
   if (!me || shareCardMode === 'link') {
-    html += '<p class="hint">' + (me ? 'This link is tagged with your account, so anyone who joins through it can quickly add people from your trust circle to their own. ' : '') + 'This only works if everyone adds and rates spots — send this link to the people whose taste you trust.</p>';
+    html += '<p class="hint">' + (me ? 'This link is tagged with your account, so anyone who joins through it can quickly add people from your trust circle to their own. ' : '') + 'This only works if everyone adds and rates spots — send this link to the fellow foodies whose taste you trust.</p>';
     html += '<div class="share-row">';
     html += '<input type="text" id="share-link" readonly value="' + escapeHtml(shareUrl) + '">';
     html += '<button class="btn btn-ghost btn-small" id="copy-link-btn">Copy link</button>';
@@ -4789,7 +4789,7 @@ function renderPage() {
     }
 
     html += '<label>Cuisines you like to eat (optional)</label>';
-    html += '<p class="hint" style="margin-top:-4px;">Helps us get your recommendations right from day one. Skip this entirely if you\'d rather not say — you can always set it later.</p>';
+    html += '<p class="hint" style="margin-top:-4px;">Helps us get your foodie recommendations right from day one. Skip this entirely if you\'d rather not say — you can always set it later.</p>';
     html += '<div class="cuisine-chip-row">';
     MAJOR_CUISINES.forEach(c => {
       const selected = signupCuisines.includes(c);
