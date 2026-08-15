@@ -4,10 +4,10 @@
 <script src="/db-client.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nate-Worthy — trusted food scouting</title>
-<meta name="description" content="Nate-Worthy: a running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends — not random internet reviews.">
+<title>Nate-Worthy — genuinely good restaurants</title>
+<meta name="description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
 <meta property="og:title" content="Nate-Worthy">
-<meta property="og:description" content="A running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends.">
+<meta property="og:description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://nate-worthy.com/og-image.jpg">
 <meta property="og:image:width" content="1200">
@@ -15,11 +15,11 @@
 <meta property="og:url" content="https://nate-worthy.com">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Nate-Worthy">
-<meta name="twitter:description" content="A running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends.">
+<meta name="twitter:description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
 <meta name="twitter:image" content="https://nate-worthy.com/og-image.jpg">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Nate-Worthy">
-<meta name="twitter:description" content="A running list of genuinely good restaurants, shared and rated by Nathan's trust circle of friends.">
+<meta name="twitter:description" content="Restaurant recommendations found by people you trust and AI that knows your taste. Not random internet reviews.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -2906,7 +2906,7 @@ function renderCircleNudgeCard() {
   if (ratedCount === 0 && adminSuggestions.length === 0) {
     let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
     html += '<h2 style="margin-bottom:4px;">Add people you trust</h2>';
-    html += '<p class="hint">Your board and recommendations stay empty until you rate a few people\'s taste, 1 to 5 stars. It only takes a minute.</p>';
+    html += '<p class="hint">Trust is what makes this different from a generic review site — rate a few people\'s taste (1 to 5 stars) and their picks count the most in what you see. You\'ll still get solid community and web picks either way, but nothing beats a friend whose taste you know.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Go rate people</button></div>';
     html += '</div>';
     return html;
@@ -4759,8 +4759,7 @@ function renderPage() {
   if (!me) {
     html += '<div class="card">';
     html += '<h2>Who are you</h2>';
-    html += '<p class="hint">This app runs on Claude (Anthropic\'s AI) — that\'s what powers the "What sounds good?" recommendation feature specifically. A free Claude account is required for that part to work; without it, the AI recommendations just won\'t run, though you can still browse and add your own picks either way.</p>';
-    html += '<p class="hint">If signing into Claude just now sent you somewhere other than back here, click the Claude logo/icon in the corner — that should bring you back to this app.</p>';
+    html += '<p class="hint">You\'re signed in — just need a name so friends recognize you when they see your picks.</p>';
 
     html += '<div class="row2">';
     html += '<div><label for="signin-first">First name</label><input type="text" id="signin-first" placeholder="First" value="' + escapeHtml(signupFirstName) + '"></div>';
