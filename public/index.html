@@ -3405,7 +3405,7 @@ function renderTrustCard() {
 
   if (!trustCardExpanded) {
     const jumpstartInfoCollapsed = getJumpstartInfo();
-    let summary = '<div class="card collapsed-card" id="trust-card-summary">';
+    let summary = '<div class="card collapsed-card" id="trust-card-summary" style="border:1px solid rgba(224,120,86,0.4);">';
     summary += '<div class="collapsed-row">';
     summary += '<div><h2 style="margin-bottom:2px;">Your trust circle</h2><p class="track-record">Trusting ' + trustedCount + (trustedCount === 1 ? ' person' : ' people') + (jumpstartInfoCollapsed ? ' · ' + jumpstartInfoCollapsed.candidateIds.length + ' suggested from your circle' : '') + '</p></div>';
     summary += '<button class="btn btn-ghost btn-small" id="expand-trust-card">Manage</button>';
@@ -3413,7 +3413,7 @@ function renderTrustCard() {
     return summary;
   }
 
-  let html = '<div class="card">';
+  let html = '<div class="card" style="border:1px solid rgba(224,120,86,0.4);">';
   html += '<div class="collapsed-row" style="margin-bottom:2px;"><h2 style="margin-bottom:0;">Your trust circle</h2>' + (trustedCount > 0 ? '<button class="btn btn-ghost btn-small" id="collapse-trust-card">Done</button>' : '') + '</div>';
   html += '<p class="hint">Rate how much you trust each person\'s taste, 1 to 5 stars. It weights how much their ratings count toward your board and recommendations. Ratings are private — only you see them.</p>';
 
