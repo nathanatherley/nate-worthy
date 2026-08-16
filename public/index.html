@@ -1981,9 +1981,46 @@ function shrunkCuisineAverage(friendId, cuisine) {
   return row ? Number(row.shrunk_score) : null;
 }
 
+// Pulls forward any records that exist in a freshly-fetched copy of the
+// shared data but aren't in our local state yet -- specifically new
+// friends (people who signed up since we last loaded), new suggestions
+// (entries someone submitted), and new cities. This is deliberately
+// scoped to ADDITIONS only, not full conflict resolution: two people
+// editing the exact same existing record at the exact same moment can
+// still have one edit lost, but that's a far rarer and less catastrophic
+// case than what this fixes -- a whole new signup silently vanishing
+// because an unrelated tab's save overwrote it with an older snapshot
+// that never knew it existed.
+function mergeFreshDataForward(freshState) {
+  if (Array.isArray(freshState.friends)) {
+    const myFriendIds = new Set(state.friends.map(f => f.id));
+    freshState.friends.forEach(f => { if (!myFriendIds.has(f.id)) state.friends.push(f); });
+  }
+  if (Array.isArray(freshState.suggestions)) {
+    const mySuggestionIds = new Set(state.suggestions.map(s => s.id));
+    freshState.suggestions.forEach(s => { if (!mySuggestionIds.has(s.id)) state.suggestions.push(s); });
+  }
+  if (Array.isArray(freshState.cities)) {
+    const myCityIds = new Set(state.cities.map(c => c.id));
+    freshState.cities.forEach(c => { if (!myCityIds.has(c.id)) state.cities.push(c); });
+  }
+}
+
 async function saveData(retriesLeft) {
   if (typeof retriesLeft !== 'number') retriesLeft = 2;
   try {
+    try {
+      const freshRes = await window.storage.get('scout-data', true);
+      if (freshRes && freshRes.value) {
+        mergeFreshDataForward(JSON.parse(freshRes.value));
+      }
+    } catch (e) {
+      // Best-effort -- if the fresh read fails (e.g. this is genuinely the
+      // very first save ever, before 'scout-data' exists), still proceed
+      // to save what we have locally rather than blocking the save
+      // entirely. Losing this one safety check on a rare failure is far
+      // better than refusing to save at all.
+    }
     await window.storage.set('scout-data', JSON.stringify(state), true);
     return true;
   } catch (e) {
