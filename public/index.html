@@ -4229,32 +4229,6 @@ function renderCuisineExpertiseCard() {
   return html;
 }
 
-function generateTopPicksText(limit) {
-  if (!me) return '';
-  const ids = visibleFriendIds();
-  const candidates = state.suggestions
-    .filter(s => ids.has(s.friendId) && s.ratingTaste > 0)
-    .map(e => {
-      const weight = myTrustWeight(e.friendId) || 1;
-      return { e, score: e.ratingTaste * weight };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit || 5);
-
-  if (!candidates.length) return '';
-
-  const lines = candidates.map(({ e }, i) => {
-    const city = state.cities.find(c => c.id === e.cityId);
-    const cityName = city ? city.name : '';
-    return (i + 1) + '. ' + e.restaurant + (e.cuisine ? ' (' + e.cuisine + ')' : '') + (cityName ? ' — ' + cityName : '') + ' — ' + '\u2605'.repeat(e.ratingTaste) + '\u2606'.repeat(5 - e.ratingTaste);
-  });
-
-  const baseUrl = window.location.origin + window.location.pathname;
-  const link = baseUrl + '?ref=' + encodeURIComponent(me.friendId);
-
-  return me.name + '\u2019s top trusted picks:\n\n' + lines.join('\n') + '\n\nFrom Nate-Worthy — ' + link;
-}
-
 function renderPlannedVisitsCard() {
   if (!me || !me.plannedVisits || !me.plannedVisits.length) return '';
 
@@ -4491,7 +4465,6 @@ function renderShareCard() {
     if (isCurrentUserAdmin()) {
       html += '<button class="share-tab' + (shareCardMode === 'open' ? ' active' : '') + '" data-share-tab="open">Invite a stranger</button>';
     }
-    html += '<button class="share-tab' + (shareCardMode === 'picks' ? ' active' : '') + '" data-share-tab="picks">My top picks</button>';
     html += '</div>';
   }
 
@@ -4521,15 +4494,6 @@ function renderShareCard() {
     html += '<button class="btn btn-ghost btn-small" id="copy-open-link-btn">Copy link</button>';
     html += '</div>';
     html += '<span class="msg" id="open-share-msg"></span>';
-  } else {
-    const preview = generateTopPicksText(5);
-    if (!preview) {
-      html += '<p class="empty">Rate a few restaurants first, then your top picks will show up here to share.</p>';
-    } else {
-      html += '<p class="hint">A quick, shareable snapshot of your highest-rated trusted picks — good for texting to someone outside the app entirely.</p>';
-      html += '<textarea id="top-picks-preview" readonly style="min-height:120px; font-size:13px; background:rgba(245,240,230,0.03);">' + escapeHtml(preview) + '</textarea>';
-      html += '<div class="actions"><button class="btn btn-ghost btn-small" id="copy-top-picks-btn">Copy my top picks</button><span class="msg" id="top-picks-msg"></span></div>';
-    }
   }
 
   html += '</div>';
@@ -6063,28 +6027,6 @@ function attachHandlers() {
         link.setAttribute('readonly', 'true');
       }
       setTimeout(() => { if (openMsg) openMsg.textContent = ''; }, 3000);
-    });
-  }
-  const copyTopPicksBtn = document.getElementById('copy-top-picks-btn');
-  if (copyTopPicksBtn) {
-    copyTopPicksBtn.addEventListener('click', async () => {
-      const preview = document.getElementById('top-picks-preview');
-      const msg = document.getElementById('top-picks-msg');
-      try {
-        await navigator.clipboard.writeText(preview.value);
-        msg.textContent = 'Copied.';
-      } catch (e) {
-        preview.removeAttribute('readonly');
-        preview.select();
-        try {
-          document.execCommand('copy');
-          msg.textContent = 'Copied.';
-        } catch (e2) {
-          msg.textContent = 'Couldn\'t copy automatically — select the text and copy it manually.';
-        }
-        preview.setAttribute('readonly', 'true');
-      }
-      setTimeout(() => { if (msg) msg.textContent = ''; }, 3000);
     });
   }
   document.querySelectorAll('[data-share-tab]').forEach(tab => {
