@@ -4515,7 +4515,7 @@ function renderShareCard() {
     }
   } else if (shareCardMode === 'open' && isCurrentUserAdmin()) {
     const openUrl = window.location.origin + window.location.pathname;
-    html += '<p class="hint">A plain link with no referral tag, meant for posting somewhere public — Facebook, a community group, anywhere you don\'t personally know who\'ll see it. Nobody who joins through this is connected to you, your trust circle stays completely private from them, and it won\'t show up in your "joined through your link" list. Admin-only, since a broadcast link reaches people you have no personal relationship with at all.</p>';
+    html += '<p class="hint">Posting somewhere public, like a Facebook group? Use this link if you\'re not sure they share your food taste.</p>';
     html += '<div class="share-row">';
     html += '<input type="text" id="open-share-link" readonly value="' + escapeHtml(openUrl) + '">';
     html += '<button class="btn btn-ghost btn-small" id="copy-open-link-btn">Copy link</button>';
