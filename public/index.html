@@ -37,7 +37,7 @@
     --text-on-paper: #F5F0E6;
     --text-on-paper-dim: #B7C7CE;
     --line: rgba(245,240,230,0.14);
-    --card-border: rgba(245,240,230,0.22);
+    --card-border: rgba(224,120,86,0.4);
   }
   * { box-sizing: border-box; }
   .sr-only {
@@ -3405,7 +3405,7 @@ function renderTrustCard() {
 
   if (!trustCardExpanded) {
     const jumpstartInfoCollapsed = getJumpstartInfo();
-    let summary = '<div class="card collapsed-card" id="trust-card-summary" style="border:1px solid rgba(224,120,86,0.4);">';
+    let summary = '<div class="card collapsed-card" id="trust-card-summary">';
     summary += '<div class="collapsed-row">';
     summary += '<div><h2 style="margin-bottom:2px;">Your trust circle</h2><p class="track-record">Trusting ' + trustedCount + (trustedCount === 1 ? ' person' : ' people') + (jumpstartInfoCollapsed ? ' · ' + jumpstartInfoCollapsed.candidateIds.length + ' suggested from your circle' : '') + '</p></div>';
     summary += '<button class="btn btn-ghost btn-small" id="expand-trust-card">Manage</button>';
@@ -3413,7 +3413,7 @@ function renderTrustCard() {
     return summary;
   }
 
-  let html = '<div class="card" style="border:1px solid rgba(224,120,86,0.4);">';
+  let html = '<div class="card">';
   html += '<div class="collapsed-row" style="margin-bottom:2px;"><h2 style="margin-bottom:0;">Your trust circle</h2>' + (trustedCount > 0 ? '<button class="btn btn-ghost btn-small" id="collapse-trust-card">Done</button>' : '') + '</div>';
   html += '<p class="hint">Rate how much you trust each person\'s taste, 1 to 5 stars. It weights how much their ratings count toward your board and recommendations. Ratings are private — only you see them.</p>';
 
@@ -4310,7 +4310,7 @@ function updateGroupPickResults() {
 function renderRecommendCard() {
   const isFollowUp = recConversation.length > 0;
   const isGroupMode = groupPickSelectedIds.size > 0;
-  let html = '<div class="card rec-card hero-panel" style="border:1px solid rgba(224,120,86,0.4);">';
+  let html = '<div class="card rec-card hero-panel">';
   html += '<h2>What sounds good?</h2>';
   if (me && !isFollowUp && Object.values(myTrustRatings()).filter(v => v > 0).length === 0) {
     html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(224,120,86,0.25); border: 1px solid rgba(224,120,86,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — recommendations only pull from people you actually trust. Head to the Circle tab and rate a few people to start seeing real results here.</p>';
@@ -4524,7 +4524,7 @@ function renderShareFavoriteForm() {
   }
   if (formState.city === null) formState.city = defaultCityName;
 
-  html += '<div class="card" id="section-share-favorite" style="border:1px solid rgba(224,120,86,0.4);">';
+  html += '<div class="card" id="section-share-favorite">';
   if (editingEntryId) {
     const editingEntry = state.suggestions.find(s => s.id === editingEntryId);
     const editHeaderText = (editingEntry && editingEntry.friendId !== me.friendId)
