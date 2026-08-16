@@ -831,11 +831,11 @@ async function applyAdminBootstrapIfRequested() {
   }
 }
 
-const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking'];
+const ADMIN_PERMISSIONS = ['export', 'restore', 'seedImport', 'manageAdmins', 'viewStats', 'cleanup', 'matchmaking', 'manageEntries'];
 const ADMIN_PERMISSION_LABELS = {
   export: 'Export data', restore: 'Restore from backup', seedImport: 'Import seed picks',
   manageAdmins: 'Manage admins', viewStats: 'View app stats', cleanup: 'Clean up accounts',
-  matchmaking: 'Suggest connections between users'
+  matchmaking: 'Suggest connections between users', manageEntries: 'Edit/delete any entry'
 };
 
 function getAdminPermissions(friend) {
@@ -2067,6 +2067,10 @@ let placeDetailsPreview = null; // transient, on-screen only -- never written in
 let pendingCleanupConfirm = null;
 let deleteAccountEmailInput = '';
 let pendingDeleteAccountEmail = null;
+let entriesBrowserSearchQuery = '';
+let entriesBrowserEditingId = null;
+let entriesBrowserEditState = null;
+let entriesBrowserPendingDeleteId = null;
 let deleteAccountStatus = '';
 let cleanupStatus = '';
 
@@ -3694,6 +3698,176 @@ async function claimExistingAccount(targetId) {
   render();
 }
 
+// Lets an admin search, inline-edit, and delete ANY entry site-wide --
+// distinct from "Clean up accounts" above, which operates on whole
+// accounts, not individual entries. Deliberately scoped to the fields
+// most likely to need a quick fix (name, cuisine, note, ratings, cost),
+// not city reassignment -- that touches the city-resolution logic used
+// by the main entry form, and re-implementing that here isn't
+// proportionate to what this tool is actually for (moderation and
+// testing cleanup, not a second full entry-creation flow).
+function renderEntriesBrowserCard() {
+  let html = '<div class="card">';
+  html += '<h2>All entries</h2>';
+  html += '<p class="hint">Search by restaurant or person to find, edit, or delete any entry site-wide.</p>';
+  html += '<input type="text" id="entries-browser-search" placeholder="Search restaurant or person…" value="' + escapeHtml(entriesBrowserSearchQuery) + '" style="margin-bottom:12px;">';
+  html += '<div id="entries-browser-results">' + renderEntriesBrowserResults() + '</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderEntriesBrowserResults() {
+  const query = entriesBrowserSearchQuery.trim().toLowerCase();
+  let matches = state.suggestions.filter(e => {
+    if (!query) return true;
+    return e.restaurant.toLowerCase().includes(query) || (e.friendName || '').toLowerCase().includes(query);
+  });
+  matches = matches.slice().sort((a, b) => b.ts - a.ts);
+  const cap = query ? 50 : 20;
+  const total = matches.length;
+  matches = matches.slice(0, cap);
+
+  if (!total) return '<p class="empty">No entries match.</p>';
+
+  let html = '<p class="hint" style="margin-bottom:8px;">' + total + ' match' + (total === 1 ? '' : 'es') + (total > matches.length ? ' — showing first ' + matches.length : '') + (!query ? ' — most recent shown, search to find older ones' : '') + '.</p>';
+
+  matches.forEach(e => {
+    const city = state.cities.find(c => c.id === e.cityId);
+    const isEditing = entriesBrowserEditingId === e.id;
+    const isPendingDelete = entriesBrowserPendingDeleteId === e.id;
+    html += '<div style="padding:10px 0; border-top:1px solid var(--line);">';
+
+    if (isEditing && entriesBrowserEditState) {
+      const s = entriesBrowserEditState;
+      html += '<div style="padding:10px; background:var(--surface); border-radius:8px;">';
+      html += '<input type="text" id="eb-edit-restaurant" value="' + escapeHtml(s.restaurant) + '" placeholder="Restaurant name" style="margin-bottom:8px;">';
+      html += '<input type="text" id="eb-edit-cuisine" value="' + escapeHtml(s.cuisine || '') + '" placeholder="Cuisine" style="margin-bottom:8px;">';
+      html += '<textarea id="eb-edit-note" placeholder="Note" style="margin-bottom:8px; min-height:50px;">' + escapeHtml(s.note || '') + '</textarea>';
+      html += '<div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:8px;">';
+      html += '<div><p class="hint" style="margin:0 0 2px;">Taste</p><div class="rate-dots">';
+      for (let i = 1; i <= 5; i++) html += '<button type="button" class="rate-star' + (s.taste >= i ? ' filled' : '') + '" data-eb-rate="taste" data-val="' + i + '">' + (s.taste >= i ? '\u2605' : '\u2606') + '</button>';
+      html += '</div></div>';
+      html += '<div><p class="hint" style="margin:0 0 2px;">Ambiance</p><div class="rate-dots">';
+      for (let i = 1; i <= 5; i++) html += '<button type="button" class="rate-star' + (s.ambiance >= i ? ' filled' : '') + '" data-eb-rate="ambiance" data-val="' + i + '">' + (s.ambiance >= i ? '\u2605' : '\u2606') + '</button>';
+      html += '</div></div>';
+      html += '</div>';
+      html += '<div style="display:flex; gap:6px; margin-bottom:10px;">';
+      [1, 2, 3, 4].forEach(n => {
+        html += '<button type="button" class="btn btn-ghost btn-small' + (s.cost === n ? ' active-cost' : '') + '" data-eb-cost="' + n + '" style="' + (s.cost === n ? 'background:var(--brass); color:#fff;' : '') + '">' + '$'.repeat(n) + '</button>';
+      });
+      html += '</div>';
+      html += '<div class="actions"><button class="btn btn-primary btn-small" id="eb-save-' + e.id + '">Save</button><button class="btn btn-ghost btn-small" id="eb-cancel-' + e.id + '">Cancel</button></div>';
+      html += '</div>';
+    } else if (isPendingDelete) {
+      html += '<p class="hint" style="color:#fff; font-weight:600;">Delete "' + escapeHtml(e.restaurant) + '" by ' + escapeHtml(e.friendName) + '? This cannot be undone.</p>';
+      html += '<div class="actions"><button class="btn btn-primary btn-small" id="eb-delete-confirm-' + e.id + '" style="background:var(--rust);">Yes, delete</button><button class="btn btn-ghost btn-small" id="eb-delete-cancel-' + e.id + '">Cancel</button></div>';
+    } else {
+      html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">';
+      html += '<div style="min-width:0;">';
+      html += '<p style="font-size:14px; color:var(--text-on-paper); margin:0; font-weight:600;">' + escapeHtml(e.restaurant) + '</p>';
+      html += '<p class="track-record" style="margin-top:2px;">' + escapeHtml(e.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — ' + escapeHtml(e.friendName) + '</p>';
+      html += '<p class="track-record">Taste ' + '\u2605'.repeat(e.ratingTaste || 0) + '\u2606'.repeat(5 - (e.ratingTaste || 0)) + (e.note ? ' — "' + escapeHtml(e.note.slice(0, 60)) + (e.note.length > 60 ? '…' : '') + '"' : '') + '</p>';
+      html += '</div>';
+      html += '<div style="display:flex; gap:6px; flex-shrink:0;">';
+      html += '<button class="btn btn-ghost btn-small" data-eb-edit="' + e.id + '">Edit</button>';
+      html += '<button class="btn btn-ghost btn-small" data-eb-delete="' + e.id + '">Delete</button>';
+      html += '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  return html;
+}
+
+function updateEntriesBrowserResults() {
+  const container = document.getElementById('entries-browser-results');
+  if (!container) return;
+  container.innerHTML = renderEntriesBrowserResults();
+  attachEntriesBrowserHandlers();
+}
+
+function attachEntriesBrowserHandlers() {
+  document.querySelectorAll('[data-eb-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-eb-edit');
+      const entry = state.suggestions.find(s => s.id === id);
+      if (!entry) return;
+      entriesBrowserEditingId = id;
+      entriesBrowserEditState = { restaurant: entry.restaurant, cuisine: entry.cuisine || '', note: entry.note || '', taste: entry.ratingTaste || 0, ambiance: entry.ratingAmbiance || 0, cost: entry.cost || 0 };
+      entriesBrowserPendingDeleteId = null;
+      updateEntriesBrowserResults();
+    });
+  });
+  document.querySelectorAll('[data-eb-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      entriesBrowserPendingDeleteId = btn.getAttribute('data-eb-delete');
+      entriesBrowserEditingId = null;
+      updateEntriesBrowserResults();
+    });
+  });
+  document.querySelectorAll('button[id^="eb-delete-confirm-"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.id.replace('eb-delete-confirm-', '');
+      state.suggestions = state.suggestions.filter(s => s.id !== id);
+      entriesBrowserPendingDeleteId = null;
+      await saveData();
+      updateEntriesBrowserResults();
+    });
+  });
+  document.querySelectorAll('button[id^="eb-delete-cancel-"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      entriesBrowserPendingDeleteId = null;
+      updateEntriesBrowserResults();
+    });
+  });
+  const restaurantInput = document.getElementById('eb-edit-restaurant');
+  if (restaurantInput) restaurantInput.addEventListener('input', () => { entriesBrowserEditState.restaurant = restaurantInput.value; });
+  const cuisineInput = document.getElementById('eb-edit-cuisine');
+  if (cuisineInput) cuisineInput.addEventListener('input', () => { entriesBrowserEditState.cuisine = cuisineInput.value; });
+  const noteInput = document.getElementById('eb-edit-note');
+  if (noteInput) noteInput.addEventListener('input', () => { entriesBrowserEditState.note = noteInput.value; });
+  document.querySelectorAll('[data-eb-rate]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const field = btn.getAttribute('data-eb-rate');
+      const val = parseInt(btn.getAttribute('data-val'), 10);
+      entriesBrowserEditState[field] = entriesBrowserEditState[field] === val ? 0 : val;
+      updateEntriesBrowserResults();
+    });
+  });
+  document.querySelectorAll('[data-eb-cost]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.getAttribute('data-eb-cost'), 10);
+      entriesBrowserEditState.cost = entriesBrowserEditState.cost === val ? 0 : val;
+      updateEntriesBrowserResults();
+    });
+  });
+  document.querySelectorAll('button[id^="eb-save-"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.id.replace('eb-save-', '');
+      const entry = state.suggestions.find(s => s.id === id);
+      if (entry && entriesBrowserEditState) {
+        entry.restaurant = entriesBrowserEditState.restaurant.trim() || entry.restaurant;
+        entry.cuisine = entriesBrowserEditState.cuisine.trim();
+        entry.note = entriesBrowserEditState.note.trim();
+        entry.ratingTaste = entriesBrowserEditState.taste;
+        entry.ratingAmbiance = entriesBrowserEditState.ambiance;
+        entry.cost = entriesBrowserEditState.cost;
+      }
+      entriesBrowserEditingId = null;
+      entriesBrowserEditState = null;
+      await saveData();
+      updateEntriesBrowserResults();
+    });
+  });
+  document.querySelectorAll('button[id^="eb-cancel-"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      entriesBrowserEditingId = null;
+      entriesBrowserEditState = null;
+      updateEntriesBrowserResults();
+    });
+  });
+}
+
 function renderAccountCleanupCard() {
   const others = state.friends.filter(f => !me || f.id !== me.friendId);
   let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
@@ -4618,8 +4792,7 @@ function renderFirstActionScreen() {
   let html = '<div class="card">';
   const inviterFriend = inviterFriendId ? state.friends.find(f => f.id === inviterFriendId) : null;
   if (inviterFriend) {
-    const lastInitial = (inviterFriend.lastName || inviterFriend.name.split(' ').slice(-1)[0] || '').charAt(0).toUpperCase();
-    const displayName = (inviterFriend.firstName || inviterFriend.name.split(' ')[0]) + (lastInitial ? ' ' + lastInitial + '.' : '');
+    const displayName = formatFirstLastInitial(inviterFriend);
     html += '<p class="hint" style="text-transform:uppercase; letter-spacing:0.06em; font-size:11px; margin-bottom:6px;">You were invited</p>';
     html += '<h2>' + escapeHtml(displayName) + ' invited you</h2>';
     html += '<p class="hint">Rate their taste to get started — it\'s the one relationship we already know is real.</p>';
@@ -4803,7 +4976,7 @@ function renderPage() {
   if (me) {
     html += '<div class="status-strip">';
     html += '<div style="display:flex; justify-content:flex-start; align-items:center; flex-wrap:wrap; gap:10px;">';
-    html += '<span class="who">' + escapeHtml(me.name) + '</span>';
+    html += '<span class="who">' + escapeHtml(formatFirstLastInitial(me)) + '</span>';
     if (isCurrentUserAdmin()) html += '<span class="meta-badge">ADMIN</span>';
     html += '</div>';
 
@@ -4870,6 +5043,7 @@ function renderPage() {
       if (hasAdminPermission('matchmaking')) html += renderMatchmakingCard();
       if (hasAdminPermission('manageAdmins')) html += renderManageAdminsCard();
       if (hasAdminPermission('cleanup')) { html += renderAccountClaimCard(); html += renderAccountCleanupCard(); html += renderDeleteAccountByEmailCard(); }
+      if (hasAdminPermission('manageEntries')) html += renderEntriesBrowserCard();
       if (hasAdminPermission('export')) html += renderExportCard();
       if (hasAdminPermission('restore')) { html += renderAutoBackupsCard(); html += renderDataImportCard(); }
       if (hasAdminPermission('seedImport')) html += renderSeedImportCard();
@@ -4891,8 +5065,7 @@ function renderPage() {
 
     const inviterFriend = inviterFriendId ? state.friends.find(f => f.id === inviterFriendId) : null;
     if (inviterFriend) {
-      const lastInitial = (inviterFriend.lastName || inviterFriend.name.split(' ').slice(-1)[0] || '').charAt(0).toUpperCase();
-      const displayName = (inviterFriend.firstName || inviterFriend.name.split(' ')[0]) + (lastInitial ? ' ' + lastInitial + '.' : '');
+      const displayName = formatFirstLastInitial(inviterFriend);
       html += '<div style="background:var(--surface); border-radius:10px; padding:14px; margin-bottom:16px;"><p class="hint" style="margin:0;"><strong style="color:var(--brass);">' + escapeHtml(displayName) + '</strong> invited you to Nate-Worthy — a place for foodies to share great restaurants.</p></div>';
     } else if (isPublicInvite) {
       html += '<div style="background:var(--surface); border-radius:10px; padding:14px; margin-bottom:16px;"><p class="hint" style="margin:0;">Join Nate-Worthy — a site for foodies, enhanced by trust and AI.</p></div>';
@@ -5960,6 +6133,19 @@ function buildCuisineDatalist() {
   return '<datalist id="cuisine-suggestions">' + options + '</datalist>';
 }
 
+// "First L." format -- short enough to reliably fit on one line in tight
+// spaces (a narrow in-app browser view, a small badge), used wherever a
+// full name isn't necessary. Prefers a friend record's own firstName/
+// lastName fields when available, falling back to just splitting the
+// combined name string.
+function formatFirstLastInitial(friendOrMe) {
+  if (!friendOrMe) return '';
+  const name = friendOrMe.name || '';
+  const first = friendOrMe.firstName || name.split(' ')[0] || '';
+  const lastInitial = (friendOrMe.lastName || name.split(' ').slice(-1)[0] || '').charAt(0).toUpperCase();
+  return first + (lastInitial ? ' ' + lastInitial + '.' : '');
+}
+
 function escapeHtml(str) {
   const d = document.createElement('div');
   d.textContent = str || '';
@@ -6340,6 +6526,14 @@ function attachHandlers() {
       render();
     });
   }
+  const entriesBrowserSearchInput = document.getElementById('entries-browser-search');
+  if (entriesBrowserSearchInput) {
+    entriesBrowserSearchInput.addEventListener('input', () => {
+      entriesBrowserSearchQuery = entriesBrowserSearchInput.value;
+      updateEntriesBrowserResults();
+    });
+  }
+  attachEntriesBrowserHandlers();
   document.querySelectorAll('[data-claim-account]').forEach(btn => {
     btn.addEventListener('click', () => {
       const targetId = btn.getAttribute('data-claim-account');
