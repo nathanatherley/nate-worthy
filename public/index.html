@@ -4524,7 +4524,7 @@ function renderShareFavoriteForm() {
   }
   if (formState.city === null) formState.city = defaultCityName;
 
-  html += '<div class="card" id="section-share-favorite">';
+  html += '<div class="card" id="section-share-favorite" style="border:1px solid rgba(224,120,86,0.4);">';
   if (editingEntryId) {
     const editingEntry = state.suggestions.find(s => s.id === editingEntryId);
     const editHeaderText = (editingEntry && editingEntry.friendId !== me.friendId)
