@@ -1579,7 +1579,7 @@ const US_CITY_COORDS = {
   "saint paul": [44.95, -93.09], "st paul": [44.95, -93.09], "st louis": [38.63, -90.20],
   "saint louis": [38.63, -90.20], "cincinnati": [39.10, -84.51], "pittsburgh": [40.44, -79.99],
   "greensboro": [36.07, -79.79], "anchorage": [61.22, -149.90], "plano": [33.02, -96.70],
-  "lincoln": [40.81, -96.68], "orlando": [28.54, -81.38], "irvine": [33.68, -117.83],
+  "lincoln": [40.81, -96.68], "orlando": [28.54, -81.38], "winter garden": [28.5654, -81.5862], "irvine": [33.68, -117.83],
   "newark": [40.74, -74.17], "toledo": [41.66, -83.56], "durham": [35.99, -78.90],
   "chula vista": [32.64, -117.08], "fort wayne": [41.13, -85.13], "jersey city": [40.72, -74.08],
   "st petersburg": [27.77, -82.64], "saint petersburg": [27.77, -82.64], "laredo": [27.51, -99.51],
@@ -4678,7 +4678,7 @@ function renderShareFavoriteForm() {
   const existingPhotoCount = editingEntryId ? editKeptPhotoKeys.length : 0;
   if (existingPhotoCount + formState.photos.length < 3) {
     html += '<input type="file" id="f-photos" accept="image/*" multiple>';
-    html += '<p class="photo-hint">Up to 3 photos total — food, the space, whatever\'s worth showing.</p>';
+    html += '<p class="photo-hint">Up to 3 photos total.</p>';
   } else {
     html += '<p class="photo-hint">3 photos total — remove one to add a different shot.</p>';
   }
@@ -4733,7 +4733,7 @@ function renderPage() {
 
   if (me) {
     html += '<div class="status-strip">';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">';
+    html += '<div style="display:flex; justify-content:flex-start; align-items:center; flex-wrap:wrap; gap:10px;">';
     html += '<span class="who">' + escapeHtml(me.name) + '</span>';
     if (isCurrentUserAdmin()) html += '<span class="meta-badge">ADMIN</span>';
     html += '</div>';
@@ -4745,7 +4745,7 @@ function renderPage() {
     // not another structured data-entry task. Paired on the same row as
     // Sign out, mirroring the name+ADMIN row above it, rather than Sign
     // out sitting alone with nothing to align against.
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; flex-wrap:wrap; gap:8px;">';
+    html += '<div style="display:flex; justify-content:flex-start; align-items:center; margin-top:4px; flex-wrap:wrap; gap:10px;">';
     if (editingSelfReportedCity) {
       html += '<div style="display:flex; gap:8px; align-items:center; flex:1;">';
       html += '<input type="text" id="self-reported-city-input" list="self-reported-city-suggestions" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="flex:1;">';
