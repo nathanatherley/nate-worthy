@@ -3,7 +3,7 @@
 <head>
 <script src="/db-client.js"></script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Nate-Worthy — for foodies who trust their circle</title>
 <meta name="description" content="For foodies. Built on trust. Enhanced by AI. Not random internet reviews.">
 <meta property="og:title" content="Nate-Worthy">
@@ -55,7 +55,7 @@
     font-family: 'Inter', -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 110px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: max(40px, calc(env(safe-area-inset-top) + 16px)) 24px max(110px, calc(env(safe-area-inset-bottom) + 90px)); }
   .masthead {
     border-bottom: 1px solid rgba(241,236,221,0.15);
     padding-bottom: 24px;
@@ -816,6 +816,8 @@ let shareCardMode = 'link';
 let leaderboardCuisine = null;
 let inviterFriendId = null;
 let isPublicInvite = false;
+let onboardingScreen = 'welcome'; // 'welcome' | 'about' | null (null shows the actual signup form)
+let showFirstActionScreen = false; // true right after a brand-new account is created
 let adminBootstrapRequested = false;
 
 async function applyAdminBootstrapIfRequested() {
@@ -2438,6 +2440,8 @@ async function forgetIdentity() {
   referrerJumpstartSelections = {};
   boardSortMode = 'rating';
   boardCitySearchQuery = '';
+  onboardingScreen = 'welcome';
+  showFirstActionScreen = false;
   manuallyToggledCities = new Set();
   hideMyEntries = false;
   if (pendingUndoTimeout) clearTimeout(pendingUndoTimeout);
@@ -2554,6 +2558,7 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
   signupPhone = '';
   signupError = '';
   signupStartedLogged = false;
+  if (!existing) showFirstActionScreen = true;
   logEvent('signup_completed', { isNewAccount: !existing });
   saveIdentity();
   await applyAdminBootstrapIfRequested();
@@ -4504,6 +4509,66 @@ function renderShareCard() {
   return html;
 }
 
+// Onboarding sequence, shown once for a brand-new visitor before the real
+// signup form: a welcome screen, then a combined "why this beats a review
+// site + what we ask for and why" screen. Existing users signing back in
+// never see this -- onboardingScreen only matters while !me, and once
+// someone has an account, loadIdentity() restores them past it entirely.
+function renderOnboardingWelcome() {
+  let html = '<div class="card">';
+  html += '<h2>Welcome to Nate-Worthy</h2>';
+  html += '<p class="hint">For foodies. Built on trust. Enhanced by AI.</p>';
+  html += '<div class="actions"><button class="btn btn-primary" id="onboarding-next-1">Next</button></div>';
+  html += '</div>';
+  return html;
+}
+
+function renderOnboardingAbout() {
+  let html = '<div class="card">';
+  html += '<h2>Why this beats a review site</h2>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Random reviews:</strong> strangers, no idea if your taste matches theirs.</p>';
+  html += '<p class="hint"><strong style="color:var(--brass);">Nate-Worthy:</strong> weighted by how much you trust who\'s recommending.</p>';
+  html += '<p class="hint"><strong style="color:var(--rust);">Plus AI:</strong> fills the gaps, even for cuisines you haven\'t rated yet.</p>';
+  html += '<div style="border-top:1px solid var(--line); margin:18px 0;"></div>';
+  html += '<h2>What we ask for, and why</h2>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Your city</strong> — so results are actually nearby.</p>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Cuisines you like</strong> — smart recommendations from day one.</p>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Who you trust</strong> — the biggest factor in what you see.</p>';
+  html += '<div class="actions"><button class="btn btn-primary" id="onboarding-next-2">Get started</button></div>';
+  html += '</div>';
+  return html;
+}
+
+// Shown once, right after a brand-new account is created (not for existing
+// users signing back in). Branches on how the person arrived: a referred
+// signup gets a direct prompt to rate the one person we're actually
+// confident they know; an organic signup gets an achievable first action
+// (add a restaurant) plus the invite prompt, since there's often no one
+// for them to rate yet.
+function renderFirstActionScreen() {
+  let html = '<div class="card">';
+  const inviterFriend = inviterFriendId ? state.friends.find(f => f.id === inviterFriendId) : null;
+  if (inviterFriend) {
+    const lastInitial = (inviterFriend.lastName || inviterFriend.name.split(' ').slice(-1)[0] || '').charAt(0).toUpperCase();
+    const displayName = (inviterFriend.firstName || inviterFriend.name.split(' ')[0]) + (lastInitial ? ' ' + lastInitial + '.' : '');
+    html += '<p class="hint" style="text-transform:uppercase; letter-spacing:0.06em; font-size:11px; margin-bottom:6px;">You were invited</p>';
+    html += '<h2>' + escapeHtml(displayName) + ' invited you</h2>';
+    html += '<p class="hint">Rate their taste to get started — it\'s the one relationship we already know is real.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="first-action-rate-inviter" data-inviter-id="' + escapeHtml(inviterFriend.id) + '">Rate ' + escapeHtml(displayName.split(' ')[0]) + '\'s taste</button><button class="btn btn-ghost btn-small" id="first-action-skip">Skip for now</button></div>';
+  } else {
+    html += '<h2>Add your first favorite</h2>';
+    html += '<p class="hint">A place you\'d genuinely recommend — this is what starts building your own results.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="first-action-add-restaurant">Add a restaurant</button></div>';
+    html += '<div style="border-top:1px solid var(--line); margin:18px 0;"></div>';
+    html += '<h3 style="margin-bottom:4px;">Or invite people you trust</h3>';
+    html += '<p class="hint">Invite the foodies you\'d actually ask for a restaurant tip. The more of them are here, the better your recommendations get — and theirs too.</p>';
+    const shareUrl = window.location.origin + window.location.pathname + '?ref=' + encodeURIComponent(me.friendId);
+    html += '<div class="actions"><a class="btn btn-ghost btn-small" id="first-action-text-invite" data-share-url="' + escapeHtml(shareUrl) + '" href="#">Text your link to someone</a><button class="btn btn-ghost btn-small" id="first-action-skip">Skip for now</button></div>';
+  }
+  html += '</div>';
+  return html;
+}
+
 function render() {
   const app = document.getElementById('app');
   document.getElementById('loading').style.display = 'none';
@@ -4668,7 +4733,7 @@ function renderPage() {
 
   if (me) {
     html += '<div class="status-strip">';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">';
     html += '<span class="who">' + escapeHtml(me.name) + '</span>';
     if (isCurrentUserAdmin()) html += '<span class="meta-badge">ADMIN</span>';
     html += '</div>';
@@ -4680,7 +4745,7 @@ function renderPage() {
     // not another structured data-entry task. Paired on the same row as
     // Sign out, mirroring the name+ADMIN row above it, rather than Sign
     // out sitting alone with nothing to align against.
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; flex-wrap:wrap; gap:8px;">';
     if (editingSelfReportedCity) {
       html += '<div style="display:flex; gap:8px; align-items:center; flex:1;">';
       html += '<input type="text" id="self-reported-city-input" list="self-reported-city-suggestions" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="flex:1;">';
@@ -4745,6 +4810,14 @@ function renderPage() {
   }
 
   if (!me) {
+    if (onboardingScreen === 'welcome') {
+      html += renderOnboardingWelcome();
+      return html;
+    }
+    if (onboardingScreen === 'about') {
+      html += renderOnboardingAbout();
+      return html;
+    }
     html += '<div class="card">';
 
     const inviterFriend = inviterFriendId ? state.friends.find(f => f.id === inviterFriendId) : null;
@@ -4784,6 +4857,11 @@ function renderPage() {
     html += '<div class="actions"><button class="btn btn-primary" id="signin-submit">Continue</button></div>';
     html += '</div>';
     html += renderShareCard();
+    return html;
+  }
+
+  if (showFirstActionScreen) {
+    html += renderFirstActionScreen();
     return html;
   }
 
@@ -6215,6 +6293,16 @@ function attachHandlers() {
   }
 
   if (!me) {
+    if (onboardingScreen === 'welcome') {
+      const nextBtn = document.getElementById('onboarding-next-1');
+      if (nextBtn) nextBtn.addEventListener('click', () => { onboardingScreen = 'about'; render(); });
+      return;
+    }
+    if (onboardingScreen === 'about') {
+      const nextBtn = document.getElementById('onboarding-next-2');
+      if (nextBtn) nextBtn.addEventListener('click', () => { onboardingScreen = null; render(); });
+      return;
+    }
     document.getElementById('signin-submit').addEventListener('click', async () => {
       const first = document.getElementById('signin-first').value;
       const mi = document.getElementById('signin-mi').value;
@@ -6240,6 +6328,57 @@ function attachHandlers() {
         render();
       });
     });
+    return;
+  }
+  if (showFirstActionScreen) {
+    const rateInviterBtn = document.getElementById('first-action-rate-inviter');
+    if (rateInviterBtn) {
+      rateInviterBtn.addEventListener('click', () => {
+        const friendId = rateInviterBtn.getAttribute('data-inviter-id');
+        showFirstActionScreen = false;
+        currentTab = 'circle';
+        trustCardExpanded = true; // the card is collapsed by default; the target row won't exist otherwise
+        render();
+        setTimeout(() => {
+          const row = document.querySelector('[data-rate-friend-row="' + friendId + '"]');
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            row.classList.add('highlight-pulse');
+            setTimeout(() => row.classList.remove('highlight-pulse'), 2000);
+          }
+        }, 50);
+      });
+    }
+    const addRestaurantBtn = document.getElementById('first-action-add-restaurant');
+    if (addRestaurantBtn) {
+      addRestaurantBtn.addEventListener('click', () => {
+        showFirstActionScreen = false;
+        currentTab = 'board'; // the entry form only exists in the My Ratings tab DOM
+        render();
+        setTimeout(() => {
+          const target = document.getElementById('section-share-favorite');
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      });
+    }
+    const textInviteBtn = document.getElementById('first-action-text-invite');
+    if (textInviteBtn) {
+      textInviteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const shareUrl = textInviteBtn.getAttribute('data-share-url');
+        const message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const smsUrl = (isIOS ? 'sms:&body=' : 'sms:?body=') + encodeURIComponent(message);
+        window.location.href = smsUrl;
+      });
+    }
+    const skipFirstActionBtn = document.getElementById('first-action-skip');
+    if (skipFirstActionBtn) {
+      skipFirstActionBtn.addEventListener('click', () => {
+        showFirstActionScreen = false;
+        render();
+      });
+    }
     return;
   }
   document.getElementById('switch-user').addEventListener('click', () => {
