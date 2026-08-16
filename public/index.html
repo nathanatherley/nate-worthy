@@ -4451,6 +4451,12 @@ function renderRecommendCard() {
     html += '</div>';
   }
 
+  if (me) {
+    const myEntryCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
+    const myCircleCount = Object.values(myTrustRatings()).filter(v => v > 0).length;
+    html += '<p style="margin-top:16px; padding-top:12px; border-top:1px solid var(--line); font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim);"><b style="color:var(--text-on-paper);">' + myEntryCount + '</b> ' + (myEntryCount === 1 ? 'entry' : 'entries') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
+  }
+
   html += '</div>';
   return html;
 }
@@ -4666,12 +4672,8 @@ function renderPage() {
   }
 
   if (me) {
-    const myEntryCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
-    const myCircleCount = Object.values(myTrustRatings()).filter(v => v > 0).length;
     html += '<div class="status-strip"><span class="who">' + escapeHtml(me.name) + '</span><div class="stats">';
     if (isCurrentUserAdmin()) html += '<span class="meta-badge">ADMIN</span>';
-    html += '<span><b>' + myEntryCount + '</b> ' + (myEntryCount === 1 ? 'entry' : 'entries') + '</span>';
-    html += '<span><b>' + myCircleCount + '</b> circle</span>';
     html += '<button class="switch-link" id="switch-user">Sign out</button>';
     html += '</div></div>';
 
