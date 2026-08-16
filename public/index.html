@@ -2071,6 +2071,7 @@ let entriesBrowserSearchQuery = '';
 let entriesBrowserEditingId = null;
 let entriesBrowserEditState = null;
 let entriesBrowserPendingDeleteId = null;
+let entriesBrowserFlaggedOnly = false;
 let deleteAccountStatus = '';
 let cleanupStatus = '';
 
@@ -3706,11 +3707,34 @@ async function claimExistingAccount(targetId) {
 // by the main entry form, and re-implementing that here isn't
 // proportionate to what this tool is actually for (moderation and
 // testing cleanup, not a second full entry-creation flow).
+// A moderate, common-cases list for flagging entries worth an admin's
+// attention -- not an exhaustive filter, and deliberately not used to
+// block submission (that would need a much more careful, higher-stakes
+// design). This only marks entries for review in the admin browser below;
+// nothing gets hidden or removed automatically. Word-boundary matching
+// avoids the classic false-positive problem (e.g. a substring match
+// inside an unrelated word).
+const FLAGGED_CONTENT_TERMS = [
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'piss',
+  'whore', 'slut', 'faggot', 'retard', 'nigger', 'nigga', 'porn', 'sex',
+  'rape', 'kill yourself', 'kys'
+];
+
+function entryContainsFlaggedContent(entry) {
+  const text = ((entry.restaurant || '') + ' ' + (entry.note || '')).toLowerCase();
+  return FLAGGED_CONTENT_TERMS.some(term => {
+    const pattern = new RegExp('\\b' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+    return pattern.test(text);
+  });
+}
+
 function renderEntriesBrowserCard() {
   let html = '<div class="card">';
   html += '<h2>All entries</h2>';
   html += '<p class="hint">Search by restaurant or person to find, edit, or delete any entry site-wide.</p>';
-  html += '<input type="text" id="entries-browser-search" placeholder="Search restaurant or person…" value="' + escapeHtml(entriesBrowserSearchQuery) + '" style="margin-bottom:12px;">';
+  html += '<input type="text" id="entries-browser-search" placeholder="Search restaurant or person…" value="' + escapeHtml(entriesBrowserSearchQuery) + '" style="margin-bottom:8px;">';
+  const flaggedCount = state.suggestions.filter(entryContainsFlaggedContent).length;
+  html += '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-on-paper-dim); margin-bottom:12px; cursor:pointer;"><input type="checkbox" id="entries-browser-flagged-only"' + (entriesBrowserFlaggedOnly ? ' checked' : '') + '> Show flagged only' + (flaggedCount ? ' (' + flaggedCount + ')' : '') + '</label>';
   html += '<div id="entries-browser-results">' + renderEntriesBrowserResults() + '</div>';
   html += '</div>';
   return html;
@@ -3719,15 +3743,19 @@ function renderEntriesBrowserCard() {
 function renderEntriesBrowserResults() {
   const query = entriesBrowserSearchQuery.trim().toLowerCase();
   let matches = state.suggestions.filter(e => {
+    if (entriesBrowserFlaggedOnly && !entryContainsFlaggedContent(e)) return false;
     if (!query) return true;
     return e.restaurant.toLowerCase().includes(query) || (e.friendName || '').toLowerCase().includes(query);
   });
   matches = matches.slice().sort((a, b) => b.ts - a.ts);
-  const cap = query ? 50 : 20;
+  // No arbitrary cap when specifically reviewing flagged content -- a
+  // moderation pass shouldn't have items silently cut off past a display
+  // limit meant for casual browsing.
+  const cap = entriesBrowserFlaggedOnly ? matches.length : (query ? 50 : 20);
   const total = matches.length;
   matches = matches.slice(0, cap);
 
-  if (!total) return '<p class="empty">No entries match.</p>';
+  if (!total) return '<p class="empty">' + (entriesBrowserFlaggedOnly ? 'Nothing flagged right now.' : 'No entries match.') + '</p>';
 
   let html = '<p class="hint" style="margin-bottom:8px;">' + total + ' match' + (total === 1 ? '' : 'es') + (total > matches.length ? ' — showing first ' + matches.length : '') + (!query ? ' — most recent shown, search to find older ones' : '') + '.</p>';
 
@@ -3764,7 +3792,7 @@ function renderEntriesBrowserResults() {
     } else {
       html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">';
       html += '<div style="min-width:0;">';
-      html += '<p style="font-size:14px; color:var(--text-on-paper); margin:0; font-weight:600;">' + escapeHtml(e.restaurant) + '</p>';
+      html += '<p style="font-size:14px; color:var(--text-on-paper); margin:0; font-weight:600;">' + escapeHtml(e.restaurant) + (entryContainsFlaggedContent(e) ? ' <span class="meta-badge meta-badge-warn">flagged</span>' : '') + '</p>';
       html += '<p class="track-record" style="margin-top:2px;">' + escapeHtml(e.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — ' + escapeHtml(e.friendName) + '</p>';
       html += '<p class="track-record">Taste ' + '\u2605'.repeat(e.ratingTaste || 0) + '\u2606'.repeat(5 - (e.ratingTaste || 0)) + (e.note ? ' — "' + escapeHtml(e.note.slice(0, 60)) + (e.note.length > 60 ? '…' : '') + '"' : '') + '</p>';
       html += '</div>';
@@ -6531,6 +6559,13 @@ function attachHandlers() {
     entriesBrowserSearchInput.addEventListener('input', () => {
       entriesBrowserSearchQuery = entriesBrowserSearchInput.value;
       updateEntriesBrowserResults();
+    });
+  }
+  const entriesBrowserFlaggedOnlyCb = document.getElementById('entries-browser-flagged-only');
+  if (entriesBrowserFlaggedOnlyCb) {
+    entriesBrowserFlaggedOnlyCb.addEventListener('change', () => {
+      entriesBrowserFlaggedOnly = entriesBrowserFlaggedOnlyCb.checked;
+      render();
     });
   }
   attachEntriesBrowserHandlers();
