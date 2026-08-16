@@ -19,6 +19,7 @@ const SESSION_TTL_DAYS = 30;
 // POST /api/auth/request-link   body: { email }
 router.post('/request-link', rateLimitLoginRequests, async (req, res) => {
   const email = (req.body.email || '').trim().toLowerCase();
+  const ref = (req.body.ref || '').trim();
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'valid email required' });
 
   try {
@@ -29,7 +30,12 @@ router.post('/request-link', rateLimitLoginRequests, async (req, res) => {
     );
     const token = result.rows[0].token;
     const appUrl = process.env.APP_URL || 'http://localhost:3000';
-    const link = `${appUrl}/api/auth/verify?token=${token}`;
+    // The referral code travels IN the link itself -- not in a cookie or
+    // session storage -- since the person might open this email on a
+    // completely different device or browser than the one they first
+    // clicked the invite link on. Encoding it into the URL is what makes
+    // it survive that gap.
+    const link = `${appUrl}/api/auth/verify?token=${token}` + (ref ? `&ref=${encodeURIComponent(ref)}` : '');
 
     await sendMagicLinkEmail(email, link);
     res.json({ sent: true });
@@ -41,7 +47,7 @@ router.post('/request-link', rateLimitLoginRequests, async (req, res) => {
 
 // GET /api/auth/verify?token=...
 router.get('/verify', async (req, res) => {
-  const { token } = req.query;
+  const { token, ref } = req.query;
   if (!token) return res.status(400).send('Missing token.');
 
   try {
@@ -74,7 +80,8 @@ router.get('/verify', async (req, res) => {
       maxAge: SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(process.env.APP_URL || '/');
+    const baseUrl = process.env.APP_URL || '/';
+    res.redirect(baseUrl + (ref ? `?ref=${encodeURIComponent(ref)}` : ''));
   } catch (e) {
     console.error('verify failed', e);
     res.status(500).send('Something went wrong signing you in — try requesting a new link.');

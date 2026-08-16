@@ -5813,7 +5813,7 @@ function attachHandlers() {
         const res = await fetch('/api/auth/request-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, ref: inviterFriendId || undefined }),
         });
         if (res.ok) { emailLinkSent = true; render(); }
         else { msg.textContent = 'Something went wrong — try again.'; authEmailBtn.disabled = false; }
@@ -7661,6 +7661,11 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
     logEvent('error', { message: msg.slice(0, 300), context: 'unhandledrejection' });
   });
   try {
+    const params = new URLSearchParams(window.location.search);
+    inviterFriendId = params.get('ref') || null;
+    adminBootstrapRequested = params.get('admin') === 'setup';
+  } catch (e) { inviterFriendId = null; }
+  try {
     const meRes = await fetch('/api/auth/me');
     if (meRes.ok) {
       const meData = await meRes.json();
@@ -7673,11 +7678,6 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
 
   if (!sessionEmail) { render(); return; }
 
-  try {
-    const params = new URLSearchParams(window.location.search);
-    inviterFriendId = params.get('ref') || null;
-    adminBootstrapRequested = params.get('admin') === 'setup';
-  } catch (e) { inviterFriendId = null; }
   await loadData();
   await loadIdentity();
   if (me) {
