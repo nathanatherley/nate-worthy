@@ -915,6 +915,8 @@ let lastQueryWasNearMeFiltered = false;
 let recResults = null;
 let recResultsShownCount = 5;
 let boardSortMode = 'rating';
+let boardCitySearchQuery = '';
+let boardCitySearchDebounceTimer = null;
 let manuallyToggledCities = new Set(); // cities where the user overrode the default expand/collapse state
 let hideMyEntries = false;
 let pendingUndo = null;
@@ -2434,6 +2436,7 @@ async function forgetIdentity() {
   quickConnectSelections = {};
   referrerJumpstartSelections = {};
   boardSortMode = 'rating';
+  boardCitySearchQuery = '';
   manuallyToggledCities = new Set();
   hideMyEntries = false;
   if (pendingUndoTimeout) clearTimeout(pendingUndoTimeout);
@@ -4742,13 +4745,9 @@ function renderPage() {
     } else if (currentTab === 'board') {
       html += renderShareFavoriteForm();
       html += renderBoard();
-      let legendInner = '<div class="legend-row"><span class="legend-label">Taste</span><span class="legend-desc">1 to 5 — how strongly you\'d recommend it. Drives the ranking.</span></div>';
-      legendInner += '<div class="legend-row"><span class="legend-label">Ambiance</span><span class="legend-desc">1 to 5 — how much you enjoyed the space. Shown for reference only.</span></div>';
-      legendInner += '<div class="legend-row"><span class="legend-label">Cost</span><span class="legend-desc">$ to $$$$ — least to most expensive. Shown for reference only.</span></div>';
       html += '<div class="quiet-zone">';
       html += renderTrendingCard();
       html += renderLeaderboardCard();
-      html += renderCollapsibleWrapper('scale-legend', 'What the ratings mean', legendInner, true, 'scale-legend');
       html += '</div>';
     } else if (currentTab === 'circle') {
       html += renderTrustCard();
@@ -5010,6 +5009,7 @@ function renderEntryCard(e, showCityLabel) {
 
 function renderBoardControls(totalVisible, newSinceCount) {
   let html = '<div class="card board-controls">';
+  html += '<input type="text" id="board-city-search" placeholder="Find a city…" value="' + escapeHtml(boardCitySearchQuery) + '" style="margin-bottom:10px;">';
   html += '<div class="board-controls-row">';
   html += '<select id="board-sort">';
   html += '<option value="rating"' + (boardSortMode === 'rating' ? ' selected' : '') + '>Top rated</option>';
@@ -5220,15 +5220,21 @@ function renderBoard() {
     return a.name.localeCompare(b.name);
   });
 
+  const searchQuery = boardCitySearchQuery.trim().toLowerCase();
   orderedCities.forEach(city => {
     if (childCityIds.has(city.id)) return; // rendered nested under its parent below, not as its own top-level entry
+    const children = childrenByParentId[city.id] || [];
+    if (searchQuery) {
+      const cityMatches = city.name.toLowerCase().includes(searchQuery);
+      const anyChildMatches = children.some(c => c.name.toLowerCase().includes(searchQuery));
+      if (!cityMatches && !anyChildMatches) return;
+    }
     const rendered = renderCityBlock(city, visibleIds, false);
     if (!rendered.html) return;
     totalVisible += rendered.count;
     out += rendered.html;
 
-    const children = childrenByParentId[city.id];
-    if (children && children.length) {
+    if (children.length) {
       out += '<div class="nested-suburbs">';
       children.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(child => {
         const childRendered = renderCityBlock(child, visibleIds, true);
@@ -5239,7 +5245,7 @@ function renderBoard() {
   });
 
   if (!out) {
-    return renderBoardControls(0, newSinceCount) + '<p class="empty">Nothing here yet \u2014 try turning off \u201chide places I\'ve already added.\u201d</p>';
+    return renderBoardControls(0, newSinceCount) + '<p class="empty">' + (searchQuery ? 'No cities match "' + escapeHtml(boardCitySearchQuery) + '."' : 'Nothing here yet \u2014 try turning off \u201chide places I\'ve already added.\u201d') + '</p>';
   }
 
   return renderBoardControls(totalVisible, newSinceCount) + out;
@@ -6832,6 +6838,26 @@ function attachHandlers() {
     boardHideMineCb.addEventListener('change', () => {
       hideMyEntries = boardHideMineCb.checked;
       render();
+    });
+  }
+  const boardCitySearchInput = document.getElementById('board-city-search');
+  if (boardCitySearchInput) {
+    boardCitySearchInput.addEventListener('input', () => {
+      boardCitySearchQuery = boardCitySearchInput.value;
+      const cursorPos = boardCitySearchInput.selectionStart;
+      clearTimeout(boardCitySearchDebounceTimer);
+      boardCitySearchDebounceTimer = setTimeout(() => {
+        render();
+        // render() rebuilds the whole tab, so the search box is a brand
+        // new DOM node afterward -- restore focus and cursor position so
+        // continuing to type feels uninterrupted rather than requiring a
+        // re-click into the field after every pause.
+        const freshInput = document.getElementById('board-city-search');
+        if (freshInput) {
+          freshInput.focus();
+          freshInput.setSelectionRange(cursorPos, cursorPos);
+        }
+      }, 300);
     });
   }
   const boardShowNewCb = document.getElementById('board-show-new');
