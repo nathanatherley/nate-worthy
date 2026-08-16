@@ -103,6 +103,45 @@ router.post('/logout', async (req, res) => {
   res.json({ loggedOut: true });
 });
 
+// POST /api/auth/delete-account-by-email   body: { email }
+// Admin-only in intent, gated client-side -- same limitation as other
+// admin-facing endpoints in this app: there's no reliable server-side way
+// to verify "is this user an app-admin" given admin status lives in
+// client-managed state, not tied to the users table. Requires at least a
+// valid session so this can't be called by someone with no account.
+//
+// Deleting the users row cascades automatically (via the foreign keys in
+// schema.sql) to their sessions AND their personal kv_store data --
+// including their saved 'my-identity' key. That matters here specifically:
+// if a friend record they pointed to was ever lost from the shared app
+// data (e.g. from a save race before the merge-forward fix), their old
+// identity key surviving on its own would leave them stuck re-logging
+// into a broken, dangling reference. Deleting the account here clears
+// that out, so their next signup starts genuinely fresh.
+//
+// This does NOT touch the shared app data (friends/suggestions) -- any
+// leftover record there needs separate cleanup via the existing "Clean up
+// accounts" admin tool, since there's no stored link from a users row
+// back to which specific friend record (if any) belongs to them.
+router.post('/delete-account-by-email', async (req, res) => {
+  const sessionId = req.cookies.session_id;
+  if (!sessionId) return res.status(401).json({ error: 'not signed in' });
+  try {
+    const sessionCheck = await pool.query('SELECT user_id FROM sessions WHERE id = $1 AND expires_at > now()', [sessionId]);
+    if (!sessionCheck.rows.length) return res.status(401).json({ error: 'session expired' });
+
+    const email = (req.body.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'valid email required' });
+
+    const result = await pool.query('DELETE FROM users WHERE email = $1 RETURNING id', [email]);
+    if (!result.rows.length) return res.status(404).json({ error: 'no account found with that email' });
+    res.json({ deleted: true, email });
+  } catch (e) {
+    console.error('delete-account-by-email failed', e);
+    res.status(500).json({ error: 'delete failed' });
+  }
+});
+
 // GET /api/me — used by the frontend on load to check session state
 router.get('/me', async (req, res) => {
   const sessionId = req.cookies.session_id;

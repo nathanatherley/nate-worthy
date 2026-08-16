@@ -2065,6 +2065,9 @@ let placeAutocompleteDebounceTimer = null;
 let placeAutocompleteLoading = false;
 let placeDetailsPreview = null; // transient, on-screen only -- never written into the saved entry
 let pendingCleanupConfirm = null;
+let deleteAccountEmailInput = '';
+let pendingDeleteAccountEmail = null;
+let deleteAccountStatus = '';
 let cleanupStatus = '';
 
 function cancelDataImport() {
@@ -3733,6 +3736,35 @@ function renderAccountCleanupCard() {
   return html;
 }
 
+// Separate from "Clean up accounts" above -- that one only touches the
+// shared app data (friends/suggestions). This tool deletes the actual
+// login account (the users row), which is what a stuck/broken account
+// genuinely needs: their session and any personal data (including a
+// stale saved identity pointing at a friend record that no longer
+// exists) get cleared out via cascade, so their next signup starts
+// genuinely fresh instead of re-loading a dangling reference.
+function renderDeleteAccountByEmailCard() {
+  let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+  html += '<h2>Delete account by email</h2>';
+
+  if (pendingDeleteAccountEmail) {
+    html += '<p class="hint" style="color: var(--rust); font-weight: 600;">This will permanently delete the login account for <strong>' + escapeHtml(pendingDeleteAccountEmail) + '</strong> -- their session and any saved personal data. This cannot be undone.</p>';
+    html += '<p class="hint">This does not remove them from the shared app data (their name, ratings, entries) -- use "Clean up accounts" above for that separately, if needed.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="delete-account-confirm-btn">Yes, delete permanently</button><button class="btn btn-ghost" id="delete-account-cancel-btn">Cancel</button></div>';
+    html += '</div>';
+    return html;
+  }
+
+  html += '<p class="hint">For a login account stuck in a broken state -- e.g. a signup that got lost from the shared data but left a stale saved identity behind. Deletes their account entirely so their next signup starts fresh.</p>';
+  html += '<div class="share-row">';
+  html += '<input type="text" id="delete-account-email-input" placeholder="email@example.com" value="' + escapeHtml(deleteAccountEmailInput) + '">';
+  html += '<button class="btn btn-ghost btn-small" id="delete-account-stage-btn">Delete account</button>';
+  html += '</div>';
+  html += '<span class="msg' + (deleteAccountStatus && deleteAccountStatus.startsWith('Deleted') ? ' msg-success' : (deleteAccountStatus ? ' msg-duplicate' : '')) + '" id="delete-account-status-msg">' + escapeHtml(deleteAccountStatus) + '</span>';
+  html += '</div>';
+  return html;
+}
+
 function stageCleanup() {
   const selectedIds = Object.keys(cleanupSelections).filter(id => cleanupSelections[id]);
   if (!selectedIds.length) { cleanupStatus = 'Select at least one account first.'; render(); return; }
@@ -4837,7 +4869,7 @@ function renderPage() {
       if (hasAdminPermission('viewStats')) html += renderAdminStatsCard();
       if (hasAdminPermission('matchmaking')) html += renderMatchmakingCard();
       if (hasAdminPermission('manageAdmins')) html += renderManageAdminsCard();
-      if (hasAdminPermission('cleanup')) { html += renderAccountClaimCard(); html += renderAccountCleanupCard(); }
+      if (hasAdminPermission('cleanup')) { html += renderAccountClaimCard(); html += renderAccountCleanupCard(); html += renderDeleteAccountByEmailCard(); }
       if (hasAdminPermission('export')) html += renderExportCard();
       if (hasAdminPermission('restore')) { html += renderAutoBackupsCard(); html += renderDataImportCard(); }
       if (hasAdminPermission('seedImport')) html += renderSeedImportCard();
@@ -6260,6 +6292,54 @@ function attachHandlers() {
   if (cleanupConfirmBtn) cleanupConfirmBtn.addEventListener('click', confirmCleanup);
   const cleanupCancelBtn = document.getElementById('cleanup-cancel-btn');
   if (cleanupCancelBtn) cleanupCancelBtn.addEventListener('click', cancelCleanup);
+  const deleteAccountEmailEl = document.getElementById('delete-account-email-input');
+  if (deleteAccountEmailEl) deleteAccountEmailEl.addEventListener('input', () => { deleteAccountEmailInput = deleteAccountEmailEl.value; });
+  const deleteAccountStageBtn = document.getElementById('delete-account-stage-btn');
+  if (deleteAccountStageBtn) {
+    deleteAccountStageBtn.addEventListener('click', () => {
+      const email = deleteAccountEmailInput.trim();
+      if (!email || !email.includes('@')) {
+        deleteAccountStatus = 'Enter a valid email first.';
+        render();
+        return;
+      }
+      pendingDeleteAccountEmail = email;
+      deleteAccountStatus = '';
+      render();
+    });
+  }
+  const deleteAccountConfirmBtn = document.getElementById('delete-account-confirm-btn');
+  if (deleteAccountConfirmBtn) {
+    deleteAccountConfirmBtn.addEventListener('click', async () => {
+      const email = pendingDeleteAccountEmail;
+      try {
+        const res = await fetch('/api/auth/delete-account-by-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          deleteAccountStatus = 'Deleted account for ' + email + '.';
+          deleteAccountEmailInput = '';
+        } else {
+          deleteAccountStatus = data.error === 'no account found with that email' ? 'No account found with that email.' : ('Delete failed: ' + (data.error || 'unknown error'));
+        }
+      } catch (e) {
+        console.error('delete account failed', e);
+        deleteAccountStatus = 'Delete failed — check your connection and try again.';
+      }
+      pendingDeleteAccountEmail = null;
+      render();
+    });
+  }
+  const deleteAccountCancelBtn = document.getElementById('delete-account-cancel-btn');
+  if (deleteAccountCancelBtn) {
+    deleteAccountCancelBtn.addEventListener('click', () => {
+      pendingDeleteAccountEmail = null;
+      render();
+    });
+  }
   document.querySelectorAll('[data-claim-account]').forEach(btn => {
     btn.addEventListener('click', () => {
       const targetId = btn.getAttribute('data-claim-account');
