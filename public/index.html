@@ -815,6 +815,7 @@ let cuisineCardExpanded = false;
 let shareCardMode = 'link';
 let leaderboardCuisine = null;
 let inviterFriendId = null;
+let isPublicInvite = false;
 let adminBootstrapRequested = false;
 
 async function applyAdminBootstrapIfRequested() {
@@ -4487,7 +4488,7 @@ function renderShareCard() {
       }
     }
   } else if (shareCardMode === 'open' && isCurrentUserAdmin()) {
-    const openUrl = window.location.origin + window.location.pathname;
+    const openUrl = window.location.origin + window.location.pathname + '?invite=public';
     html += '<p class="hint">Posting somewhere public, like a Facebook group? Use this link if you\'re not sure they share your food taste.</p>';
     html += '<div class="share-row">';
     html += '<input type="text" id="open-share-link" readonly value="' + escapeHtml(openUrl) + '">';
@@ -4736,6 +4737,16 @@ function renderPage() {
 
   if (!me) {
     html += '<div class="card">';
+
+    const inviterFriend = inviterFriendId ? state.friends.find(f => f.id === inviterFriendId) : null;
+    if (inviterFriend) {
+      const lastInitial = (inviterFriend.lastName || inviterFriend.name.split(' ').slice(-1)[0] || '').charAt(0).toUpperCase();
+      const displayName = (inviterFriend.firstName || inviterFriend.name.split(' ')[0]) + (lastInitial ? ' ' + lastInitial + '.' : '');
+      html += '<div style="background:var(--surface); border-radius:10px; padding:14px; margin-bottom:16px;"><p class="hint" style="margin:0;"><strong style="color:var(--brass);">' + escapeHtml(displayName) + '</strong> invited you to Nate-Worthy — a place for foodies to share great restaurants.</p></div>';
+    } else if (isPublicInvite) {
+      html += '<div style="background:var(--surface); border-radius:10px; padding:14px; margin-bottom:16px;"><p class="hint" style="margin:0;">Join Nate-Worthy — a site for foodies, enhanced by trust and AI.</p></div>';
+    }
+
     html += '<h2>Who are you</h2>';
     html += '<p class="hint">You\'re signed in — just need a name so friends recognize you when they see your picks.</p>';
 
@@ -5813,7 +5824,7 @@ function attachHandlers() {
         const res = await fetch('/api/auth/request-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, ref: inviterFriendId || undefined }),
+          body: JSON.stringify({ email, ref: inviterFriendId || undefined, publicInvite: isPublicInvite || undefined }),
         });
         if (res.ok) { emailLinkSent = true; render(); }
         else { msg.textContent = 'Something went wrong — try again.'; authEmailBtn.disabled = false; }
@@ -7663,6 +7674,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   try {
     const params = new URLSearchParams(window.location.search);
     inviterFriendId = params.get('ref') || null;
+    isPublicInvite = params.get('invite') === 'public';
     adminBootstrapRequested = params.get('admin') === 'setup';
   } catch (e) { inviterFriendId = null; }
   try {
