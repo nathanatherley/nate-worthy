@@ -4387,7 +4387,7 @@ function renderRecommendCard() {
   let html = '<div class="card rec-card hero-panel">';
   html += '<h2>What sounds good?</h2>';
   if (me && !isFollowUp && Object.values(myTrustRatings()).filter(v => v > 0).length === 0) {
-    html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(224,120,86,0.25); border: 1px solid rgba(224,120,86,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — recommendations only pull from people you actually trust. Head to the Circle tab and rate a few people to start seeing real results here.</p>';
+    html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(224,120,86,0.25); border: 1px solid rgba(224,120,86,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — you\'ll still get community and web picks, but rating a few people whose taste you trust makes your recommendations significantly better.</p>';
   }
   if (isFollowUp) {
     html += '<p class="hint">Want to adjust that? Ask for something like "cheaper" or "not that one" and it\'ll refine from the same options.</p>';
