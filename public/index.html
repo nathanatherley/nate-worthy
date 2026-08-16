@@ -5003,33 +5003,29 @@ function renderPage() {
 
   if (me) {
     html += '<div class="status-strip">';
-    html += '<div style="display:flex; justify-content:flex-start; align-items:center; flex-wrap:wrap; gap:10px;">';
-    html += '<span class="who">' + escapeHtml(formatFirstLastInitial(me)) + '</span>';
-    if (isCurrentUserAdmin()) html += '<span class="meta-badge">ADMIN</span>';
-    html += '</div>';
+    html += '<p class="who" style="margin:0;">' + escapeHtml(formatFirstLastInitial(me)) + (isCurrentUserAdmin() ? ' <span class="meta-badge" style="vertical-align:2px;">ADMIN</span>' : '') + '</p>';
 
     // Self-reported city -- a second, honest signal alongside geolocation
     // (which only knows where your phone is right now, not where you
     // actually know food). Kept as free text rather than forcing a match
     // to an existing city record, since the point is a quick self-report,
-    // not another structured data-entry task. Paired on the same row as
-    // Sign out, mirroring the name+ADMIN row above it, rather than Sign
-    // out sitting alone with nothing to align against.
-    html += '<div style="display:flex; justify-content:flex-start; align-items:center; margin-top:4px; flex-wrap:wrap; gap:10px;">';
+    // not another structured data-entry task. Sign out flows inline right
+    // after Edit, in the same paragraph, rather than as a separate
+    // flex-positioned element -- that's what stops it from wrapping away
+    // on its own, since it's not a separate flex child to begin with.
     if (editingSelfReportedCity) {
-      html += '<div style="display:flex; gap:8px; align-items:center; flex:1;">';
-      html += '<input type="text" id="self-reported-city-input" list="self-reported-city-suggestions" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="flex:1;">';
+      html += '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px;">';
+      html += '<input type="text" id="self-reported-city-input" list="self-reported-city-suggestions" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="flex:1; min-width:160px;">';
       html += buildCityDatalist('self-reported-city-suggestions');
       html += '<button class="btn btn-primary btn-small" id="save-self-reported-city">Save</button>';
       html += '<button class="btn btn-ghost btn-small" id="cancel-self-reported-city">Cancel</button>';
+      html += '<button class="switch-link" id="switch-user">Sign out</button>';
       html += '</div>';
     } else if (me.selfReportedCity) {
-      html += '<p class="hint" style="margin:0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button></p>';
+      html += '<p class="hint" style="margin:4px 0 0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button></p>';
     } else {
-      html += '<p class="hint" style="margin:0;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button></p>';
+      html += '<p class="hint" style="margin:4px 0 0;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button></p>';
     }
-    html += '<button class="switch-link" style="white-space:nowrap; margin-left:12px;" id="switch-user">Sign out</button>';
-    html += '</div>';
     html += '</div>';
 
     html += renderCircleNudgeCard();
