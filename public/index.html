@@ -4310,7 +4310,7 @@ function updateGroupPickResults() {
 function renderRecommendCard() {
   const isFollowUp = recConversation.length > 0;
   const isGroupMode = groupPickSelectedIds.size > 0;
-  let html = '<div class="card rec-card hero-panel" style="border-top:none; border-radius:0 0 12px 12px; margin-top:0;">';
+  let html = '<div class="card rec-card hero-panel">';
   html += '<h2>What sounds good?</h2>';
   if (me && !isFollowUp && Object.values(myTrustRatings()).filter(v => v > 0).length === 0) {
     html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(224,120,86,0.25); border: 1px solid rgba(224,120,86,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — recommendations only pull from people you actually trust. Head to the Circle tab and rate a few people to start seeing real results here.</p>';
@@ -4666,8 +4666,7 @@ function renderPage() {
   }
 
   if (me) {
-    const headerConnectsToCard = (currentTab === 'discover');
-    html += '<div class="status-strip"' + (headerConnectsToCard ? ' style="border:1px solid rgba(245,240,230,0.14); border-bottom:none; border-radius:12px 12px 0 0; padding:16px 20px 8px; margin-bottom:0;"' : '') + '>';
+    html += '<div class="status-strip">';
     html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
     html += '<span class="who">' + escapeHtml(me.name) + '</span>';
     if (isCurrentUserAdmin()) html += '<span class="meta-badge">ADMIN</span>';
