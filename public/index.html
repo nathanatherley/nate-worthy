@@ -4321,17 +4321,19 @@ function renderRecommendCard() {
   html += '<textarea id="rec-query" placeholder="' + (isFollowUp ? 'e.g. something cheaper, or not that one' : 'What are you craving? Cuisine, $$, location — this pulls the best matches for you.') + '">' + escapeHtml(recQuery) + '</textarea>';
 
   const submitLabel = recLoading ? 'Thinking…' : (isFollowUp ? (lastGroupModeParticipants ? 'Refine group picks' : 'Refine') : (isGroupMode ? 'Find group picks' : 'Find suggestions'));
-  html += '<div class="actions"><button class="btn btn-primary" id="rec-submit"' + (recLoading ? ' disabled' : '') + '>' + submitLabel + '</button>';
+  html += '<div class="actions">';
+  html += '<button class="btn btn-primary" id="rec-submit"' + (recLoading ? ' disabled' : '') + '>' + submitLabel + '</button>';
   if (isFollowUp) {
     html += '<button class="btn btn-ghost btn-small" id="rec-start-over">Start over</button>';
+  } else {
+    html += '<button type="button" class="btn btn-ghost btn-small" id="group-pick-toggle" style="background:rgba(46,139,139,0.1); border-color:var(--brass); color:var(--brass);">' +
+      (groupPickExpanded ? 'Hide group planning' : (isGroupMode ? 'Planning with ' + groupPickSelectedIds.size + ' ' + (groupPickSelectedIds.size === 1 ? 'other' : 'others') + ' — edit' : 'Planning with others')) +
+      '</button>';
   }
   html += '</div>';
 
   if (!isFollowUp) {
     const others = me ? state.friends.filter(f => f.id !== me.friendId) : [];
-    html += '<button type="button" class="btn btn-ghost btn-small" id="group-pick-toggle" style="margin-top:8px;">' +
-      (groupPickExpanded ? 'Hide group planning' : (isGroupMode ? 'Planning with ' + groupPickSelectedIds.size + ' ' + (groupPickSelectedIds.size === 1 ? 'other' : 'others') + ' tonight — edit' : 'Planning with others tonight?')) +
-      '</button>';
     if (groupPickExpanded) {
       html += '<div class="group-pick-list">';
       if (!others.length) {
