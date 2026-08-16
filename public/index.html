@@ -4477,6 +4477,7 @@ function renderShareCard() {
     html += '<input type="text" id="share-link" readonly value="' + escapeHtml(shareUrl) + '">';
     html += '<button class="btn btn-ghost btn-small" id="copy-link-btn">Copy link</button>';
     html += '</div>';
+    html += '<div class="actions" style="margin-top:8px;"><a class="btn btn-ghost btn-small" id="text-invite-link" data-share-url="' + escapeHtml(shareUrl) + '" href="#">Text it to someone</a></div>';
     html += '<span class="msg" id="share-msg"></span>';
     if (me) {
       const referred = state.friends.filter(f => f.referredBy === me.friendId);
@@ -6024,6 +6025,21 @@ function attachHandlers() {
         link.setAttribute('readonly', 'true');
       }
       setTimeout(() => { if (shareMsg) shareMsg.textContent = ''; }, 3000);
+    });
+  }
+  const textInviteLink = document.getElementById('text-invite-link');
+  if (textInviteLink) {
+    textInviteLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const shareUrl = textInviteLink.getAttribute('data-share-url');
+      const message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
+      // iOS and Android use a different separator before the body param in
+      // sms: links -- a long-standing platform quirk, not a typo. Getting
+      // this wrong doesn't break anything dangerously, it just means the
+      // message body sometimes won't pre-fill, so it's worth getting right.
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const smsUrl = (isIOS ? 'sms:&body=' : 'sms:?body=') + encodeURIComponent(message);
+      window.location.href = smsUrl;
     });
   }
   const copyOpenLinkBtn = document.getElementById('copy-open-link-btn');
