@@ -220,6 +220,10 @@
     padding: 14px 4px 8px;
   }
   .status-strip .who { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; color: var(--text-on-paper); }
+  @media (max-width: 420px) {
+    .status-strip .who { font-size: 16px; }
+    .status-strip .meta-badge { font-size: 8px; padding: 1px 5px; margin-left: 2px; }
+  }
   .status-strip .stats { display: flex; gap: 14px; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-on-paper-dim); }
   .status-strip .stats b { color: var(--text-on-paper); font-weight: 600; }
   .switch-link { font-size: 12px; color: var(--text-on-paper-dim); background: none; border: none; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-family: 'Inter', sans-serif; padding: 0; }
