@@ -4326,7 +4326,7 @@ function renderRecommendCard() {
   if (isFollowUp) {
     html += '<button class="btn btn-ghost btn-small" id="rec-start-over">Start over</button>';
   } else {
-    html += '<button type="button" class="btn btn-ghost btn-small" id="group-pick-toggle" style="background:rgba(46,139,139,0.1); border-color:var(--brass); color:var(--brass);">' +
+    html += '<button type="button" class="btn" id="group-pick-toggle" style="background:rgba(46,139,139,0.35); color:var(--text-on-paper);">' +
       (groupPickExpanded ? 'Hide group planning' : (isGroupMode ? 'Planning with ' + groupPickSelectedIds.size + ' ' + (groupPickSelectedIds.size === 1 ? 'other' : 'others') + ' — edit' : 'Planning with others')) +
       '</button>';
   }
