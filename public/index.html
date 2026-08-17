@@ -1924,14 +1924,24 @@ function shrunkCuisineAverage(friendId, cuisine) {
 // case than what this fixes -- a whole new signup silently vanishing
 // because an unrelated tab's save overwrote it with an older snapshot
 // that never knew it existed.
-function mergeFreshDataForward(freshState) {
+function mergeFreshDataForward(freshState, excludeIds) {
+  // excludeIds lets a caller that just intentionally deleted something tell
+  // this merge "don't resurrect these" -- without it, this purely-additive
+  // merge (built to protect against losing concurrent signups from other
+  // users) can't tell the difference between "never seen this friend" and
+  // "deleted this friend on purpose a moment ago", and would silently
+  // re-add anything just deleted right before the save that's supposed to
+  // remove it.
+  excludeIds = excludeIds || {};
+  const excludeFriendIds = excludeIds.friends || new Set();
+  const excludeSuggestionIds = excludeIds.suggestions || new Set();
   if (Array.isArray(freshState.friends)) {
     const myFriendIds = new Set(state.friends.map(f => f.id));
-    freshState.friends.forEach(f => { if (!myFriendIds.has(f.id)) state.friends.push(f); });
+    freshState.friends.forEach(f => { if (!myFriendIds.has(f.id) && !excludeFriendIds.has(f.id)) state.friends.push(f); });
   }
   if (Array.isArray(freshState.suggestions)) {
     const mySuggestionIds = new Set(state.suggestions.map(s => s.id));
-    freshState.suggestions.forEach(s => { if (!mySuggestionIds.has(s.id)) state.suggestions.push(s); });
+    freshState.suggestions.forEach(s => { if (!mySuggestionIds.has(s.id) && !excludeSuggestionIds.has(s.id)) state.suggestions.push(s); });
   }
   if (Array.isArray(freshState.cities)) {
     const myCityIds = new Set(state.cities.map(c => c.id));
@@ -1939,13 +1949,13 @@ function mergeFreshDataForward(freshState) {
   }
 }
 
-async function saveData(retriesLeft) {
+async function saveData(retriesLeft, excludeIds) {
   if (typeof retriesLeft !== 'number') retriesLeft = 2;
   try {
     try {
       const freshRes = await window.storage.get('scout-data', true);
       if (freshRes && freshRes.value) {
-        mergeFreshDataForward(JSON.parse(freshRes.value));
+        mergeFreshDataForward(JSON.parse(freshRes.value), excludeIds);
       }
     } catch (e) {
       // Best-effort -- if the fresh read fails (e.g. this is genuinely the
@@ -1959,7 +1969,7 @@ async function saveData(retriesLeft) {
   } catch (e) {
     if (retriesLeft > 0) {
       await new Promise(r => setTimeout(r, 400));
-      return saveData(retriesLeft - 1);
+      return saveData(retriesLeft - 1, excludeIds);
     }
     console.error('save failed after retries', e);
     logEvent('error', { message: 'saveData failed after retries: ' + (e && e.message ? e.message : String(e)) });
@@ -3786,7 +3796,7 @@ function attachEntriesBrowserHandlers() {
       const id = btn.id.replace('eb-delete-confirm-', '');
       state.suggestions = state.suggestions.filter(s => s.id !== id);
       entriesBrowserPendingDeleteId = null;
-      await saveData();
+      await saveData(undefined, { suggestions: new Set([id]) });
       updateEntriesBrowserResults();
     });
   });
@@ -3933,6 +3943,8 @@ async function confirmCleanup() {
   const idsToDelete = new Set(pendingCleanupConfirm);
   pendingCleanupConfirm = null;
 
+  const suggestionIdsToDelete = new Set(state.suggestions.filter(s => idsToDelete.has(s.friendId)).map(s => s.id));
+
   state.suggestions = state.suggestions.filter(s => !idsToDelete.has(s.friendId));
   state.friends = state.friends.filter(f => !idsToDelete.has(f.id));
   state.friends.forEach(f => {
@@ -3944,7 +3956,7 @@ async function confirmCleanup() {
 
   const deletedCount = idsToDelete.size;
   cleanupSelections = {};
-  const saved = await saveData();
+  const saved = await saveData(undefined, { friends: idsToDelete, suggestions: suggestionIdsToDelete });
   cleanupStatus = saved
     ? 'Deleted ' + deletedCount + ' account(s) and their entries.'
     : 'Deletion applied locally but failed to save — try again.';
