@@ -2932,9 +2932,9 @@ function renderCircleNudgeCard() {
   // doesn't yet know who to look for.
   if (ratedCount === 0 && adminSuggestions.length === 0) {
     let html = '<div class="card" style="border: 1px solid rgba(46,139,139,0.4); background: rgba(46,139,139,0.06);">';
-    html += '<h2 style="margin-bottom:4px;">Add people whose taste you trust</h2>';
-    html += '<p class="hint">Trust is what makes this different from a generic review site — rate a few people\'s taste (1 to 5 stars) and their picks count the most in what you see. You\'ll still get solid community and web picks either way, but nothing beats a friend whose taste you know.</p>';
-    html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-go">Go rate people</button></div>';
+    html += '<h2 style="margin-bottom:4px;">Invite people whose taste you trust</h2>';
+    html += '<p class="hint">Trust is what makes this different from a generic review site — invite a few friends, then rate their taste (1 to 5 stars) once they\'re here, and their picks count the most in what you see. You\'ll still get solid community and web picks either way, but nothing beats a friend whose taste you know.</p>';
+    html += '<div class="actions"><button class="btn btn-primary" id="circle-nudge-invite">Invite people</button></div>';
     html += '</div>';
     return html;
   }
@@ -6793,6 +6793,15 @@ function attachHandlers() {
     trustCardExpanded = true;
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  const circleNudgeInviteBtn = document.getElementById('circle-nudge-invite');
+  if (circleNudgeInviteBtn) circleNudgeInviteBtn.addEventListener('click', () => {
+    currentTab = 'circle';
+    render();
+    setTimeout(() => {
+      const shareCard = document.querySelector('.share-card');
+      if (shareCard) shareCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   });
   const expandCuisineBtn = document.getElementById('expand-cuisine-card');
   if (expandCuisineBtn) expandCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = true; render(); });
