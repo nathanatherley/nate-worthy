@@ -1,0 +1,22 @@
+# Dedicated Dockerfile for the backup cron service only -- the main
+# nate-worthy web service still builds normally via Railway's default
+# builder. This exists because nixpacks' pinned package snapshot doesn't
+# yet include postgresql_18, and pg_dump must match the server's major
+# version (18) or it refuses to run.
+FROM node:20-slim
+
+# Install postgresql-client-18 from the official PostgreSQL apt
+# repository (PGDG), since Debian's own default repo only ships an older
+# major version.
+RUN apt-get update && apt-get install -y wget gnupg lsb-release ca-certificates \
+  && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-keyring.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+  && apt-get update && apt-get install -y postgresql-client-18 \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --omit=dev
+COPY . .
+
+CMD ["node", "scripts/backup-db.js"]
