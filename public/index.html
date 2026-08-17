@@ -1992,7 +1992,7 @@ let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
 let showFeedbackForm = false;
-let feedbackStatus = null; // null | 'sending' | 'sent' | 'error'
+let reportFormStatus = null; // null | 'sending' | 'sent' | 'error'
 let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
 let placeAutocompleteSuggestions = [];
 let placeAutocompleteSessionToken = null; // groups a whole search into one billing session; null between searches
@@ -2899,11 +2899,11 @@ function renderFeedbackFormCard() {
   html += '<p class="hint" style="margin-top:0;">Tell us what happened — we\'ll get an email with your account so we can follow up if needed.</p>';
   html += '<textarea id="feedback-message-input" placeholder="What went wrong?" style="width:100%; min-height:100px; box-sizing:border-box;"></textarea>';
   html += '<div style="display:flex; gap:8px; margin-top:8px;">';
-  html += '<button class="btn btn-primary btn-small" id="submit-feedback"' + (feedbackStatus === 'sending' ? ' disabled' : '') + '>' + (feedbackStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
+  html += '<button class="btn btn-primary btn-small" id="submit-feedback"' + (reportFormStatus === 'sending' ? ' disabled' : '') + '>' + (reportFormStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
   html += '<button class="btn btn-ghost btn-small" id="cancel-feedback">Cancel</button>';
   html += '</div>';
-  if (feedbackStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin-bottom:0;">Thanks — that\'s on its way.</p>';
-  if (feedbackStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin-bottom:0;">Something went wrong sending that — try again in a moment.</p>';
+  if (reportFormStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin-bottom:0;">Thanks — that\'s on its way.</p>';
+  if (reportFormStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin-bottom:0;">Something went wrong sending that — try again in a moment.</p>';
   html += '</div>';
   return html;
 }
@@ -6629,7 +6629,7 @@ function attachHandlers() {
   const openFeedbackBtn = document.getElementById('open-feedback-form');
   if (openFeedbackBtn) openFeedbackBtn.addEventListener('click', () => {
     showFeedbackForm = true;
-    feedbackStatus = null;
+    reportFormStatus = null;
     render();
     setTimeout(() => {
       const card = document.getElementById('feedback-form-card');
@@ -6639,7 +6639,7 @@ function attachHandlers() {
   const cancelFeedbackBtn = document.getElementById('cancel-feedback');
   if (cancelFeedbackBtn) cancelFeedbackBtn.addEventListener('click', () => {
     showFeedbackForm = false;
-    feedbackStatus = null;
+    reportFormStatus = null;
     render();
   });
   const submitFeedbackBtn = document.getElementById('submit-feedback');
@@ -6647,7 +6647,7 @@ function attachHandlers() {
     const input = document.getElementById('feedback-message-input');
     const message = (input.value || '').trim();
     if (!message) return;
-    feedbackStatus = 'sending';
+    reportFormStatus = 'sending';
     render();
     try {
       const res = await fetch('/api/feedback', {
@@ -6656,11 +6656,11 @@ function attachHandlers() {
         body: JSON.stringify({ message, page: currentTab }),
       });
       if (!res.ok) throw new Error('feedback send failed');
-      feedbackStatus = 'sent';
-      setTimeout(() => { showFeedbackForm = false; feedbackStatus = null; render(); }, 2000);
+      reportFormStatus = 'sent';
+      setTimeout(() => { showFeedbackForm = false; reportFormStatus = null; render(); }, 2000);
       render();
     } catch (e) {
-      feedbackStatus = 'error';
+      reportFormStatus = 'error';
       render();
     }
   });
