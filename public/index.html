@@ -1991,6 +1991,8 @@ let friendSearchAddedIds = new Set();
 let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
+let showFeedbackForm = false;
+let feedbackStatus = null; // null | 'sending' | 'sent' | 'error'
 let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
 let placeAutocompleteSuggestions = [];
 let placeAutocompleteSessionToken = null; // groups a whole search into one billing session; null between searches
@@ -2889,6 +2891,21 @@ function allConnectionSuggestionsFor(friendId) {
   });
 
   return results;
+}
+
+function renderFeedbackFormCard() {
+  let html = '<div class="card" id="feedback-form-card">';
+  html += '<h3 style="margin-top:0;">Report a problem</h3>';
+  html += '<p class="hint" style="margin-top:0;">Tell us what happened — we\'ll get an email with your account so we can follow up if needed.</p>';
+  html += '<textarea id="feedback-message-input" placeholder="What went wrong?" style="width:100%; min-height:100px; box-sizing:border-box;"></textarea>';
+  html += '<div style="display:flex; gap:8px; margin-top:8px;">';
+  html += '<button class="btn btn-primary btn-small" id="submit-feedback"' + (feedbackStatus === 'sending' ? ' disabled' : '') + '>' + (feedbackStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
+  html += '<button class="btn btn-ghost btn-small" id="cancel-feedback">Cancel</button>';
+  html += '</div>';
+  if (feedbackStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin-bottom:0;">Thanks — that\'s on its way.</p>';
+  if (feedbackStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin-bottom:0;">Something went wrong sending that — try again in a moment.</p>';
+  html += '</div>';
+  return html;
 }
 
 function renderCircleNudgeCard() {
@@ -4951,13 +4968,16 @@ function renderPage() {
       html += '<button class="btn btn-primary btn-small" id="save-self-reported-city">Save</button>';
       html += '<button class="btn btn-ghost btn-small" id="cancel-self-reported-city">Cancel</button>';
       html += '<button class="switch-link" id="switch-user">Sign out</button>';
+      html += '<button class="switch-link" id="open-feedback-form">Report a problem</button>';
       html += '</div>';
     } else if (me.selfReportedCity) {
-      html += '<p class="hint" style="margin:4px 0 0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button></p>';
+      html += '<p class="hint" style="margin:4px 0 0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button> &middot; <button class="switch-link" id="open-feedback-form" style="font-size:inherit;">Report a problem</button></p>';
     } else {
-      html += '<p class="hint" style="margin:4px 0 0;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button></p>';
+      html += '<p class="hint" style="margin:4px 0 0;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button> &middot; <button class="switch-link" id="open-feedback-form" style="font-size:inherit;">Report a problem</button></p>';
     }
     html += '</div>';
+
+    if (showFeedbackForm) html += renderFeedbackFormCard();
 
     html += renderCircleNudgeCard();
     html += renderAdminClaimCard();
@@ -6605,6 +6625,44 @@ function attachHandlers() {
     const hasDraft = formState.restaurant.trim() || formState.note.trim() || formState.taste > 0 || formState.photos.length > 0;
     if (hasDraft) { pendingSwitchUserConfirm = true; render(); return; }
     forgetIdentity();
+  });
+  const openFeedbackBtn = document.getElementById('open-feedback-form');
+  if (openFeedbackBtn) openFeedbackBtn.addEventListener('click', () => {
+    showFeedbackForm = true;
+    feedbackStatus = null;
+    render();
+    setTimeout(() => {
+      const card = document.getElementById('feedback-form-card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  });
+  const cancelFeedbackBtn = document.getElementById('cancel-feedback');
+  if (cancelFeedbackBtn) cancelFeedbackBtn.addEventListener('click', () => {
+    showFeedbackForm = false;
+    feedbackStatus = null;
+    render();
+  });
+  const submitFeedbackBtn = document.getElementById('submit-feedback');
+  if (submitFeedbackBtn) submitFeedbackBtn.addEventListener('click', async () => {
+    const input = document.getElementById('feedback-message-input');
+    const message = (input.value || '').trim();
+    if (!message) return;
+    feedbackStatus = 'sending';
+    render();
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, page: currentTab }),
+      });
+      if (!res.ok) throw new Error('feedback send failed');
+      feedbackStatus = 'sent';
+      setTimeout(() => { showFeedbackForm = false; feedbackStatus = null; render(); }, 2000);
+      render();
+    } catch (e) {
+      feedbackStatus = 'error';
+      render();
+    }
   });
   document.querySelectorAll('[data-quickconnect-toggle]').forEach(cb => {
     cb.addEventListener('change', () => {
