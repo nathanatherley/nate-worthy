@@ -2,8 +2,10 @@
 // directly — your API key lives only here, never in the browser.
 const express = require('express');
 const { requireAuth } = require('../auth/middleware');
+const { aiLimiter } = require('../middleware/rate-limit');
 const router = express.Router();
 router.use(requireAuth);
+router.use(aiLimiter);
 
 // POST /api/recommend  body: { query, options: [...], isGroup, followUp: bool }
 router.post('/', async (req, res) => {

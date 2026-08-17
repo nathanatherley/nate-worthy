@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const pool = require('../db/pool');
 const { sendMagicLinkEmail } = require('./email');
 const { rateLimitLoginRequests } = require('./rate-limit');
+const { signupLimiter } = require('../middleware/rate-limit');
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const TOKEN_TTL_MINUTES = 15;
 const SESSION_TTL_DAYS = 30;
 
 // POST /api/auth/request-link   body: { email }
-router.post('/request-link', rateLimitLoginRequests, async (req, res) => {
+router.post('/request-link', signupLimiter, rateLimitLoginRequests, async (req, res) => {
   const email = (req.body.email || '').trim().toLowerCase();
   const ref = (req.body.ref || '').trim();
   const publicInvite = !!req.body.publicInvite;
