@@ -3194,10 +3194,45 @@ function renderQuickConnectCard() {
   return html;
 }
 
-function renderFriendSearchResults(others, visibleIds, unknownMarks) {
+// Scopes who's findable via search to people reachable through the trust
+// graph, rather than every name ever signed up -- the same principle as
+// Facebook not letting you search a total stranger into a friend request.
+// Reachable means: your referrer, anyone you referred, anyone who already
+// trusts you (they found you through some legitimate path already, fair
+// that you can find them back), and anyone vouched for by someone you
+// already trust (same friend-of-friend source pool jumpstart uses).
+function computeReachableFriendIds() {
+  if (!me) return new Set();
+  const myFriend = state.friends.find(f => f.id === me.friendId);
+  if (!myFriend) return new Set();
+  const reachable = new Set();
+
+  if (myFriend.referredBy) reachable.add(myFriend.referredBy);
+  state.friends.forEach(f => { if (f.referredBy === me.friendId) reachable.add(f.id); });
+
+  unratedReciprocityList().forEach(f => reachable.add(f.id));
+
+  const jumpstartInfo = getJumpstartInfo();
+  if (jumpstartInfo) Object.keys(jumpstartInfo.candidateInfo).forEach(id => reachable.add(id));
+
+  reachable.delete(me.friendId);
+  return reachable;
+}
+
+function renderFriendSearchResults(others, visibleIds, unknownMarks, reachableIds) {
   const query = friendSearchQuery.trim().toLowerCase();
   if (!query) return '';
-  const matches = others.filter(f => !visibleIds.has(f.id) && !unknownMarks[f.id] && f.name.toLowerCase().includes(query)).slice(0, 8);
+  const matches = others.filter(f => {
+    if (visibleIds.has(f.id) || unknownMarks[f.id]) return false;
+    const name = f.name.toLowerCase();
+    // Inside the reachable graph: normal partial-match search, so people
+    // you're already connected to (even loosely) are easy to find. Outside
+    // it: only an exact full-name match surfaces them -- you can still add
+    // someone you actually know by name, but can't casually browse the
+    // whole platform by typing a few letters and seeing who comes up.
+    if (reachableIds.has(f.id)) return name.includes(query);
+    return name === query;
+  }).slice(0, 8);
   if (!matches.length) {
     // Not actually a broken search -- this box is specifically for finding
     // someone NOT already visible, to add them for the first time. If the
@@ -3234,7 +3269,8 @@ function updateFriendSearchResults() {
   const jumpstartIds = new Set(jumpstartInfo ? jumpstartInfo.candidateIds : []);
   const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
   const visibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds]);
-  container.innerHTML = renderFriendSearchResults(others, visibleIds, unknownMarks);
+  const reachableIds = computeReachableFriendIds();
+  container.innerHTML = renderFriendSearchResults(others, visibleIds, unknownMarks, reachableIds);
   attachFriendSearchHandlers();
 }
 
@@ -3493,7 +3529,7 @@ function renderTrustCard() {
     html += '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">';
     html += '<label for="friend-search-input" style="font-size:12.5px; font-weight:600;">Find and add someone</label>';
     html += '<input type="text" id="friend-search-input" placeholder="Type a name to search…" value="' + escapeHtml(friendSearchQuery) + '" style="margin-top:6px;">';
-    html += '<div id="friend-search-results">' + renderFriendSearchResults(others, defaultVisibleIds, unknownMarks) + '</div>';
+    html += '<div id="friend-search-results">' + renderFriendSearchResults(others, defaultVisibleIds, unknownMarks, computeReachableFriendIds()) + '</div>';
     html += '</div>';
 
     if (markedUnknown.length) {
