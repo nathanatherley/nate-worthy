@@ -4756,15 +4756,15 @@ function renderOnboardingWelcome() {
 
 function renderOnboardingAbout() {
   let html = '<div class="card">';
-  html += '<h2>Why this beats a review site</h2>';
-  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Random reviews:</strong> strangers, no idea if your taste matches theirs.</p>';
-  html += '<p class="hint"><strong style="color:var(--brass);">Nate-Worthy:</strong> weighted by how much you trust who\'s recommending.</p>';
-  html += '<p class="hint"><strong style="color:var(--rust);">Plus AI:</strong> fills the gaps, even for cuisines you haven\'t rated yet.</p>';
+  html += '<h2>Not another review site</h2>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Strangers</strong> rate restaurants. Your friends recommend restaurants for you.</p>';
+  html += '<p class="hint"><strong style="color:var(--brass);">Nate-Worthy:</strong> the people whose taste you trust most.</p>';
+  html += '<p class="hint"><strong style="color:var(--rust);">AI</strong> covers the gaps — it never replaces a real recommendation.</p>';
   html += '<div style="border-top:1px solid var(--line); margin:18px 0;"></div>';
   html += '<h2>What we ask for, and why</h2>';
-  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Your city</strong> — so results are actually nearby.</p>';
-  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Cuisines you like</strong> — smart recommendations from day one.</p>';
-  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Who you trust</strong> — the biggest factor in what you see.</p>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">City</strong> — keeps results local, not theoretical.</p>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Taste</strong> — a few cuisines gets you started, not from a blank slate.</p>';
+  html += '<p class="hint"><strong style="color:var(--text-on-paper);">Circle</strong> — trust is the entire point of this app. Everything else is backup.</p>';
   html += '<div class="actions"><button class="btn btn-primary" id="onboarding-next-2">Get started</button></div>';
   html += '</div>';
   return html;
