@@ -4845,8 +4845,17 @@ function renderFirstActionScreen() {
     html += '<div style="border-top:1px solid var(--line); margin:18px 0;"></div>';
     html += '<h3 style="margin-bottom:4px;">Or invite people you trust</h3>';
     html += '<p class="hint">Invite the foodies you\'d actually ask for a restaurant tip. The more of them are here, the better your recommendations get — and theirs too.</p>';
-    const shareUrl = window.location.origin + window.location.pathname + '?ref=' + encodeURIComponent(me.friendId);
-    html += '<div class="actions"><a class="btn btn-ghost btn-small" id="first-action-text-invite" data-share-url="' + escapeHtml(shareUrl) + '" href="#">Text your link to someone</a><button class="btn btn-ghost btn-small" id="first-action-skip">Skip for now</button></div>';
+    html += '<div class="share-row" style="margin-bottom:8px;">';
+    html += '<input type="email" id="invite-email-input" placeholder="their@email.com">';
+    html += '<button class="btn btn-ghost btn-small" id="invite-email-btn"' + (inviteEmailStatus === 'sending' ? ' disabled' : '') + '>' + (inviteEmailStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
+    html += '</div>';
+    if (inviteEmailStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin:0 0 8px;">Sent!</p>';
+    if (inviteEmailStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin:0 0 8px;">Couldn\'t send that — try again.</p>';
+    html += '<div class="share-row" style="margin-bottom:8px;">';
+    html += '<input type="tel" id="invite-phone-input" placeholder="Their phone number">';
+    html += '<button class="btn btn-ghost btn-small" id="invite-phone-btn">Text</button>';
+    html += '</div>';
+    html += '<div class="actions"><button class="btn btn-ghost btn-small" id="first-action-skip">Skip for now</button></div>';
   }
   html += '</div>';
   return html;
