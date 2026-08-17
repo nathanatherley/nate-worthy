@@ -4745,25 +4745,27 @@ function renderShareCard() {
   }
 
   if (!me || shareCardMode === 'link') {
-    html += '<p class="hint">Better picks start with a bigger circle. Send it to foodies you trust.</p>';
-    html += '<div class="share-row">';
-    html += '<input type="text" id="share-link" readonly value="' + escapeHtml(shareUrl) + '">';
-    html += '<button class="btn btn-ghost btn-small" id="copy-link-btn">Copy link</button>';
-    html += '</div>';
-    html += '<div class="actions" style="margin-top:8px;"><a class="btn btn-ghost btn-small" id="text-invite-link" data-share-url="' + escapeHtml(shareUrl) + '" href="#">Text it to someone</a></div>';
-    html += '<span class="msg" id="share-msg"></span>';
-    if (me) {
-      html += '<div style="border-top:1px solid var(--line); margin:14px 0 10px;"></div>';
-      html += '<p class="hint" style="margin-bottom:6px;">Or send it directly:</p>';
+    if (!me) {
+      // No personal invite link exists yet (not signed in) -- fall back to
+      // the plain base URL with a copy button, since there's no ref param
+      // to attach and no email/phone form without an account to send from.
+      html += '<p class="hint">Better picks start with a bigger circle. Send it to foodies you trust.</p>';
+      html += '<div class="share-row">';
+      html += '<input type="text" id="share-link" readonly value="' + escapeHtml(shareUrl) + '">';
+      html += '<button class="btn btn-ghost btn-small" id="copy-link-btn">Copy link</button>';
+      html += '</div>';
+      html += '<span class="msg" id="share-msg"></span>';
+    } else {
+      html += '<p class="hint">Better picks start with a bigger circle. Send your invite directly — your personal link goes with it automatically.</p>';
       html += '<div class="share-row" style="margin-bottom:8px;">';
       html += '<input type="email" id="invite-email-input" placeholder="their@email.com">';
-      html += '<button class="btn btn-ghost btn-small" id="invite-email-btn"' + (inviteEmailStatus === 'sending' ? ' disabled' : '') + '>' + (inviteEmailStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
+      html += '<button class="btn btn-primary btn-small" id="invite-email-btn"' + (inviteEmailStatus === 'sending' ? ' disabled' : '') + '>' + (inviteEmailStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
       html += '</div>';
       if (inviteEmailStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin:0 0 8px;">Sent!</p>';
       if (inviteEmailStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin:0 0 8px;">Couldn\'t send that — try again.</p>';
       html += '<div class="share-row">';
       html += '<input type="tel" id="invite-phone-input" placeholder="Their phone number">';
-      html += '<button class="btn btn-ghost btn-small" id="invite-phone-btn">Text</button>';
+      html += '<button class="btn btn-primary btn-small" id="invite-phone-btn">Text</button>';
       html += '</div>';
     }
     if (me) {
