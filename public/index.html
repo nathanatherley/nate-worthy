@@ -812,7 +812,6 @@ let showOnlyNew = false;
 let trustCardExpanded = true;
 let cuisineCardExpanded = false;
 let shareCardMode = 'link';
-let leaderboardCuisine = null;
 let inviterFriendId = null;
 let isPublicInvite = false;
 let onboardingScreen = 'welcome'; // 'welcome' | 'about' | null (null shows the actual signup form)
@@ -874,7 +873,6 @@ let currentTab = 'discover';
 let authChecked = false;
 let sessionEmail = null;
 let emailLinkSent = false;
-let leaderboardShowAllCuisines = false;
 
 function isCardCollapsed(id, defaultCollapsed) {
   if (Object.prototype.hasOwnProperty.call(cardCollapseState, id)) return cardCollapseState[id];
@@ -1357,70 +1355,6 @@ function getTrendingGroups() {
 
 // Leaderboard is deliberately scoped to the viewer's own trust circle only — it ranks
 // restaurants, never people, so it can't leak anyone's trust ratings of anyone else.
-function getAvailableLeaderboardCuisines() {
-  if (!me) return [];
-  const visibleIds = visibleFriendIds();
-  const cuisines = new Set();
-  state.suggestions.forEach(s => {
-    if (visibleIds.has(s.friendId) && s.cuisine && s.ratingTaste > 0) cuisines.add(s.cuisine);
-  });
-  return Array.from(cuisines).sort((a, b) => a.localeCompare(b));
-}
-
-function getCuisineLeaderboard(cuisine, limit) {
-  if (!me || !cuisine) return [];
-  const visibleIds = visibleFriendIds();
-  const seenGroupIds = new Set();
-  const ranked = [];
-
-  state.suggestions.forEach(entry => {
-    if (!visibleIds.has(entry.friendId)) return;
-    if ((entry.cuisine || '').toLowerCase() !== cuisine.toLowerCase()) return;
-    const gid = groupIdFor(entry);
-    if (seenGroupIds.has(gid)) return;
-    seenGroupIds.add(gid);
-
-    const score = groupWeightedScore(entry);
-    if (score === null) return;
-    const city = state.cities.find(c => c.id === entry.cityId);
-    ranked.push({ entry, score, cityName: city ? city.name : '' });
-  });
-
-  ranked.sort((a, b) => b.score - a.score);
-  return ranked.slice(0, limit || 5);
-}
-
-// People leaderboard — Option A from the design note: ranks recommenders by the
-// trust-scoped quality of their own picks, never by trust received. Strictly scoped
-// to your own visible network, and only counts cuisine-specific entries (not their
-// overall average) so someone isn't ranked "best Thai" off unrelated cuisine history.
-function getTopRecommendersForCuisine(cuisine, limit) {
-  if (!me || !cuisine) return [];
-  const visibleIds = visibleFriendIds();
-  const results = [];
-
-  visibleIds.forEach(friendId => {
-    if (friendId === me.friendId) return;
-    const rated = state.suggestions.filter(s =>
-      s.friendId === friendId &&
-      s.ratingTaste > 0 &&
-      (s.cuisine || '').toLowerCase() === cuisine.toLowerCase()
-    );
-    if (!rated.length) return;
-    const friend = state.friends.find(f => f.id === friendId);
-    if (!friend) return;
-    results.push({
-      friendId,
-      name: friend.name,
-      score: avg(rated.map(s => s.ratingTaste)),
-      count: rated.length
-    });
-  });
-
-  results.sort((a, b) => b.score - a.score);
-  return results.slice(0, limit || 5);
-}
-
 function compressImage(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -2504,8 +2438,6 @@ async function forgetIdentity() {
   isSubmittingSuggestion = false;
   confirmationMsg = '';
   isDuplicateEntryMsg = false;
-  leaderboardCuisine = null;
-  leaderboardShowAllCuisines = false;
   currentTab = 'discover';
   shareCardMode = 'link';
   lightboxKeys = null;
@@ -5051,7 +4983,6 @@ function renderPage() {
       html += renderBoard();
       html += '<div class="quiet-zone">';
       html += renderTrendingCard();
-      html += renderLeaderboardCard();
       html += '</div>';
     } else if (currentTab === 'circle') {
       html += renderTrustCard();
@@ -5176,59 +5107,7 @@ function renderTrendingCard() {
   return renderCollapsibleWrapper('trending', 'Trending in your circle', inner, false, 'trending-card');
 }
 
-function renderLeaderboardCard() {
-  if (!me) return '';
-  const cuisines = getAvailableLeaderboardCuisines();
-  if (!cuisines.length) return '';
 
-  if (!leaderboardCuisine || !cuisines.includes(leaderboardCuisine)) {
-    leaderboardCuisine = cuisines[0];
-  }
-
-  const ranked = getCuisineLeaderboard(leaderboardCuisine, 5);
-  const recommenders = getTopRecommendersForCuisine(leaderboardCuisine, 5);
-
-  let inner = '<p class="hint">Top-rated picks and top recommenders in your own trust network, by cuisine. Never ranks people outside your network, and never shows trust ratings — only their picks\' own scores.</p>';
-  const VISIBLE_CUISINE_COUNT = 6;
-  inner += '<div class="cuisine-chips">';
-  cuisines.forEach((c, i) => {
-    const isSelected = c === leaderboardCuisine;
-    const hidden = i >= VISIBLE_CUISINE_COUNT && !leaderboardShowAllCuisines;
-    inner += '<span class="chip' + (isSelected ? ' selected' : '') + (hidden ? ' hidden-cuisine-chip' : '') + '" data-leaderboard-cuisine="' + escapeHtml(c) + '">' + escapeHtml(c) + '</span>';
-  });
-  if (cuisines.length > VISIBLE_CUISINE_COUNT && !leaderboardShowAllCuisines) {
-    inner += '<span class="chip more" id="leaderboard-more-chip">+' + (cuisines.length - VISIBLE_CUISINE_COUNT) + ' more</span>';
-  }
-  inner += '</div>';
-
-  inner += '<div class="section-label" style="margin:16px 0 8px;">Top picks</div>';
-  if (!ranked.length) {
-    inner += '<p class="empty">No rated entries for this cuisine yet.</p>';
-  } else {
-    ranked.forEach((r, i) => {
-      inner += '<div class="trend-row">';
-      inner += '<div><p class="trend-title">' + (i + 1) + '. ' + escapeHtml(r.entry.restaurant) + '</p>';
-      inner += '<p class="track-record">' + escapeHtml(r.cityName) + '</p></div>';
-      inner += '<span class="trend-score">' + r.score.toFixed(1) + '\u2605</span>';
-      inner += '</div>';
-    });
-  }
-
-  inner += '<div class="section-label" style="margin:16px 0 8px;">Top recommenders in your network</div>';
-  if (!recommenders.length) {
-    inner += '<p class="empty">Nobody in your network has rated this cuisine yet.</p>';
-  } else {
-    recommenders.forEach((r, i) => {
-      inner += '<div class="trend-row">';
-      inner += '<div><p class="trend-title">' + (i + 1) + '. ' + escapeHtml(r.name) + '</p>';
-      inner += '<p class="track-record">' + r.count + ' rated ' + (r.count === 1 ? 'pick' : 'picks') + '</p></div>';
-      inner += '<span class="trend-score">' + r.score.toFixed(1) + '\u2605</span>';
-      inner += '</div>';
-    });
-  }
-
-  return renderCollapsibleWrapper('leaderboard', 'Leaderboard by cuisine', inner, true);
-}
 
 function renderEntryCard(e, showCityLabel) {
   const stale = (Date.now() - e.ts) > ONE_YEAR_MS;
@@ -7274,19 +7153,6 @@ function attachHandlers() {
   if (boardSortSelect) {
     boardSortSelect.addEventListener('change', () => {
       boardSortMode = boardSortSelect.value;
-      render();
-    });
-  }
-  document.querySelectorAll('[data-leaderboard-cuisine]').forEach(chip => {
-    chip.addEventListener('click', () => {
-      leaderboardCuisine = chip.getAttribute('data-leaderboard-cuisine');
-      render();
-    });
-  });
-  const leaderboardMoreChip = document.getElementById('leaderboard-more-chip');
-  if (leaderboardMoreChip) {
-    leaderboardMoreChip.addEventListener('click', () => {
-      leaderboardShowAllCuisines = true;
       render();
     });
   }
