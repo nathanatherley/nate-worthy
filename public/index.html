@@ -2003,6 +2003,7 @@ let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
 let showFeedbackForm = false;
 let reportFormStatus = null; // null | 'sending' | 'sent' | 'error'
+let inviteEmailStatus = null; // null | 'sending' | 'sent' | 'error'
 let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
 let placeAutocompleteSuggestions = [];
 let placeAutocompleteSessionToken = null; // groups a whole search into one billing session; null between searches
@@ -4752,6 +4753,20 @@ function renderShareCard() {
     html += '<div class="actions" style="margin-top:8px;"><a class="btn btn-ghost btn-small" id="text-invite-link" data-share-url="' + escapeHtml(shareUrl) + '" href="#">Text it to someone</a></div>';
     html += '<span class="msg" id="share-msg"></span>';
     if (me) {
+      html += '<div style="border-top:1px solid var(--line); margin:14px 0 10px;"></div>';
+      html += '<p class="hint" style="margin-bottom:6px;">Or send it directly:</p>';
+      html += '<div class="share-row" style="margin-bottom:8px;">';
+      html += '<input type="email" id="invite-email-input" placeholder="their@email.com">';
+      html += '<button class="btn btn-ghost btn-small" id="invite-email-btn"' + (inviteEmailStatus === 'sending' ? ' disabled' : '') + '>' + (inviteEmailStatus === 'sending' ? 'Sending…' : 'Send') + '</button>';
+      html += '</div>';
+      if (inviteEmailStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin:0 0 8px;">Sent!</p>';
+      if (inviteEmailStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin:0 0 8px;">Couldn\'t send that — try again.</p>';
+      html += '<div class="share-row">';
+      html += '<input type="tel" id="invite-phone-input" placeholder="Their phone number">';
+      html += '<button class="btn btn-ghost btn-small" id="invite-phone-btn">Text</button>';
+      html += '</div>';
+    }
+    if (me) {
       const referred = state.friends.filter(f => f.referredBy === me.friendId);
       if (referred.length > 0) {
         html += '<p class="track-record" style="margin-top:10px;">' + referred.length + ' ' + (referred.length === 1 ? 'person has' : 'people have') + ' joined through your link:</p>';
@@ -6344,6 +6359,47 @@ function attachHandlers() {
       // message body sometimes won't pre-fill, so it's worth getting right.
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const smsUrl = (isIOS ? 'sms:&body=' : 'sms:?body=') + encodeURIComponent(message);
+      window.location.href = smsUrl;
+    });
+  }
+  const inviteEmailBtn = document.getElementById('invite-email-btn');
+  if (inviteEmailBtn) {
+    inviteEmailBtn.addEventListener('click', async () => {
+      const input = document.getElementById('invite-email-input');
+      const toEmail = (input.value || '').trim();
+      if (!toEmail || !toEmail.includes('@')) return;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+      inviteEmailStatus = 'sending';
+      render();
+      try {
+        const res = await fetch('/api/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ toEmail, fromName: me ? me.name : '', shareUrl }),
+        });
+        if (!res.ok) throw new Error('invite send failed');
+        inviteEmailStatus = 'sent';
+        setTimeout(() => { inviteEmailStatus = null; render(); }, 3000);
+        render();
+      } catch (e) {
+        inviteEmailStatus = 'error';
+        render();
+      }
+    });
+  }
+  const invitePhoneBtn = document.getElementById('invite-phone-btn');
+  if (invitePhoneBtn) {
+    invitePhoneBtn.addEventListener('click', () => {
+      const input = document.getElementById('invite-phone-input');
+      const phone = (input.value || '').trim();
+      if (!phone) return;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+      const message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const cleanPhone = phone.replace(/[^\d+]/g, '');
+      const smsUrl = (isIOS ? 'sms:' + cleanPhone + '&body=' : 'sms:' + cleanPhone + '?body=') + encodeURIComponent(message);
       window.location.href = smsUrl;
     });
   }

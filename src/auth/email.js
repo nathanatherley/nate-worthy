@@ -63,4 +63,33 @@ async function sendFeedbackEmail({ fromUserEmail, message, page }) {
   }
 }
 
-module.exports = { sendMagicLinkEmail, sendFeedbackEmail };
+// Sends an invite email on a signed-in user's behalf, to someone they want
+// to invite. Only ever sends a small fixed template -- toEmail, fromName,
+// and shareUrl are the only client-supplied values, never free-text body
+// content -- so this endpoint can't be turned into an open email relay.
+async function sendInviteEmail({ toEmail, fromName, shareUrl }) {
+  if (!process.env.RESEND_API_KEY) {
+    console.log(`\n[DEV] Invite from ${fromName} to ${toEmail}:\n${shareUrl}\n`);
+    return;
+  }
+  const safeFromName = fromName || 'A friend';
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM || 'Nate-Worthy <onboarding@resend.dev>',
+      to: toEmail,
+      subject: `${safeFromName} invited you to Nate-Worthy`,
+      html: `<p><strong>${safeFromName}</strong> thinks you'd like Nate-Worthy — a restaurant recommendation app weighted by people you actually trust, not random internet reviews.</p><p><a href="${shareUrl}">${shareUrl}</a></p>`,
+    }),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error('Invite email send failed: ' + body);
+  }
+}
+
+module.exports = { sendMagicLinkEmail, sendFeedbackEmail, sendInviteEmail };

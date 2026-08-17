@@ -32,6 +32,18 @@ const aiLimiter = rateLimit({
   message: { error: 'Too many AI requests from this network — try again in a bit.' },
 });
 
+// Invite emails: this endpoint sends email to addresses the caller
+// controls, so it's a spam vector if left unlimited -- someone could use
+// it to email-bomb a third party's inbox. 20/hour per IP is far more than
+// any real person inviting friends would need.
+const inviteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many invites sent — try again in a bit.' },
+});
+
 // General API backstop: loose enough to never bother normal browsing/use,
 // just there to stop a runaway script or misbehaving client.
 const generalLimiter = rateLimit({
@@ -42,4 +54,4 @@ const generalLimiter = rateLimit({
   message: { error: 'Too many requests from this network — slow down a bit and try again.' },
 });
 
-module.exports = { signupLimiter, aiLimiter, generalLimiter };
+module.exports = { signupLimiter, aiLimiter, inviteLimiter, generalLimiter };
