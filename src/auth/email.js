@@ -65,14 +65,24 @@ async function sendFeedbackEmail({ fromUserEmail, message, page }) {
 
 // Sends an invite email on a signed-in user's behalf, to someone they want
 // to invite. Only ever sends a small fixed template -- toEmail, fromName,
-// and shareUrl are the only client-supplied values, never free-text body
-// content -- so this endpoint can't be turned into an open email relay.
-async function sendInviteEmail({ toEmail, fromName, shareUrl }) {
+// shareUrl, and pickRestaurant are the only client-supplied values, never
+// free-text body content -- so this endpoint can't be turned into an open
+// email relay. When pickRestaurant is set (the invite was triggered by a
+// specific highly-rated entry), the subject/body reference that specific
+// place instead of a generic pitch -- a concrete recommendation is a much
+// stronger hook than an abstract "join this app" ask.
+async function sendInviteEmail({ toEmail, fromName, shareUrl, pickRestaurant }) {
   if (!process.env.RESEND_API_KEY) {
     console.log(`\n[DEV] Invite from ${fromName} to ${toEmail}:\n${shareUrl}\n`);
     return;
   }
   const safeFromName = fromName || 'A friend';
+  const subject = pickRestaurant
+    ? `${safeFromName} rated ${pickRestaurant} on Nate-Worthy`
+    : `${safeFromName} invited you to Nate-Worthy`;
+  const bodyIntro = pickRestaurant
+    ? `<p><strong>${safeFromName}</strong> just rated <strong>${pickRestaurant}</strong> on Nate-Worthy — a restaurant recommendation app weighted by people you actually trust, not random internet reviews.</p>`
+    : `<p><strong>${safeFromName}</strong> thinks you'd like Nate-Worthy — a restaurant recommendation app weighted by people you actually trust, not random internet reviews.</p>`;
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -82,8 +92,8 @@ async function sendInviteEmail({ toEmail, fromName, shareUrl }) {
     body: JSON.stringify({
       from: process.env.EMAIL_FROM || 'Nate-Worthy <onboarding@resend.dev>',
       to: toEmail,
-      subject: `${safeFromName} invited you to Nate-Worthy`,
-      html: `<p><strong>${safeFromName}</strong> thinks you'd like Nate-Worthy — a restaurant recommendation app weighted by people you actually trust, not random internet reviews.</p><p><a href="${shareUrl}">${shareUrl}</a></p>`,
+      subject,
+      html: `${bodyIntro}<p><a href="${shareUrl}">${shareUrl}</a></p>`,
     }),
   });
   if (!response.ok) {

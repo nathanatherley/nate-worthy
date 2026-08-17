@@ -2004,7 +2004,11 @@ let editingSelfReportedCity = false;
 let showFeedbackForm = false;
 let reportFormStatus = null; // null | 'sending' | 'sent' | 'error'
 let inviteEmailStatus = null; // null | 'sending' | 'sent' | 'error'
-let showPostRatingInvite = false;
+let postRatingInviteEntryId = null; // null | the entry id, so shares can reference which pick
+let previewPickId = null;
+let previewData = null;
+let previewDismissed = false;
+let declinedPreview = false;
 let showGroupPickInvite = false;
 let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
 let placeAutocompleteSuggestions = [];
@@ -2436,7 +2440,7 @@ async function forgetIdentity() {
   boardCitySearchQuery = '';
   onboardingScreen = 'welcome';
   showFirstActionScreen = false;
-  showPostRatingInvite = false;
+  postRatingInviteEntryId = null;
   manuallyToggledCities = new Set();
   hideMyEntries = false;
   if (pendingUndoTimeout) clearTimeout(pendingUndoTimeout);
@@ -4834,6 +4838,39 @@ function renderShareCard() {
 // site + what we ask for and why" screen. Existing users signing back in
 // never see this -- onboardingScreen only matters while !me, and once
 // someone has an account, loadIdentity() restores them past it entirely.
+// Shown before the generic welcome screen when a logged-out visitor
+// arrives via a link tied to a specific rated pick (see the post-rating
+// invite flow). Shows the actual restaurant, rating, and note up front --
+// a concrete recommendation is a much stronger hook than an abstract pitch
+// -- with a genuinely soft ask rather than a forced signup wall.
+function renderPickPreviewScreen() {
+  const p = previewData;
+  let html = '<div class="card">';
+  if (p.friendName) html += '<p class="hint" style="margin:0 0 6px;">' + escapeHtml(p.friendName.split(' ')[0]) + ' recommends</p>';
+  html += '<h2 style="margin-bottom:2px;">' + escapeHtml(p.restaurant) + '</h2>';
+  if (p.cuisine || p.cityName) {
+    html += '<p class="hint" style="color:var(--brass-dim); margin-top:0;">' + escapeHtml([p.cuisine, p.cityName].filter(Boolean).join(' — ')) + '</p>';
+  }
+  if (p.ratingTaste) {
+    html += '<p style="color:var(--rust); font-size:16px; margin:4px 0 10px;">' + '\u2605'.repeat(p.ratingTaste) + '\u2606'.repeat(5 - p.ratingTaste) + '</p>';
+  }
+  if (p.note) {
+    html += '<p class="hint" style="background:var(--surface); border-radius:8px; padding:10px 12px; font-style:italic;">\u201C' + escapeHtml(p.note) + '\u201D</p>';
+  }
+  html += '<div class="actions" style="margin-top:14px;"><button class="btn btn-primary" id="preview-continue">See more picks like this</button></div>';
+  html += '<p style="margin-top:10px;"><button type="button" class="switch-link" id="preview-decline">No thanks</button></p>';
+  html += '</div>';
+  return html;
+}
+
+function renderPreviewDeclinedScreen() {
+  let html = '<div class="card">';
+  html += '<h2>No problem</h2>';
+  html += '<p class="hint">Nate-Worthy is here anytime if you change your mind.</p>';
+  html += '</div>';
+  return html;
+}
+
 function renderOnboardingWelcome() {
   let html = '<div class="card">';
   html += '<h2>Welcome to Nate-Worthy</h2>';
@@ -5131,7 +5168,7 @@ function renderPage() {
       html += '</div>';
     } else if (currentTab === 'board') {
       html += renderShareFavoriteForm();
-      if (showPostRatingInvite) html += renderPostRatingInviteCard();
+      if (postRatingInviteEntryId) html += renderPostRatingInviteCard();
       html += renderBoard();
       html += '<div class="quiet-zone">';
       html += renderTrendingCard();
@@ -5159,6 +5196,14 @@ function renderPage() {
   }
 
   if (!me) {
+    if (previewData && !previewDismissed) {
+      html += renderPickPreviewScreen();
+      return html;
+    }
+    if (declinedPreview) {
+      html += renderPreviewDeclinedScreen();
+      return html;
+    }
     if (onboardingScreen === 'welcome') {
       html += renderOnboardingWelcome();
       return html;
@@ -6221,14 +6266,20 @@ function wireInviteButtons() {
       const toEmail = (input.value || '').trim();
       if (!toEmail || !toEmail.includes('@')) return;
       const baseUrl = window.location.origin + window.location.pathname;
-      const shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+      let shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+      let pickRestaurant = null;
+      if (postRatingInviteEntryId) {
+        shareUrl += '&pick=' + encodeURIComponent(postRatingInviteEntryId);
+        const pickEntry = state.suggestions.find(s => s.id === postRatingInviteEntryId);
+        if (pickEntry) pickRestaurant = pickEntry.restaurant;
+      }
       inviteEmailStatus = 'sending';
       render();
       try {
         const res = await fetch('/api/invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toEmail, fromName: me ? me.name : '', shareUrl }),
+          body: JSON.stringify({ toEmail, fromName: me ? me.name : '', shareUrl, pickRestaurant }),
         });
         if (!res.ok) throw new Error('invite send failed');
         inviteEmailStatus = 'sent';
@@ -6248,8 +6299,15 @@ function wireInviteButtons() {
       const phone = (input.value || '').trim();
       if (!phone) return;
       const baseUrl = window.location.origin + window.location.pathname;
-      const shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
-      const message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
+      let shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+      let message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
+      if (postRatingInviteEntryId) {
+        shareUrl += '&pick=' + encodeURIComponent(postRatingInviteEntryId);
+        const pickEntry = state.suggestions.find(s => s.id === postRatingInviteEntryId);
+        if (pickEntry && me) {
+          message = me.name.split(' ')[0] + ' rated ' + pickEntry.restaurant + ' ' + pickEntry.ratingTaste + ' stars on Nate-Worthy — check it out: ' + shareUrl;
+        }
+      }
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const cleanPhone = phone.replace(/[^\d+]/g, '');
       const smsUrl = (isIOS ? 'sms:' + cleanPhone + '&body=' : 'sms:' + cleanPhone + '?body=') + encodeURIComponent(message);
@@ -6484,7 +6542,7 @@ function attachHandlers() {
   wireInviteButtons();
   const dismissPostRatingInviteBtn = document.getElementById('dismiss-post-rating-invite');
   if (dismissPostRatingInviteBtn) dismissPostRatingInviteBtn.addEventListener('click', () => {
-    showPostRatingInvite = false;
+    postRatingInviteEntryId = null;
     render();
   });
   const copyOpenLinkBtn = document.getElementById('copy-open-link-btn');
@@ -6723,6 +6781,14 @@ function attachHandlers() {
   }
 
   if (!me) {
+    if (previewData && !previewDismissed) {
+      const continueBtn = document.getElementById('preview-continue');
+      if (continueBtn) continueBtn.addEventListener('click', () => { previewDismissed = true; render(); });
+      const declineBtn = document.getElementById('preview-decline');
+      if (declineBtn) declineBtn.addEventListener('click', () => { previewDismissed = true; declinedPreview = true; render(); });
+      return;
+    }
+    if (declinedPreview) return;
     if (onboardingScreen === 'welcome') {
       const nextBtn = document.getElementById('onboarding-next-1');
       if (nextBtn) nextBtn.addEventListener('click', () => { onboardingScreen = 'about'; render(); });
@@ -8283,7 +8349,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   // real value out of a great find -- the best time to ask them to bring
   // someone else in, since it's tied to a concrete, felt reason rather than
   // a cold ask on day one.
-  if (!duplicateUpdated && formState.taste >= 4) showPostRatingInvite = true;
+  if (!duplicateUpdated && formState.taste >= 4) postRatingInviteEntryId = entryId;
   formState = { city: (state.cities.find(c => c.id === cityId) || {}).name || '', state: (state.cities.find(c => c.id === cityId) || {}).state || '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
   cuisineOtherMode = false;
   resetPlaceAutocompleteState();
@@ -8317,6 +8383,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
     inviterFriendId = params.get('ref') || null;
     isPublicInvite = params.get('invite') === 'public';
     adminBootstrapRequested = params.get('admin') === 'setup';
+    previewPickId = params.get('pick') || null;
   } catch (e) { inviterFriendId = null; }
   try {
     const meRes = await fetch('/api/auth/me');
@@ -8329,7 +8396,21 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   } catch (e) { sessionEmail = null; }
   authChecked = true;
 
-  if (!sessionEmail) { render(); return; }
+  if (!sessionEmail) {
+    // A logged-out visitor who arrived via a specific shared pick gets a
+    // real preview of that restaurant/rating before any signup ask, rather
+    // than the generic welcome screen -- a concrete recommendation is a
+    // much stronger hook than an abstract pitch. This fetch is public, no
+    // auth needed, and only ever returns the single pick being previewed.
+    if (previewPickId) {
+      try {
+        const previewRes = await fetch('/api/preview/' + encodeURIComponent(previewPickId));
+        if (previewRes.ok) previewData = await previewRes.json();
+      } catch (e) { previewData = null; }
+    }
+    render();
+    return;
+  }
 
   await loadData();
   await loadIdentity();
