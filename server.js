@@ -1,3 +1,7 @@
+// IMPORTANT: Sentry must be imported first, before any other code, so it
+// can catch errors from everything that follows.
+require('./instrument');
+
 require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
@@ -25,5 +29,12 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Serve the frontend (index.html + the compatibility client) as static files.
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// Sentry's error handler must be registered after all routes/controllers,
+// but before any other error-handling middleware, so it sees every error
+// that reaches this point before Express's default handler swallows it.
+const Sentry = require('./instrument');
+Sentry.setupExpressErrorHandler(app);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`nate-worthy backend listening on :${PORT}`));
