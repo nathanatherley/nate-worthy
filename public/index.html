@@ -1992,6 +1992,9 @@ let analyticsLoading = false;
 let analyticsData = null;
 let exportStatus = '';
 let seedImportText = '';
+let seedManageSearchQuery = '';
+let seedManagePendingDeleteId = null;
+let seedManageStatus = '';
 let dataImportText = '';
 let dataImportStatus = '';
 let dataImportInProgress = false;
@@ -2300,6 +2303,79 @@ function uidFromString(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0; }
   return Math.abs(hash).toString(36);
+}
+
+async function deleteSeedPick(id) {
+  seedManageStatus = 'Deleting…';
+  render();
+  try {
+    let existing = [];
+    try {
+      const existingRes = await window.storage.get('seed-picks-extra', true);
+      if (existingRes && existingRes.value) {
+        existing = JSON.parse(existingRes.value);
+        if (!Array.isArray(existing)) existing = [];
+      }
+    } catch (e) {
+      existing = [];
+    }
+    const before = existing.length;
+    existing = existing.filter(p => p.id !== id);
+    if (existing.length === before) {
+      seedManageStatus = 'Couldn\'t find that pick — it may have already been removed.';
+    } else {
+      let writeOk = false;
+      for (let attempt = 0; attempt < 3 && !writeOk; attempt++) {
+        try {
+          await window.storage.set('seed-picks-extra', JSON.stringify(existing), true);
+          writeOk = true;
+        } catch (e) {
+          if (attempt < 2) await new Promise(r => setTimeout(r, 400));
+          else throw e;
+        }
+      }
+      const defaultIds = new Set(DEFAULT_WEB_SEED_PICKS.map(p => p.id));
+      webSeedPicks = DEFAULT_WEB_SEED_PICKS.slice();
+      existing.forEach(p => { if (!defaultIds.has(p.id)) webSeedPicks.push(p); });
+      applySeedPickPlaceIds();
+      seedManageStatus = 'Deleted.';
+    }
+  } catch (e) {
+    console.error('seed pick delete failed', e);
+    seedManageStatus = 'Delete failed — try again.';
+  }
+  seedManagePendingDeleteId = null;
+  render();
+}
+
+function updateSeedManageResults() {
+  // Lightweight update for the search box only, so typing doesn't lose
+  // focus -- delete/cancel/confirm are infrequent click actions and use a
+  // full render() instead (see attachSeedManageHandlers), which correctly
+  // picks up the status message text without needing it duplicated here.
+  const container = document.getElementById('seed-manage-results');
+  if (container) container.innerHTML = renderSeedManageResults();
+  attachSeedManageHandlers();
+}
+
+function attachSeedManageHandlers() {
+  document.querySelectorAll('[data-delete-seed]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      seedManagePendingDeleteId = btn.getAttribute('data-delete-seed');
+      render();
+    });
+  });
+  document.querySelectorAll('[data-cancel-delete-seed]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      seedManagePendingDeleteId = null;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-confirm-delete-seed]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteSeedPick(btn.getAttribute('data-confirm-delete-seed'));
+    });
+  });
 }
 
 async function importSeedPicks() {
@@ -4297,6 +4373,38 @@ function renderSeedImportCard() {
   return html;
 }
 
+function renderSeedManageCard() {
+  let html = '<div class="card">';
+  html += '<h2>Manage imported seed picks</h2>';
+  html += '<p class="hint">Search and delete individual seed picks — for fixing a mislabeled city, a duplicate that survived, or bad content that shouldn\'t have been imported. This only covers picks added through the import tool, not the built-in starter set.</p>';
+  html += '<input type="text" id="seed-manage-search" placeholder="Search by restaurant or city…" value="' + escapeHtml(seedManageSearchQuery) + '">';
+  html += '<div id="seed-manage-results">' + renderSeedManageResults() + '</div>';
+  if (seedManageStatus) html += '<p class="hint" style="margin-top:8px;">' + escapeHtml(seedManageStatus) + '</p>';
+  html += '</div>';
+  return html;
+}
+
+function renderSeedManageResults() {
+  const query = seedManageSearchQuery.trim().toLowerCase();
+  if (!query) return '';
+  const defaultIds = new Set(DEFAULT_WEB_SEED_PICKS.map(p => p.id));
+  const matches = webSeedPicks.filter(p => !defaultIds.has(p.id) && (p.restaurant.toLowerCase().includes(query) || p.city.toLowerCase().includes(query))).slice(0, 15);
+  if (!matches.length) return '<p class="hint" style="margin-top:8px;">No matches among imported seed picks.</p>';
+  let html = '<div style="margin-top:10px;">';
+  matches.forEach(p => {
+    html += '<div class="friend-row" style="align-items:flex-start;">';
+    html += '<div><span class="friend-name">' + escapeHtml(p.restaurant) + '</span><br><span class="track-record">' + escapeHtml(p.cuisine || 'unspecified') + ' — ' + escapeHtml(p.city) + '</span></div>';
+    if (seedManagePendingDeleteId === p.id) {
+      html += '<span><button class="btn btn-primary btn-small" data-confirm-delete-seed="' + escapeHtml(p.id) + '">Confirm delete</button> <button class="btn btn-ghost btn-small" data-cancel-delete-seed="' + escapeHtml(p.id) + '">Cancel</button></span>';
+    } else {
+      html += '<button class="btn btn-ghost btn-small" data-delete-seed="' + escapeHtml(p.id) + '">Delete</button>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 // Renders just the live progress/results portion, swapped in via a
 // lightweight targeted update while the backfill runs -- not a full
 // render(), since this fires roughly every second or two for a batch that
@@ -5278,6 +5386,7 @@ function renderPage() {
       if (hasAdminPermission('export')) html += renderExportCard();
       if (hasAdminPermission('restore')) { html += renderAutoBackupsCard(); html += renderDataImportCard(); }
       if (hasAdminPermission('seedImport')) html += renderSeedImportCard();
+      if (hasAdminPermission('seedImport')) html += renderSeedManageCard();
       if (hasAdminPermission('seedImport')) html += renderSeedBackfillCard();
       if (hasAdminPermission('seedImport')) html += renderCuisineStatsCard();
     }
@@ -6832,6 +6941,14 @@ function attachHandlers() {
   }
   const seedTextarea = document.getElementById('seed-import-textarea');
   if (seedTextarea) seedTextarea.addEventListener('input', () => { seedImportText = seedTextarea.value; });
+  const seedManageSearchEl = document.getElementById('seed-manage-search');
+  if (seedManageSearchEl) {
+    seedManageSearchEl.addEventListener('input', () => {
+      seedManageSearchQuery = seedManageSearchEl.value;
+      updateSeedManageResults();
+    });
+  }
+  attachSeedManageHandlers();
   const seedImportBtn = document.getElementById('seed-import-btn');
   if (seedImportBtn) seedImportBtn.addEventListener('click', importSeedPicks);
   attachSeedBackfillHandlers();
