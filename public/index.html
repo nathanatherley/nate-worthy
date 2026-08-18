@@ -5414,12 +5414,17 @@ function renderPage() {
       html += buildCityDatalist('self-reported-city-suggestions');
       html += '<button class="btn btn-primary btn-small" id="save-self-reported-city">Save</button>';
       html += '<button class="btn btn-ghost btn-small" id="cancel-self-reported-city">Cancel</button>';
-      html += '<button class="switch-link" id="switch-user">Sign out</button>';
       html += '</div>';
     } else if (me.selfReportedCity) {
-      html += '<p class="hint" style="margin:4px 0 0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button></p>';
+      html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px; margin-top:4px;">';
+      html += '<p class="hint" style="margin:0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button></p>';
+      html += '<button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button>';
+      html += '</div>';
     } else {
-      html += '<p class="hint" style="margin:4px 0 0;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button> &middot; <button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button></p>';
+      html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px; margin-top:4px;">';
+      html += '<p class="hint" style="margin:0;"><button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">+ Add the city you know food in best</button></p>';
+      html += '<button class="switch-link" id="switch-user" style="font-size:inherit;">Sign out</button>';
+      html += '</div>';
     }
     html += '</div>';
 
