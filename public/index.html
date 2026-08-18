@@ -4965,6 +4965,90 @@ function renderRecommendCard() {
   return html;
 }
 
+// How many restaurant entries in your circle's data came from someone you
+// actually trust (rated > 0), regardless of city or cuisine. A raw count,
+// not a percentage of your total picks -- for most people early on that
+// percentage would sit near zero for a long time simply because the whole
+// network is young, which would read as discouraging even while things are
+// working exactly as intended. A raw count only ever goes up and always
+// reads as progress.
+function computeTrustedPickCount() {
+  if (!me) return 0;
+  const ratings = myTrustRatings();
+  const trustedIds = new Set(Object.keys(ratings).filter(id => ratings[id] > 0));
+  return state.suggestions.filter(s => trustedIds.has(s.friendId)).length;
+}
+
+// Counts places where a trusted friend rated highly (4-5) and you
+// separately rated the same place highly (4-5) too -- not an exact score
+// match, since two people who both loved a place might reasonably give it
+// a 4 versus a 5. Reuses the same same-restaurant matching bar as
+// findCrossFriendMatch (place id match, or normalized-name similarity)
+// so "same restaurant" means the same thing everywhere in the app.
+function computeAgreementCount() {
+  if (!me) return 0;
+  const ratings = myTrustRatings();
+  const trustedIds = new Set(Object.keys(ratings).filter(id => ratings[id] > 0));
+  const myHighEntries = state.suggestions.filter(s => s.friendId === me.friendId && s.ratingTaste >= 4);
+  const trustedHighEntries = state.suggestions.filter(s => trustedIds.has(s.friendId) && s.ratingTaste >= 4);
+
+  let count = 0;
+  myHighEntries.forEach(mine => {
+    const match = trustedHighEntries.find(t => {
+      if (t.cityId !== mine.cityId) return false;
+      if (mine.placeId && t.placeId) return mine.placeId === t.placeId;
+      const normalized = normalizeName(mine.restaurant);
+      const otherNorm = normalizeName(t.restaurant);
+      const dist = levenshtein(normalized, otherNorm);
+      const maxLen = Math.max(normalized.length, otherNorm.length);
+      if (maxLen === 0) return false;
+      return (1 - dist / maxLen) >= 0.75;
+    });
+    if (match) count++;
+  });
+  return count;
+}
+
+function computeReferredStats() {
+  if (!me) return { joined: 0, contributed: 0 };
+  const referred = state.friends.filter(f => f.referredBy === me.friendId);
+  const contributed = referred.filter(f => state.suggestions.some(s => s.friendId === f.id)).length;
+  return { joined: referred.length, contributed };
+}
+
+function renderYourImpactCard() {
+  const trustedPickCount = computeTrustedPickCount();
+  const agreementCount = computeAgreementCount();
+  const { joined, contributed } = computeReferredStats();
+
+  let html = '<div class="card">';
+  html += '<h2 style="margin-bottom:2px;">Your impact</h2>';
+  html += '<p class="hint" style="margin-top:0;">How trust has worked in both directions.</p>';
+
+  html += '<p class="hint" style="color:var(--brass-dim); font-weight:600; letter-spacing:0.04em; margin-bottom:6px; font-size:11px;">HELPING YOU</p>';
+  if (trustedPickCount === 0) {
+    html += '<p class="hint">None of your picks are from trusted friends yet — invite people to change that.</p>';
+  } else {
+    html += '<p class="hint">' + trustedPickCount + ' of your picks ' + (trustedPickCount === 1 ? 'is' : 'are') + ' from people you trust.</p>';
+    if (agreementCount > 0) {
+      html += '<p class="hint">You agreed with a friend\'s rating ' + agreementCount + (agreementCount === 1 ? ' time.' : ' times.') + '</p>';
+    }
+  }
+
+  html += '<p class="hint" style="color:var(--rust); font-weight:600; letter-spacing:0.04em; margin-bottom:6px; margin-top:14px; font-size:11px;">HELPING OTHERS</p>';
+  if (joined === 0) {
+    html += '<p class="hint">Nobody\'s joined through your link yet — share it to get started.</p>';
+  } else {
+    html += '<p class="hint">' + joined + ' ' + (joined === 1 ? 'person' : 'people') + ' joined through your invite link.</p>';
+    if (contributed > 0) {
+      html += '<p class="hint">' + contributed + ' of them ' + (contributed === 1 ? 'has' : 'have') + ' added their own pick' + (contributed === 1 ? '' : 's') + '.</p>';
+    }
+  }
+
+  html += '</div>';
+  return html;
+}
+
 function renderShareCard() {
   const baseUrl = window.location.origin + window.location.pathname;
   const shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
@@ -5373,6 +5457,7 @@ function renderPage() {
     } else if (currentTab === 'circle') {
       html += renderTrustCard();
       html += renderShareCard();
+      html += renderYourImpactCard();
       html += '<div class="quiet-zone">';
       html += renderCuisineExpertiseCard();
       html += renderStatsCard();
