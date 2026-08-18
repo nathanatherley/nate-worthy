@@ -4380,6 +4380,7 @@ function renderSeedManageCard() {
   html += '<input type="text" id="seed-manage-search" placeholder="Search by restaurant or city…" value="' + escapeHtml(seedManageSearchQuery) + '">';
   html += '<div id="seed-manage-results">' + renderSeedManageResults() + '</div>';
   if (seedManageStatus) html += '<p class="hint" style="margin-top:8px;">' + escapeHtml(seedManageStatus) + '</p>';
+  html += '<div class="actions" style="margin-top:10px;"><button class="btn btn-ghost btn-small" id="seed-export-all-btn">Export all imported picks (JSON)</button></div>';
   html += '</div>';
   return html;
 }
@@ -6949,6 +6950,20 @@ function attachHandlers() {
     });
   }
   attachSeedManageHandlers();
+  const seedExportAllBtn = document.getElementById('seed-export-all-btn');
+  if (seedExportAllBtn) seedExportAllBtn.addEventListener('click', () => {
+    const defaultIds = new Set(DEFAULT_WEB_SEED_PICKS.map(p => p.id));
+    const imported = webSeedPicks.filter(p => !defaultIds.has(p.id));
+    const blob = new Blob([JSON.stringify(imported, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nate-worthy-imported-seed-picks.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
   const seedImportBtn = document.getElementById('seed-import-btn');
   if (seedImportBtn) seedImportBtn.addEventListener('click', importSeedPicks);
   attachSeedBackfillHandlers();
