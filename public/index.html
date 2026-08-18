@@ -5792,7 +5792,16 @@ function getBestOfBestForCity(cityId) {
 
   results.sort((a, b) => b.combinedScore - a.combinedScore);
 
-  return results;
+  // A "best of the best" list showing anything below a 4 defeats the point
+  // of calling it "best" -- even a strong trust-weighted consensus score
+  // shouldn't surface a place nobody would actually call great. tasteScore
+  // is already personalized per viewer (it's built from myTrustWeight(),
+  // which reflects who *this* person trusts and by how much), so someone
+  // who personally distrusts the people driving another place's high score
+  // won't see it qualify here even if it ranks well for others. If nothing
+  // in this city clears the bar, the section stays empty rather than
+  // backfilling with a weaker pick just to show three entries.
+  return results.filter(r => r.tasteScore >= 4);
 }
 
 // Renders one city's own postcard: header, best-of-best, and its entries.
