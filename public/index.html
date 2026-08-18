@@ -2009,6 +2009,8 @@ let previewPickId = null;
 let previewData = null;
 let previewDismissed = false;
 let declinedPreview = false;
+let emailLookupTimeout = null;
+let emailLookupResult = null; // { query, friendId } | null -- query lets us discard stale results if typing continued
 let showGroupPickInvite = false;
 let cuisineTrustPickerOpenFor = null; // "friendId|cuisineLower" of the currently open picker, or null
 let placeAutocompleteSuggestions = [];
@@ -3210,6 +3212,35 @@ function renderQuickConnectCard() {
 // trusts you (they found you through some legitimate path already, fair
 // that you can find them back), and anyone vouched for by someone you
 // already trust (same friend-of-friend source pool jumpstart uses).
+function looksLikeEmail(q) {
+  return /\S+@\S+\.\S+/.test(q);
+}
+
+// Email isn't in the shared client-side data at all (only your own email is
+// ever exposed to you), so matching by email needs a real network call
+// rather than the instant local filtering name/phone get. Debounced so it
+// only fires once someone's actually finished typing a full-looking
+// address, not on every keystroke while they're still typing the domain.
+function triggerEmailLookupIfNeeded(query) {
+  if (emailLookupTimeout) clearTimeout(emailLookupTimeout);
+  if (!looksLikeEmail(query)) { emailLookupResult = null; return; }
+  emailLookupTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch('/api/friend-lookup-by-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: query }),
+      });
+      const data = await res.json();
+      emailLookupResult = { query, friendId: data.friendId || null };
+    } catch (e) {
+      emailLookupResult = null;
+    }
+    updateFriendSearchResults();
+    updateGroupPickResults();
+  }, 500);
+}
+
 function computeReachableFriendIds() {
   if (!me) return new Set();
   const myFriend = state.friends.find(f => f.id === me.friendId);
@@ -3228,20 +3259,26 @@ function computeReachableFriendIds() {
   return reachable;
 }
 
-function renderFriendSearchResults(others, visibleIds, unknownMarks, reachableIds) {
+function renderFriendSearchResults(others, visibleIds, unknownMarks, reachableIds, emailMatchFriendId) {
   const query = friendSearchQuery.trim().toLowerCase();
   if (!query) return '';
-  const matches = others.filter(f => {
+  let matches = others.filter(f => {
     if (visibleIds.has(f.id) || unknownMarks[f.id]) return false;
     const name = f.name.toLowerCase();
-    // Inside the reachable graph: normal partial-match search, so people
-    // you're already connected to (even loosely) are easy to find. Outside
-    // it: only an exact full-name match surfaces them -- you can still add
-    // someone you actually know by name, but can't casually browse the
-    // whole platform by typing a few letters and seeing who comes up.
+    // A full phone match is already a strong signal you actually know this
+    // person, so it works regardless of reachability tier -- unlike names,
+    // nobody types a few digits expecting to browse partial matches, so
+    // this doesn't reopen the browsing surface the reachability scoping
+    // was built to close.
+    const queryDigits = query.replace(/[^\d]/g, '');
+    if (queryDigits.length >= 7 && f.phone && f.phone === queryDigits) return true;
     if (reachableIds.has(f.id)) return name.includes(query);
     return name === query;
   }).slice(0, 8);
+  if (emailMatchFriendId && !matches.some(f => f.id === emailMatchFriendId) && !visibleIds.has(emailMatchFriendId) && !unknownMarks[emailMatchFriendId]) {
+    const emailFriend = others.find(f => f.id === emailMatchFriendId);
+    if (emailFriend) matches = [emailFriend, ...matches].slice(0, 8);
+  }
   if (!matches.length) {
     // Not actually a broken search -- this box is specifically for finding
     // someone NOT already visible, to add them for the first time. If the
@@ -3279,7 +3316,9 @@ function updateFriendSearchResults() {
   const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
   const visibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds]);
   const reachableIds = computeReachableFriendIds();
-  container.innerHTML = renderFriendSearchResults(others, visibleIds, unknownMarks, reachableIds);
+  const currentQuery = friendSearchQuery.trim().toLowerCase();
+  const emailMatchFriendId = (emailLookupResult && emailLookupResult.query === currentQuery) ? emailLookupResult.friendId : null;
+  container.innerHTML = renderFriendSearchResults(others, visibleIds, unknownMarks, reachableIds, emailMatchFriendId);
   attachFriendSearchHandlers();
 }
 
@@ -3537,7 +3576,7 @@ function renderTrustCard() {
 
     html += '<div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line);">';
     html += '<label for="friend-search-input" style="font-size:12.5px; font-weight:600;">Find and add someone</label>';
-    html += '<input type="text" id="friend-search-input" placeholder="Type a name to search…" value="' + escapeHtml(friendSearchQuery) + '" style="margin-top:6px;">';
+    html += '<input type="text" id="friend-search-input" placeholder="Name, email, or phone number…" value="' + escapeHtml(friendSearchQuery) + '" style="margin-top:6px;">';
     html += '<div id="friend-search-results">' + renderFriendSearchResults(others, defaultVisibleIds, unknownMarks, computeReachableFriendIds()) + '</div>';
     html += '</div>';
 
@@ -4531,16 +4570,22 @@ function renderPlannedVisitsCard() {
   return html;
 }
 
-function renderGroupPickResults(others, reachableIds) {
+function renderGroupPickResults(others, reachableIds, emailMatchFriendId) {
   let html = '';
   const query = groupPickSearchQuery.trim().toLowerCase();
   if (query) {
-    const matches = others.filter(f => {
+    let matches = others.filter(f => {
       if (groupPickSelectedIds.has(f.id)) return false;
       const name = f.name.toLowerCase();
+      const queryDigits = query.replace(/[^\d]/g, '');
+      if (queryDigits.length >= 7 && f.phone && f.phone === queryDigits) return true;
       if (reachableIds.has(f.id)) return name.includes(query);
       return name === query;
     }).slice(0, 6);
+    if (emailMatchFriendId && !matches.some(f => f.id === emailMatchFriendId) && !groupPickSelectedIds.has(emailMatchFriendId)) {
+      const emailFriend = others.find(f => f.id === emailMatchFriendId);
+      if (emailFriend) matches = [emailFriend, ...matches].slice(0, 6);
+    }
     if (matches.length) {
       html += '<div class="group-pick-suggestions">';
       matches.forEach(f => {
@@ -4608,7 +4653,9 @@ function updateGroupPickResults() {
   const container = document.getElementById('group-pick-results');
   if (!container || !me) return;
   const others = state.friends.filter(f => f.id !== me.friendId);
-  container.innerHTML = renderGroupPickResults(others, computeReachableFriendIds());
+  const currentQuery = groupPickSearchQuery.trim().toLowerCase();
+  const emailMatchFriendId = (emailLookupResult && emailLookupResult.query === currentQuery) ? emailLookupResult.friendId : null;
+  container.innerHTML = renderGroupPickResults(others, computeReachableFriendIds(), emailMatchFriendId);
   attachGroupPickResultHandlers();
 }
 
@@ -4648,7 +4695,7 @@ function renderRecommendCard() {
         // becomes genuinely unusable once someone has a large network (200+
         // connections would mean 200 checkboxes to scroll through just to
         // find two people). Typing narrows it down instantly instead.
-        html += '<input type="text" id="group-pick-search" placeholder="Type a name to add them…" value="' + escapeHtml(groupPickSearchQuery) + '" style="margin-bottom:8px;">';
+        html += '<input type="text" id="group-pick-search" placeholder="Name, email, or phone number…" value="' + escapeHtml(groupPickSearchQuery) + '" style="margin-bottom:8px;">';
         html += '<div id="group-pick-results">' + renderGroupPickResults(others, computeReachableFriendIds()) + '</div>';
       }
       html += '</div>';
@@ -6368,7 +6415,11 @@ function attachHandlers() {
   }
   const groupPickSearchEl = document.getElementById('group-pick-search');
   if (groupPickSearchEl) {
-    groupPickSearchEl.addEventListener('input', () => { groupPickSearchQuery = groupPickSearchEl.value; updateGroupPickResults(); });
+    groupPickSearchEl.addEventListener('input', () => {
+      groupPickSearchQuery = groupPickSearchEl.value;
+      updateGroupPickResults();
+      triggerEmailLookupIfNeeded(groupPickSearchQuery.trim().toLowerCase());
+    });
   }
   attachGroupPickResultHandlers();
   document.querySelectorAll('[data-claim-seed]').forEach(btn => {
@@ -7429,7 +7480,11 @@ function attachHandlers() {
   if (cancelEditBtn) cancelEditBtn.addEventListener('click', cancelEditingEntry);
 
   const friendSearchEl = document.getElementById('friend-search-input');
-  if (friendSearchEl) friendSearchEl.addEventListener('input', () => { friendSearchQuery = friendSearchEl.value; updateFriendSearchResults(); });
+  if (friendSearchEl) friendSearchEl.addEventListener('input', () => {
+    friendSearchQuery = friendSearchEl.value;
+    updateFriendSearchResults();
+    triggerEmailLookupIfNeeded(friendSearchQuery.trim().toLowerCase());
+  });
   attachFriendSearchHandlers();
 
   const recShowMoreBtn = document.getElementById('rec-show-more');

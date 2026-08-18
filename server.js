@@ -16,6 +16,7 @@ const statsRoutes = require('./src/routes/stats');
 const feedbackRoutes = require('./src/routes/feedback');
 const inviteRoutes = require('./src/routes/invite');
 const previewRoutes = require('./src/routes/preview');
+const friendLookupRoutes = require('./src/routes/friend-lookup');
 const { generalLimiter } = require('./src/middleware/rate-limit');
 const app = express();
 app.use(helmet({ contentSecurityPolicy: false })); // CSP off by default since the frontend is a single inline-script HTML file; tighten later if desired
@@ -31,6 +32,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/invite', inviteRoutes);
 app.use('/api/preview', previewRoutes);
+app.use('/api/friend-lookup-by-email', friendLookupRoutes);
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Serve the frontend (index.html + the compatibility client) as static files.
 app.use(express.static(path.join(__dirname, 'public')));

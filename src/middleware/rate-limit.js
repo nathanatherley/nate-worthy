@@ -44,6 +44,19 @@ const inviteLimiter = rateLimit({
   message: { error: 'Too many invites sent — try again in a bit.' },
 });
 
+// Email-based friend lookup: this endpoint confirms whether a specific
+// email has an account, which is an enumeration/probing risk if left
+// unlimited -- someone could script through a list of emails to find out
+// who's on the platform. 30/hour per IP is enough for genuine one-off
+// lookups while making mass probing impractical.
+const lookupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many lookups — try again in a bit.' },
+});
+
 // General API backstop: loose enough to never bother normal browsing/use,
 // just there to stop a runaway script or misbehaving client.
 const generalLimiter = rateLimit({
@@ -54,4 +67,4 @@ const generalLimiter = rateLimit({
   message: { error: 'Too many requests from this network — slow down a bit and try again.' },
 });
 
-module.exports = { signupLimiter, aiLimiter, inviteLimiter, generalLimiter };
+module.exports = { signupLimiter, aiLimiter, inviteLimiter, lookupLimiter, generalLimiter };
