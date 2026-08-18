@@ -1858,8 +1858,17 @@ async function fetchPlaceDetailsCached(placeId) {
   }
 }
 
-function renderPlaceDetailsToggle(placeId) {
-  if (!placeId) return '';
+function renderPlaceDetailsToggle(placeId, restaurantName, cityName) {
+  if (!placeId) {
+    // No captured Place ID for this entry -- likely added before autocomplete
+    // existed, or entered manually. Fall back to a plain Google Maps search
+    // by name so there's still some way to find the address, rather than
+    // showing nothing at all just because this one field is missing.
+    if (!restaurantName) return '';
+    const query = [restaurantName, cityName].filter(Boolean).join(', ');
+    const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+    return '<a href="' + mapsUrl + '" target="_blank" rel="noopener" style="font-size:12px; color:var(--brass-dim); text-decoration:underline; display:inline-block; margin-top:6px;">Search for address</a>';
+  }
   const isExpanded = expandedPlaceDetailsIds.has(placeId);
   let html = '<button type="button" class="btn-text-link" data-toggle-place-details="' + escapeHtml(placeId) + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0; margin-top:6px; display:inline-block;">' + (isExpanded ? 'Hide details' : 'View address & phone') + '</button>';
   if (isExpanded) {
@@ -4760,7 +4769,7 @@ function renderRecommendCard() {
           if (suggestion.friendId !== me.friendId) {
             html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(suggestion.id) + '" style="margin-top:8px;">I\'m going here</button>';
           }
-          if (suggestion.placeId) html += renderPlaceDetailsToggle(suggestion.placeId);
+          html += renderPlaceDetailsToggle(suggestion.placeId, suggestion.restaurant, city ? city.name : null);
           html += '</div>';
         } else if (source === 'community') {
           const first = communityGroup[0];
@@ -4788,7 +4797,7 @@ function renderRecommendCard() {
             }
           })();
           html += '<button class="btn btn-ghost btn-small" data-mark-going="friend:' + escapeHtml(first.id) + '">I\'m going here</button>';
-          if (first.placeId) html += renderPlaceDetailsToggle(first.placeId);
+          html += renderPlaceDetailsToggle(first.placeId, first.restaurant, city ? city.name : null);
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
@@ -4799,7 +4808,7 @@ function renderRecommendCard() {
           html += '<button class="btn btn-ghost btn-small" data-claim-seed="' + escapeHtml(webPick.id) + '">Rate this yourself</button>';
           html += '<button class="btn btn-ghost btn-small" data-mark-going="web:' + escapeHtml(webPick.id) + '">I\'m going here</button>';
           html += '</div>';
-          if (webPick.placeId) html += renderPlaceDetailsToggle(webPick.placeId);
+          html += renderPlaceDetailsToggle(webPick.placeId, webPick.restaurant, webPick.city);
           html += '</div>';
         }
       });
@@ -5408,7 +5417,10 @@ function renderEntryCard(e, showCityLabel) {
     return out;
   })();
   if (e.note) html += '<p class="entry-note">' + escapeHtml(e.note) + '</p>';
-  if (e.placeId) html += renderPlaceDetailsToggle(e.placeId);
+  (function() {
+    const entryCity = state.cities.find(ct => ct.id === e.cityId);
+    html += renderPlaceDetailsToggle(e.placeId, e.restaurant, entryCity ? entryCity.name : null);
+  })();
   const pooledPhotos = pooledPhotosForRestaurant(e);
   if (pooledPhotos.length) {
     html += '<div class="entry-photos">';
