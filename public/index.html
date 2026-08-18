@@ -1874,13 +1874,14 @@ function renderPlaceDetailsContent(placeId) {
   if (cached.error || !cached.data) return '<p class="hint">Couldn\'t load details right now.</p>';
   const { address, phone, website } = cached.data;
   if (!address && !phone && !website) return '<p class="hint">No additional details available.</p>';
+  const linkStyle = 'color:var(--brass-dim); text-decoration:underline;';
   let html = '<div style="font-size:12.5px; color:var(--text-on-paper-dim); line-height:1.7;">';
   if (address) {
     const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address) + '&query_place_id=' + encodeURIComponent(placeId);
-    html += '<div><a href="' + mapsUrl + '" target="_blank" rel="noopener">' + escapeHtml(address) + '</a></div>';
+    html += '<div><a href="' + mapsUrl + '" target="_blank" rel="noopener" style="' + linkStyle + '">' + escapeHtml(address) + '</a></div>';
   }
-  if (phone) html += '<div><a href="tel:' + escapeHtml(phone.replace(/[^\d+]/g, '')) + '">' + escapeHtml(phone) + '</a></div>';
-  if (website) html += '<div><a href="' + escapeHtml(website) + '" target="_blank" rel="noopener">Website</a></div>';
+  if (phone) html += '<div><a href="tel:' + escapeHtml(phone.replace(/[^\d+]/g, '')) + '" style="' + linkStyle + '">' + escapeHtml(phone) + '</a></div>';
+  if (website) html += '<div><a href="' + escapeHtml(website) + '" target="_blank" rel="noopener" style="' + linkStyle + '">Website</a></div>';
   html += '</div>';
   return html;
 }
