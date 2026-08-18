@@ -2326,7 +2326,16 @@ async function importSeedPicks() {
   parsed.forEach((item, i) => {
     if (!item || typeof item !== 'object') { errors.push('Item ' + (i + 1) + ': not an object.'); return; }
     if (!item.city || !item.restaurant) { errors.push('Item ' + (i + 1) + ' (' + (item.restaurant || 'unnamed') + '): missing city or restaurant.'); return; }
-    const id = item.id || ('seed-import-' + uidFromString(item.city + '|' + item.restaurant));
+    // Deliberately ignore any id the imported JSON supplies -- the id
+    // ALWAYS gets derived from city+restaurant instead, normalized so
+    // casing/whitespace differences still collapse together. Trusting a
+    // caller-supplied id broke "matches by city + restaurant name" in
+    // practice: a bulk-generation script that assigns each restaurant a
+    // fresh id on every run would import the same real-world restaurant
+    // as a brand-new entry every single time, since the ids never matched
+    // even though the restaurant did.
+    const normalizedKey = String(item.city).trim().toLowerCase() + '|' + String(item.restaurant).trim().toLowerCase();
+    const id = 'seed-import-' + uidFromString(normalizedKey);
     cleaned.push({
       id: id,
       city: String(item.city).trim(),
@@ -2360,6 +2369,28 @@ async function importSeedPicks() {
       existing = [];
     }
 
+    // One-time cleanup: earlier imports could have stored the same
+    // real-world restaurant under several different ids, if the imported
+    // JSON supplied its own id and that id changed between runs (see the
+    // id-derivation fix above). Collapse anything sharing a normalized
+    // city+restaurant down to a single entry here, so existing duplicates
+    // get fixed just by running any import again -- not only prevented
+    // going forward.
+    const beforeDedupCount = existing.length;
+    const seenKeys = new Map();
+    const dedupedExisting = [];
+    existing.forEach(p => {
+      const key = String(p.city || '').trim().toLowerCase() + '|' + String(p.restaurant || '').trim().toLowerCase();
+      if (seenKeys.has(key)) {
+        dedupedExisting[seenKeys.get(key)] = p; // keep the later duplicate, assumed more recent/accurate
+      } else {
+        seenKeys.set(key, dedupedExisting.length);
+        dedupedExisting.push(p);
+      }
+    });
+    existing = dedupedExisting;
+    const duplicatesRemoved = beforeDedupCount - existing.length;
+
     const existingIds = new Set(existing.map(p => p.id));
     let addedCount = 0, updatedCount = 0;
     cleaned.forEach(item => {
@@ -2384,7 +2415,7 @@ async function importSeedPicks() {
     existing.forEach(p => { if (!defaultIds.has(p.id)) webSeedPicks.push(p); });
     applySeedPickPlaceIds();
 
-    seedImportStatus = 'Imported ' + addedCount + ' new and updated ' + updatedCount + ' existing seed picks.' + (errors.length ? ' Skipped ' + errors.length + ' invalid item(s).' : '');
+    seedImportStatus = 'Imported ' + addedCount + ' new and updated ' + updatedCount + ' existing seed picks.' + (duplicatesRemoved > 0 ? ' Cleaned up ' + duplicatesRemoved + ' duplicate(s) from earlier imports.' : '') + (errors.length ? ' Skipped ' + errors.length + ' invalid item(s).' : '');
     seedImportText = '';
   } catch (e) {
     console.error('seed import failed after retries', e);
