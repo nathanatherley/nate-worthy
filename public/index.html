@@ -372,6 +372,11 @@
     font-size: 11px;
     color: var(--text-on-paper-dim);
   }
+  .city-caret {
+    font-size: 16px;
+    display: inline-block;
+    vertical-align: middle;
+  }
   .head-left { display: flex; align-items: center; gap: 12px; }
   .web-source-tag {
     font-family: 'IBM Plex Mono', monospace;
@@ -5738,11 +5743,13 @@ function renderBoardControls(totalVisible, newSinceCount) {
 // true/false, just "this city differs from its default," so the default
 // itself can change (e.g. your home city changes) without stale explicit
 // states fighting it.
+// Every city starts collapsed, regardless of home city -- too many
+// suburbs meant even the "right" auto-expanded city still buried people
+// in a wall of entries. manuallyToggledCities now just tracks which
+// cities have been tapped open; presence in the set means expanded,
+// absence means collapsed.
 function isCityCollapsed(cityId) {
-  const defaultExpanded = (cityId === computeHomeCityId());
-  const overridden = manuallyToggledCities.has(cityId);
-  const effectiveExpanded = overridden ? !defaultExpanded : defaultExpanded;
-  return !effectiveExpanded;
+  return !manuallyToggledCities.has(cityId);
 }
 
 function getBestOfBestForCity(cityId) {
@@ -5844,7 +5851,7 @@ function renderCityBlock(city, visibleIds, isNested) {
   const nearbyMajor = isNested ? null : nearbyMajorCityFor(city);
   const nearbyMajorNote = nearbyMajor ? ' <span class="near-major-city">(~' + escapeHtml(nearbyMajor) + ')</span>' : '';
   html += '<div class="postcard' + (isNested ? ' postcard-nested' : '') + '" data-city-id="' + city.id + '">';
-  html += '<div class="postcard-head postcard-head-clickable" data-toggle-city="' + city.id + '" role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + escapeHtml(city.name) + '"><div class="head-left"><div class="postmark">' + escapeHtml(city.name.slice(0,3).toUpperCase()) + '</div><h3>' + escapeHtml(city.name) + nearbyMajorNote + '</h3></div><span class="count">' + entries.length + ' spot' + (entries.length === 1 ? '' : 's') + ' ' + (isCollapsed ? '\u25b8' : '\u25be') + '</span></div>';
+  html += '<div class="postcard-head postcard-head-clickable" data-toggle-city="' + city.id + '" role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-label="' + (isCollapsed ? 'Expand' : 'Collapse') + ' ' + escapeHtml(city.name) + '"><div class="head-left"><div class="postmark">' + escapeHtml(city.name.slice(0,3).toUpperCase()) + '</div><h3>' + escapeHtml(city.name) + nearbyMajorNote + '</h3></div><span class="count">' + entries.length + ' spot' + (entries.length === 1 ? '' : 's') + ' <span class="city-caret">' + (isCollapsed ? '\u25b8' : '\u25be') + '</span></span></div>';
 
   if (!isCollapsed) {
     const bestOfBest = getBestOfBestForCity(city.id).slice(0, 3);
