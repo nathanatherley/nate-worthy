@@ -55,6 +55,14 @@
     font-family: 'Inter', -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+  body.discover-view {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+  }
+  body.discover-view .wrap {
+    width: 100%;
+  }
   .wrap { max-width: 720px; margin: 0 auto; padding: max(40px, calc(env(safe-area-inset-top) + 16px)) 24px max(110px, calc(env(safe-area-inset-bottom) + 90px)); }
   .masthead {
     border-bottom: 1px solid rgba(241,236,221,0.15);
@@ -5245,6 +5253,14 @@ function render() {
   app.style.display = 'block';
   app.innerHTML = renderPage();
   attachHandlers();
+  // Discover is usually short (just the search box before you've searched),
+  // so it looks better vertically centered in a tall viewport rather than
+  // pinned to the top with a lot of empty space below. Board and Circle are
+  // typically long scrolling lists, so they stay top-aligned as before --
+  // this only applies to Discover, and only actually centers when content
+  // is shorter than the viewport; it degrades to normal top-anchored
+  // scrolling automatically once there's enough content to fill the page.
+  document.body.classList.toggle('discover-view', currentTab === 'discover' && !!me);
 }
 
 function renderShareFavoriteForm() {
