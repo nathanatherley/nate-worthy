@@ -3205,7 +3205,14 @@ function myTrustWeightForCuisine(friendId, cuisine) {
 // and the actual ranking never disagree.
 function blendedStarRating(trustWeight, tasteRating) {
   if (!(trustWeight > 0) || !(tasteRating > 0)) return null;
-  return Math.sqrt(trustWeight * tasteRating);
+  // Trust can only ever discount a rating downward, never inflate it above
+  // what the rater actually said -- trusting someone doesn't create new
+  // information about the restaurant beyond their own stated rating. The
+  // geometric mean of two different numbers sits between them, so without
+  // this cap, trust higher than the rating itself would push the blended
+  // score ABOVE the rating -- e.g. trust 5 + rating 4 would show 4.5,
+  // higher than what the rater actually said.
+  return Math.min(Math.sqrt(trustWeight * tasteRating), tasteRating);
 }
 
 function visibleFriendIds() {
