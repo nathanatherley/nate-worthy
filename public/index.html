@@ -386,6 +386,18 @@
     vertical-align: middle;
   }
   .head-left { display: flex; align-items: center; gap: 12px; }
+  .michelin-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--rust);
+    border: 1px solid rgba(224,120,86,0.5);
+    border-radius: 2px;
+    padding: 2px 6px;
+    margin-left: 6px;
+  }
   .web-source-tag {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 9px;
@@ -2431,7 +2443,8 @@ async function importSeedPicks() {
       restaurant: String(item.restaurant).trim(),
       cuisine: item.cuisine ? String(item.cuisine).trim() : 'unspecified',
       cost: (typeof item.cost === 'number' && item.cost >= 0 && item.cost <= 4) ? item.cost : 0,
-      note: item.note ? String(item.note).trim() : ''
+      note: item.note ? String(item.note).trim() : '',
+      michelin: item.michelin ? String(item.michelin).trim() : ''
     });
   });
 
@@ -4966,7 +4979,7 @@ function renderRecommendCard() {
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
-          html += '<p class="rec-pick-title">' + escapeHtml(webPick.restaurant) + (webPick.cost ? ' <span class="cost-tag">' + costLabel(webPick.cost) + '</span>' : '') + '<span class="web-source-tag">Internet match, not a friend</span></p>';
+          html += '<p class="rec-pick-title">' + escapeHtml(webPick.restaurant) + (webPick.cost ? ' <span class="cost-tag">' + costLabel(webPick.cost) + '</span>' : '') + (webPick.michelin ? ' <span class="michelin-tag" title="Michelin Guide recognition">&#9733; ' + escapeHtml(webPick.michelin) + '</span>' : '') + '<span class="web-source-tag">Internet match, not a friend</span></p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(webPick.cuisine || 'unspecified') + ' — ' + escapeHtml(webPick.city) + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
           html += '<div style="display:flex; gap:8px; margin-top:8px;">';
