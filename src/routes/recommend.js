@@ -2,10 +2,8 @@
 // directly — your API key lives only here, never in the browser.
 const express = require('express');
 const { requireAuth } = require('../auth/middleware');
-const { aiLimiter } = require('../middleware/rate-limit');
 const router = express.Router();
 router.use(requireAuth);
-router.use(aiLimiter);
 
 // POST /api/recommend  body: { query, options: [...], isGroup, followUp: bool }
 router.post('/', async (req, res) => {
@@ -21,7 +19,7 @@ router.post('/', async (req, res) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1000,
         // The system prompt never changes between requests, so it's marked
         // as a cache breakpoint -- cached reads cost a small fraction of
