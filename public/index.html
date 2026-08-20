@@ -2623,7 +2623,13 @@ async function forgetIdentity() {
 }
 
 function normalizePhone(phone) {
-  return (phone || '').replace(/\D/g, '');
+  const digits = (phone || '').replace(/\D/g, '');
+  // Strip a leading US country code so "1-555-555-5555" or "+15555555555"
+  // still normalizes to the same 10 digits as "555-555-5555" -- without
+  // this, anyone who happens to type the country code would incorrectly
+  // fail the exact-10-digit check below.
+  if (digits.length === 11 && digits.charAt(0) === '1') return digits.slice(1);
+  return digits;
 }
 
 async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
@@ -2633,7 +2639,7 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
   const phoneDigits = normalizePhone(phone);
 
   if (!first || !last) { signupError = 'First and last name are required.'; return false; }
-  if (phoneDigits.length < 7) { signupError = 'Enter a valid phone number.'; return false; }
+  if (phoneDigits.length !== 10) { signupError = 'Enter a valid 10-digit phone number.'; return false; }
 
   const fullName = first + (mi ? ' ' + mi.toUpperCase() + '.' : '') + ' ' + last;
 
@@ -5535,20 +5541,19 @@ function renderPage() {
     html += '<p class="hint">You\'re signed in — just need a name so friends recognize you when they see your picks.</p>';
 
     html += '<div class="row2">';
-    html += '<div><label for="signin-first">First name</label><input type="text" id="signin-first" placeholder="First" value="' + escapeHtml(signupFirstName) + '"></div>';
+    html += '<div><label for="signin-first">First name *</label><input type="text" id="signin-first" placeholder="First" value="' + escapeHtml(signupFirstName) + '"></div>';
     html += '<div><label for="signin-mi">Middle initial (optional)</label><input type="text" id="signin-mi" placeholder="M" maxlength="1" value="' + escapeHtml(signupMiddleInitial) + '"></div>';
     html += '</div>';
-    html += '<label for="signin-last">Last name</label>';
+    html += '<label for="signin-last">Last name *</label>';
     html += '<input type="text" id="signin-last" placeholder="Last" value="' + escapeHtml(signupLastName) + '">';
-    html += '<label for="signin-phone">Phone number</label>';
+    html += '<label for="signin-phone">Phone number *</label>';
     html += '<input type="tel" id="signin-phone" placeholder="(555) 555-5555" value="' + escapeHtml(signupPhone) + '">';
 
     if (signupError) {
       html += '<p class="msg msg-duplicate" style="margin-top:8px;">' + escapeHtml(signupError) + '</p>';
     }
 
-    html += '<label>Cuisines you like to eat (optional)</label>';
-    html += '<p class="hint" style="margin-top:-4px;">Helps us get your foodie recommendations right from day one. Skip this entirely if you\'d rather not say — you can always set it later.</p>';
+    html += '<label>Cuisine (optional)</label>';
     html += '<div class="cuisine-chip-row">';
     MAJOR_CUISINES.forEach(c => {
       const selected = signupCuisines.includes(c);
