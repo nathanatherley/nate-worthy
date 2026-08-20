@@ -8161,25 +8161,42 @@ async function runRecommendation() {
 
       let webPayload = webSeedPicks
         .filter(p => !seedPickIsSuperseded(p))
-        .map(p => ({
-        id: p.id,
-        source: "web reviews, not a friend",
-        restaurant: p.restaurant,
-        city: p.city,
-        nearbyCities: citiesWithinRadius(p.city, null, allCandidateCityNames),
-        cuisine: p.cuisine || 'unspecified',
-        cost: p.cost ? '$'.repeat(p.cost) : 'unknown',
-        note: p.note
-      }));
+        .map(p => {
+          // Full note text only meaningfully matters for whichever handful
+          // of candidates the model actually picks -- but every one of the
+          // hundreds of entries here gets sent on every request regardless,
+          // since this is the shared cached block. Truncating trims real
+          // tokens off the majority that won't be chosen, while 160 chars
+          // is generous enough to preserve a full sentence or two for the
+          // ones that are.
+          const rawNote = p.note || '';
+          const trimmedNote = rawNote.length > 160 ? rawNote.slice(0, 160).trim() + '…' : rawNote;
+          return {
+            id: p.id,
+            source: "web reviews, not a friend",
+            restaurant: p.restaurant,
+            city: p.city,
+            nearbyCities: citiesWithinRadius(p.city, null, allCandidateCityNames),
+            cuisine: p.cuisine || 'unspecified',
+            cost: p.cost ? '$'.repeat(p.cost) : 'unknown',
+            note: trimmedNote
+          };
+        });
 
-      // "Near me" queries should mean it, literally -- someone standing in
-      // Midvale asking for "Chinese food nearby me" shouldn't get results
-      // from Bountiful or Kaysville, 20+ miles away, just because nothing
-      // closer happened to be in the data. Previously this was left
-      // entirely to the AI's own judgment, with only a loose "nearby
-      // cities" annotation as a hint it was free to ignore -- this is a
-      // hard filter enforced here instead, using real coordinates, before
-      // the AI ever sees results outside the range at all.
+      // Both "near me" and an explicitly named city (e.g. "Osaka") can
+      // restrict which cities are actually eligible -- but removing
+      // candidates from webPayload itself reshapes that block differently
+      // on every request, which defeats the cache breakpoint below almost
+      // entirely, since Anthropic only discounts a cache entry that matches
+      // byte-for-byte. webPayload therefore always stays as the full,
+      // unfiltered list here, and any city restriction is instead expressed
+      // as an explicit instruction placed in the separate, small, uncached
+      // block further down. friendPayload/communityPayload are personal
+      // data and already sent uncached every request regardless, so
+      // filtering those directly costs nothing extra and stays as a real
+      // hard filter, same as before.
+      let cityRestrictionInstruction = '';
+
       const NEARBY_QUERY_MILES = 10;
       const impliesNearMe = /\b(near\s*me|nearby(\s*me)?|close\s*to\s*me|around\s*me|by\s*me)\b/i.test(query);
       if (impliesNearMe) {
@@ -8195,7 +8212,7 @@ async function runRecommendation() {
           };
           friendPayload = friendPayload.filter(item => isWithinRange(item.city));
           communityPayload = communityPayload.filter(item => isWithinRange(item.city));
-          webPayload = webPayload.filter(item => isWithinRange(item.city));
+          cityRestrictionInstruction = 'IMPORTANT: This is a "near me" request. Only choose restaurants located within ' + NEARBY_QUERY_MILES + ' miles of ' + originCity.name + ' from the baseline list below -- do not include anything farther away, even if it otherwise looks like a great fit.';
           lastQueryWasNearMeFiltered = true;
         }
       }
@@ -8206,11 +8223,11 @@ async function runRecommendation() {
       // the data, the full global list was being handed to the model with
       // only a soft "nearbyCities" annotation as a hint it was free to
       // ignore. If the query text explicitly names one of the real
-      // candidate cities, treat that as a hard filter the same way "near
-      // me" already is -- restrict to that city (plus anything genuinely
-      // within RADIUS_MATCH_MILES of it) before the AI ever sees the rest.
-      // Skipped when the near-me filter above already fired, since that's
-      // already a stricter, coordinate-based version of the same idea.
+      // candidate cities, that becomes an explicit instruction the same way
+      // "near me" does above -- restrict to that city (plus anything
+      // genuinely within RADIUS_MATCH_MILES of it). Skipped when the
+      // near-me filter above already fired, since that's already a
+      // stricter, coordinate-based version of the same idea.
       if (!impliesNearMe) {
         const queryLower = query.toLowerCase();
         const namedCity = allCandidateCityNames
@@ -8222,7 +8239,7 @@ async function runRecommendation() {
           const matchesNamedCity = (cityName) => cityMatchList.has((cityName || '').toLowerCase());
           friendPayload = friendPayload.filter(item => matchesNamedCity(item.city));
           communityPayload = communityPayload.filter(item => matchesNamedCity(item.city));
-          webPayload = webPayload.filter(item => matchesNamedCity(item.city));
+          cityRestrictionInstruction = 'IMPORTANT: The request explicitly names "' + namedCity + '". Only choose restaurants from the baseline list below whose city is "' + namedCity + '" or one of these nearby cities: [' + [...cityMatchList].join(', ') + '] -- do not include restaurants from any other city, even if a Michelin rating or strong cuisine match makes it seem tempting.';
         }
       }
 
@@ -8245,7 +8262,9 @@ async function runRecommendation() {
       // typically the majority of the tokens in a request, this is the
       // actual cost saving, not just a token gesture. personalPayload
       // varies per person and per request, so it's sent uncached, right
-      // after the cached block.
+      // after the cached block -- and cityRestrictionInstruction, when
+      // present, rides along in that same small uncached block rather than
+      // touching webPayload itself.
       userTurnContent = [
         {
           type: "text",
@@ -8254,7 +8273,7 @@ async function runRecommendation() {
         },
         {
           type: "text",
-          text: (isGroupMode ? "This is a GROUP request for " + participantIds.size + " people going out together tonight. " : "") + "Request: " + query + "\n\nAdditional options from this person's circle and the wider community (combine these with the baseline options above as one full list to choose from):\n" + JSON.stringify(personalPayload)
+          text: (isGroupMode ? "This is a GROUP request for " + participantIds.size + " people going out together tonight. " : "") + (cityRestrictionInstruction ? cityRestrictionInstruction + "\n\n" : "") + "Request: " + query + "\n\nAdditional options from this person's circle and the wider community (combine these with the baseline options above as one full list to choose from):\n" + JSON.stringify(personalPayload)
         }
       ];
     } else {
