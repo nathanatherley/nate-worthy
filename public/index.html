@@ -2045,7 +2045,7 @@ let placeAutocompleteDebounceTimer = null;
 let placeAutocompleteLoading = false;
 let placeDetailsPreview = null; // transient, on-screen only -- never written into the saved entry
 let pendingCleanupConfirm = null;
-let deleteAccountEmailInput = '';
+let deleteAccountEmailInput = ''; // combined "remove person" tool -- removes both login and shared profile
 let pendingDeleteAccountEmail = null;
 let entriesBrowserSearchQuery = '';
 let entriesBrowserEditingId = null;
@@ -4125,22 +4125,21 @@ function renderAccountCleanupCard() {
 // genuinely fresh instead of re-loading a dangling reference.
 function renderDeleteAccountByEmailCard() {
   let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
-  html += '<h2>Delete account by email</h2>';
+  html += '<h2>Remove a person completely</h2>';
 
   if (pendingDeleteAccountEmail) {
-    html += '<p class="hint" style="color: var(--rust); font-weight: 600;">This will permanently delete the login account for <strong>' + escapeHtml(pendingDeleteAccountEmail) + '</strong> -- their session and any saved personal data. This cannot be undone.</p>';
-    html += '<p class="hint">This does not remove them from the shared app data (their name, ratings, entries) -- use "Clean up accounts" above for that separately, if needed.</p>';
+    html += '<p class="hint" style="color: var(--rust); font-weight: 600;">This will permanently delete everything for <strong>' + escapeHtml(pendingDeleteAccountEmail) + '</strong> -- their login/session, and their name, entries, and any trust ratings pointing to them in the shared app data. This cannot be undone.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="delete-account-confirm-btn">Yes, delete permanently</button><button class="btn btn-ghost" id="delete-account-cancel-btn">Cancel</button></div>';
     html += '</div>';
     return html;
   }
 
-  html += '<p class="hint">For a login account stuck in a broken state -- e.g. a signup that got lost from the shared data but left a stale saved identity behind. Deletes their account entirely so their next signup starts fresh.</p>';
+  html += '<p class="hint">Removes someone entirely -- both their login account and their shared profile, entries, and trust ratings -- in one step. For test accounts, duplicate signups, or anyone who should be fully gone.</p>';
   html += '<div class="share-row">';
   html += '<input type="text" id="delete-account-email-input" placeholder="email@example.com" value="' + escapeHtml(deleteAccountEmailInput) + '">';
-  html += '<button class="btn btn-ghost btn-small" id="delete-account-stage-btn">Delete account</button>';
+  html += '<button class="btn btn-ghost btn-small" id="delete-account-stage-btn">Remove person</button>';
   html += '</div>';
-  html += '<span class="msg' + (deleteAccountStatus && deleteAccountStatus.startsWith('Deleted') ? ' msg-success' : (deleteAccountStatus ? ' msg-duplicate' : '')) + '" id="delete-account-status-msg">' + escapeHtml(deleteAccountStatus) + '</span>';
+  html += '<span class="msg' + (deleteAccountStatus && deleteAccountStatus.startsWith('Removed') ? ' msg-success' : (deleteAccountStatus ? ' msg-duplicate' : '')) + '" id="delete-account-status-msg">' + escapeHtml(deleteAccountStatus) + '</span>';
   html += '</div>';
   return html;
 }
@@ -7000,6 +6999,41 @@ function attachHandlers() {
   if (deleteAccountConfirmBtn) {
     deleteAccountConfirmBtn.addEventListener('click', async () => {
       const email = pendingDeleteAccountEmail;
+      const results = [];
+
+      // Step 1: resolve email -> friend id, and if found, remove their
+      // shared profile the same way "Clean up accounts" does (entries,
+      // trust ratings pointing to them, referral links) -- reusing the
+      // exact same logic, just triggered by a resolved single id instead
+      // of an admin-picked list.
+      try {
+        const lookupRes = await fetch('/api/friend-lookup-by-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const lookupData = await lookupRes.json();
+        const friendId = lookupData.friendId;
+        if (friendId) {
+          const idsToDelete = new Set([friendId]);
+          const suggestionIdsToDelete = new Set(state.suggestions.filter(s => idsToDelete.has(s.friendId)).map(s => s.id));
+          state.suggestions = state.suggestions.filter(s => !idsToDelete.has(s.friendId));
+          state.friends = state.friends.filter(f => !idsToDelete.has(f.id));
+          state.friends.forEach(f => {
+            if (f.trustRatings) idsToDelete.forEach(id => { delete f.trustRatings[id]; });
+            if (f.referredBy && idsToDelete.has(f.referredBy)) f.referredBy = null;
+          });
+          const saved = await saveData(undefined, { friends: idsToDelete, suggestions: suggestionIdsToDelete });
+          results.push(saved ? 'profile and entries' : 'profile removal failed');
+        } else {
+          results.push('no shared profile found');
+        }
+      } catch (e) {
+        console.error('profile removal failed', e);
+        results.push('profile removal failed');
+      }
+
+      // Step 2: delete the actual login/session, same as before.
       try {
         const res = await fetch('/api/auth/delete-account-by-email', {
           method: 'POST',
@@ -7008,15 +7042,17 @@ function attachHandlers() {
         });
         const data = await res.json();
         if (res.ok) {
-          deleteAccountStatus = 'Deleted account for ' + email + '.';
-          deleteAccountEmailInput = '';
+          results.push('login account');
         } else {
-          deleteAccountStatus = data.error === 'no account found with that email' ? 'No account found with that email.' : ('Delete failed: ' + (data.error || 'unknown error'));
+          results.push(data.error === 'no account found with that email' ? 'no login account found' : 'login deletion failed');
         }
       } catch (e) {
         console.error('delete account failed', e);
-        deleteAccountStatus = 'Delete failed — check your connection and try again.';
+        results.push('login deletion failed');
       }
+
+      deleteAccountStatus = 'Removed ' + email + ' — ' + results.join(', ') + '.';
+      deleteAccountEmailInput = '';
       pendingDeleteAccountEmail = null;
       render();
     });
