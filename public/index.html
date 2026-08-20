@@ -8200,6 +8200,32 @@ async function runRecommendation() {
         }
       }
 
+      // Same problem, different trigger: someone typing "Osaka" shouldn't
+      // get a Macao restaurant just because the AI loosely associated the
+      // two -- with hundreds of web picks spanning dozens of cities now in
+      // the data, the full global list was being handed to the model with
+      // only a soft "nearbyCities" annotation as a hint it was free to
+      // ignore. If the query text explicitly names one of the real
+      // candidate cities, treat that as a hard filter the same way "near
+      // me" already is -- restrict to that city (plus anything genuinely
+      // within RADIUS_MATCH_MILES of it) before the AI ever sees the rest.
+      // Skipped when the near-me filter above already fired, since that's
+      // already a stricter, coordinate-based version of the same idea.
+      if (!impliesNearMe) {
+        const queryLower = query.toLowerCase();
+        const namedCity = allCandidateCityNames
+          .filter(name => name && name.trim())
+          .sort((a, b) => b.length - a.length) // longest match first, e.g. "New York City" before "New York"
+          .find(name => new RegExp('\\b' + name.trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(queryLower));
+        if (namedCity) {
+          const cityMatchList = new Set([namedCity.toLowerCase(), ...citiesWithinRadius(namedCity, null, allCandidateCityNames).map(c => c.toLowerCase())]);
+          const matchesNamedCity = (cityName) => cityMatchList.has((cityName || '').toLowerCase());
+          friendPayload = friendPayload.filter(item => matchesNamedCity(item.city));
+          communityPayload = communityPayload.filter(item => matchesNamedCity(item.city));
+          webPayload = webPayload.filter(item => matchesNamedCity(item.city));
+        }
+      }
+
       const personalPayload = friendPayload.concat(communityPayload);
 
       if (!webPayload.length && !personalPayload.length) {
