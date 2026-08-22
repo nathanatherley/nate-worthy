@@ -5134,12 +5134,10 @@ function renderShareCard() {
   let html = '<div class="card share-card">';
   html += '<h2>Share</h2>';
 
-  if (me) {
+  if (me && isCurrentUserAdmin()) {
     html += '<div class="share-tabs">';
     html += '<button class="share-tab' + (shareCardMode === 'link' ? ' active' : '') + '" data-share-tab="link">Invite link</button>';
-    if (isCurrentUserAdmin()) {
-      html += '<button class="share-tab' + (shareCardMode === 'open' ? ' active' : '') + '" data-share-tab="open">Invite a stranger</button>';
-    }
+    html += '<button class="share-tab' + (shareCardMode === 'open' ? ' active' : '') + '" data-share-tab="open">Invite a stranger</button>';
     html += '</div>';
   }
 
