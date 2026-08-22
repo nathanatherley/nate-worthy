@@ -7401,7 +7401,8 @@ function attachHandlers() {
       if (nextBtn) nextBtn.addEventListener('click', () => { onboardingScreen = null; render(); });
       return;
     }
-    document.getElementById('signin-submit').addEventListener('click', async () => {
+    const signinSubmitBtn = document.getElementById('signin-submit');
+    if (signinSubmitBtn) signinSubmitBtn.addEventListener('click', async () => {
       const first = document.getElementById('signin-first').value;
       const mi = document.getElementById('signin-mi').value;
       const last = document.getElementById('signin-last').value;
@@ -7479,7 +7480,8 @@ function attachHandlers() {
     }
     return;
   }
-  document.getElementById('switch-user').addEventListener('click', () => {
+  const switchUserBtn = document.getElementById('switch-user');
+  if (switchUserBtn) switchUserBtn.addEventListener('click', () => {
     const hasDraft = formState.restaurant.trim() || formState.note.trim() || formState.taste > 0 || formState.photos.length > 0;
     if (hasDraft) { pendingSwitchUserConfirm = true; render(); return; }
     forgetIdentity();
@@ -9048,6 +9050,22 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
     const msg = e.reason && e.reason.message ? e.reason.message : String(e.reason || 'unknown rejection');
     logEvent('error', { message: msg.slice(0, 300), context: 'unhandledrejection' });
   });
+  // The masthead sits outside #app in the static page shell, so it's never
+  // touched by render()'s innerHTML swap and only ever needs wiring once,
+  // here, rather than through the usual attachHandlers() cycle. Only
+  // navigates once actually logged in -- there's no Circle tab to go to
+  // otherwise, and clicking through to a signed-out view would just be
+  // confusing.
+  const wordmarkEl = document.querySelector('.wordmark');
+  if (wordmarkEl) {
+    wordmarkEl.style.cursor = 'pointer';
+    wordmarkEl.addEventListener('click', () => {
+      if (!me) return;
+      currentTab = 'circle';
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
   try {
     const params = new URLSearchParams(window.location.search);
     inviterFriendId = params.get('ref') || null;
