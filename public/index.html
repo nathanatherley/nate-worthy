@@ -7686,6 +7686,19 @@ function attachHandlers() {
   if (collapseCuisineBtn) collapseCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = false; render(); });
   const editSelfReportedCityBtn = document.getElementById('edit-self-reported-city');
   if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; render(); });
+  const selfReportedCityInput = document.getElementById('self-reported-city-input');
+  if (selfReportedCityInput) {
+    // Same treatment as the rating form's State field: force the full
+    // suggestion list open immediately on click/focus, even when the field
+    // already has a value -- without this, a datalist-backed input that's
+    // already filled in doesn't reliably reopen its list in every browser
+    // on its own, which undercuts the "it's a real dropdown" feel.
+    selfReportedCityInput.addEventListener('click', () => {
+      if (typeof selfReportedCityInput.showPicker === 'function') {
+        try { selfReportedCityInput.showPicker(); } catch (e) { /* unsupported context, ignore */ }
+      }
+    });
+  }
   const cancelSelfReportedCityBtn = document.getElementById('cancel-self-reported-city');
   if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; render(); });
   const saveSelfReportedCityBtn = document.getElementById('save-self-reported-city');
@@ -7888,6 +7901,11 @@ function attachHandlers() {
   if (cityInput) {
     cityInput.addEventListener('input', () => { formState.city = cityInput.value; });
     cityInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
+    cityInput.addEventListener('click', () => {
+      if (typeof cityInput.showPicker === 'function') {
+        try { cityInput.showPicker(); } catch (e) { /* unsupported context, ignore */ }
+      }
+    });
   }
   if (stateInput) {
     stateInput.addEventListener('input', () => { formState.state = stateInput.value; });
