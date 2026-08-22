@@ -111,6 +111,17 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.16), 0 12px 28px rgba(0,0,0,0.32);
     transform: translateY(-1px);
   }
+  .plain-collapsible {
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(183,199,206,0.2);
+    border-radius: 0;
+    padding: 14px 2px 0;
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+  .plain-collapsible:hover { box-shadow: none; transform: none; }
+  .plain-collapsible h2 { font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; font-weight: 400; color: var(--text-on-paper-dim); }
   .rec-card { background: transparent; border: 1px solid var(--card-border); }
   .rec-card::before { display: none; }
   .rec-card h2 { color: var(--text-on-paper); font-size: 28px; }
@@ -3863,7 +3874,7 @@ function renderTrustCard() {
     if (trustedByOthers.length) {
       html += renderCollapsibleWrapper('trusted-by-others', 'People who trust you (' + trustedByOthers.length + ')', trustedByOthers.map(f =>
         '<div class="friend-row"><span class="friend-name">' + escapeHtml(f.name) + '</span></div>'
-      ).join(''), true);
+      ).join(''), true, 'plain-collapsible');
     }
   }
   if (jumpstartHtml && !showJumpstartAtTop) {
