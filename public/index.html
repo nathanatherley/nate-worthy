@@ -1527,7 +1527,7 @@ async function submitFeedback() {
 }
 
 const US_CITY_COORDS = {
-  "new york": [40.71, -74.01], "los angeles": [34.05, -118.24], "chicago": [41.88, -87.63],
+  "new york": [40.71, -74.01], "new york city": [40.71, -74.01], "los angeles": [34.05, -118.24], "chicago": [41.88, -87.63],
   "houston": [29.76, -95.37], "phoenix": [33.45, -112.07], "philadelphia": [39.95, -75.17],
   "san antonio": [29.42, -98.49], "san diego": [32.72, -117.16], "dallas": [32.78, -96.80],
   "san jose": [37.34, -121.89], "austin": [30.27, -97.74], "jacksonville": [30.33, -81.66],
@@ -2054,6 +2054,7 @@ let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
 let selfReportedCityError = '';
+let selfReportedCitySuggestions = []; // custom dropdown, since native <datalist> rendering proved unreliable across browsers
 let showFeedbackForm = false;
 let reportFormStatus = null; // null | 'sending' | 'sent' | 'error'
 let inviteEmailStatus = null; // null | 'sending' | 'sent' | 'error'
@@ -2579,6 +2580,7 @@ async function forgetIdentity() {
   me = null;
   editingSelfReportedCity = false;
   selfReportedCityError = '';
+  selfReportedCitySuggestions = [];
   cuisineTrustPickerOpenFor = null;
   formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
   cuisineOtherMode = false;
@@ -3592,6 +3594,34 @@ function renderPlaceAutocompleteResults() {
     return '<p class="place-details-preview">\u2713 Matched: ' + escapeHtml(placeDetailsPreview.address) + '</p>';
   }
   return '';
+}
+
+function renderSelfReportedCityResults() {
+  if (!selfReportedCitySuggestions.length) return '';
+  let html = '<div class="place-autocomplete-dropdown">';
+  selfReportedCitySuggestions.forEach((name, i) => {
+    html += '<div class="place-autocomplete-row" data-select-self-reported-city="' + i + '" role="button" tabindex="0"><p class="place-autocomplete-main">' + escapeHtml(name) + '</p></div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function updateSelfReportedCityDropdown() {
+  const container = document.getElementById('self-reported-city-results');
+  if (!container) return;
+  container.innerHTML = renderSelfReportedCityResults();
+  document.querySelectorAll('[data-select-self-reported-city]').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = parseInt(row.getAttribute('data-select-self-reported-city'), 10);
+      const name = selfReportedCitySuggestions[idx];
+      if (!name) return;
+      const input = document.getElementById('self-reported-city-input');
+      if (input) input.value = name;
+      selfReportedCitySuggestions = [];
+      selfReportedCityError = '';
+      updateSelfReportedCityDropdown();
+    });
+  });
 }
 
 function updatePlaceAutocompleteResults() {
@@ -5602,8 +5632,10 @@ function renderPage() {
     // on its own, since it's not a separate flex child to begin with.
     if (editingSelfReportedCity) {
       html += '<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:4px;">';
-      html += '<input type="text" id="self-reported-city-input" list="self-reported-city-suggestions" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="flex:1; min-width:160px;">';
-      html += buildCityDatalist('self-reported-city-suggestions');
+      html += '<div style="position:relative; flex:1; min-width:160px;">';
+      html += '<input type="text" id="self-reported-city-input" autocomplete="off" placeholder="What city do you know food in best?" value="' + escapeHtml(me.selfReportedCity || '') + '" style="width:100%; box-sizing:border-box;">';
+      html += '<div id="self-reported-city-results">' + renderSelfReportedCityResults() + '</div>';
+      html += '</div>';
       html += '<button class="btn btn-primary btn-small" id="save-self-reported-city">Save</button>';
       html += '<button class="btn btn-ghost btn-small" id="cancel-self-reported-city">Cancel</button>';
       html += '</div>';
@@ -6704,24 +6736,35 @@ function updateSelectedCityIdFromForm() {
   selectedCityId = match ? match.id : null;
 }
 
-function buildCityDatalist(id) {
+function getAllKnownCityNames() {
   const names = new Set();
   state.cities.forEach(c => names.add(c.name));
   Object.keys(US_CITY_COORDS).forEach(k => names.add(titleCase(k)));
-  const options = Array.from(names).sort().map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
+  return Array.from(names).sort();
+}
+
+function buildCityDatalist(id) {
+  const options = getAllKnownCityNames().map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
   return '<datalist id="' + (id || 'city-suggestions') + '">' + options + '</datalist>';
 }
 
 // Validates against the exact same source list buildCityDatalist draws its
 // suggestions from -- state.cities plus the built-in coordinate table --
 // so "is this a real place" always means the same thing as "does it show
-// up in the dropdown." Case-insensitive, since a person picking a
-// suggestion by typing shouldn't get rejected over capitalization alone.
+// up in the dropdown." Case-insensitive, and tolerant of a trailing "City"
+// (e.g. "New York City" vs. "New York") -- naming isn't fully consistent
+// across the app's own data (seed data uses the long form for NYC, the
+// coordinate table uses the short form), so a person typing the natural,
+// correct name for a place they actually know shouldn't get rejected over
+// a difference that isn't really about whether the place is real.
+function normalizeCityForMatch(name) {
+  return (name || '').trim().toLowerCase().replace(/\s+city$/, '');
+}
 function isKnownCityName(name) {
-  const typed = (name || '').trim().toLowerCase();
+  const typed = normalizeCityForMatch(name);
   if (!typed) return false;
-  if (state.cities.some(c => c.name.toLowerCase() === typed)) return true;
-  return Object.keys(US_CITY_COORDS).some(k => titleCase(k).toLowerCase() === typed);
+  if (state.cities.some(c => normalizeCityForMatch(c.name) === typed)) return true;
+  return Object.keys(US_CITY_COORDS).some(k => normalizeCityForMatch(titleCase(k)) === typed);
 }
 
 const US_STATE_ABBREVIATIONS = [
@@ -7705,22 +7748,37 @@ function attachHandlers() {
   const collapseCuisineBtn = document.getElementById('collapse-cuisine-card');
   if (collapseCuisineBtn) collapseCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = false; render(); });
   const editSelfReportedCityBtn = document.getElementById('edit-self-reported-city');
-  if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; selfReportedCityError = ''; render(); });
+  if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; selfReportedCityError = ''; selfReportedCitySuggestions = []; render(); });
   const selfReportedCityInput = document.getElementById('self-reported-city-input');
   if (selfReportedCityInput) {
-    // Same treatment as the rating form's State field: force the full
-    // suggestion list open immediately on click/focus, even when the field
-    // already has a value -- without this, a datalist-backed input that's
-    // already filled in doesn't reliably reopen its list in every browser
-    // on its own, which undercuts the "it's a real dropdown" feel.
-    selfReportedCityInput.addEventListener('click', () => {
-      if (typeof selfReportedCityInput.showPicker === 'function') {
-        try { selfReportedCityInput.showPicker(); } catch (e) { /* unsupported context, ignore */ }
+    // Native <datalist> turned out to be unreliable for this field --
+    // confirmed the option data itself was present and correctly linked
+    // (225 real entries), yet nothing rendered even while typing, on a
+    // browser (Firefox) that generally supports datalist well. Rather than
+    // keep chasing an inconsistent, hard-to-diagnose native browser
+    // behavior, this filters and renders suggestions manually instead,
+    // reusing the same dropdown pattern already proven reliable for
+    // restaurant search.
+    selfReportedCityInput.addEventListener('input', () => {
+      const query = selfReportedCityInput.value.trim().toLowerCase();
+      selfReportedCitySuggestions = query
+        ? getAllKnownCityNames().filter(n => n.toLowerCase().includes(query)).slice(0, 8)
+        : [];
+      updateSelfReportedCityDropdown();
+    });
+    selfReportedCityInput.addEventListener('focus', () => {
+      // Showing the full list on focus (not just once something's typed)
+      // matches the "click to browse everything" feel the rating form's
+      // State field had via showPicker(), now that this no longer depends
+      // on that native, less reliable mechanism.
+      if (!selfReportedCityInput.value.trim()) {
+        selfReportedCitySuggestions = getAllKnownCityNames().slice(0, 8);
+        updateSelfReportedCityDropdown();
       }
     });
   }
   const cancelSelfReportedCityBtn = document.getElementById('cancel-self-reported-city');
-  if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; selfReportedCityError = ''; render(); });
+  if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; selfReportedCityError = ''; selfReportedCitySuggestions = []; render(); });
   const saveSelfReportedCityBtn = document.getElementById('save-self-reported-city');
   if (saveSelfReportedCityBtn) {
     saveSelfReportedCityBtn.addEventListener('click', () => {
@@ -7738,6 +7796,7 @@ function attachHandlers() {
         return;
       }
       selfReportedCityError = '';
+      selfReportedCitySuggestions = [];
       me.selfReportedCity = val || null;
       editingSelfReportedCity = false;
       saveIdentity();
