@@ -5621,7 +5621,12 @@ function renderPage() {
 
     if (showFeedbackForm) html += renderFeedbackFormCard();
 
-    html += renderCircleNudgeCard();
+    // Skipped specifically on the Circle tab -- the Share card just below
+    // already covers the exact same "invite people" action there, so
+    // showing this too was a duplicate of the same form on the same page.
+    // Still shows everywhere else (Discover, etc.), where it's the only
+    // invite prompt on screen.
+    if (currentTab !== 'circle') html += renderCircleNudgeCard();
     html += renderAdminClaimCard();
     html += renderPlannedVisitsCard();
     html += renderQuickConnectCard();
