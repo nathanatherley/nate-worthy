@@ -4035,12 +4035,26 @@ function entryContainsFlaggedContent(entry) {
   });
 }
 
+// Plenty of real restaurant names legitimately trip the keyword list --
+// "Dick's Drive-In" being the obvious one -- so a raw keyword match alone
+// isn't a real queue, it's the same handful of false positives resurfacing
+// forever. entryNeedsFlagReview additionally excludes anything already
+// explicitly marked reviewed, so the badge and queue only ever reflect
+// what's actually still waiting on a decision.
+function entryNeedsFlagReview(entry) {
+  return entryContainsFlaggedContent(entry) && !entry.flagReviewed;
+}
+
+function countEntriesNeedingFlagReview() {
+  return state.suggestions.filter(entryNeedsFlagReview).length;
+}
+
 function renderEntriesBrowserCard() {
   let html = '<div class="card">';
   html += '<h2>All entries</h2>';
   html += '<p class="hint">Search by restaurant or person to find, edit, or delete any entry site-wide.</p>';
   html += '<input type="text" id="entries-browser-search" placeholder="Search restaurant or person…" value="' + escapeHtml(entriesBrowserSearchQuery) + '" style="margin-bottom:8px;">';
-  const flaggedCount = state.suggestions.filter(entryContainsFlaggedContent).length;
+  const flaggedCount = countEntriesNeedingFlagReview();
   html += '<label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-on-paper-dim); margin-bottom:12px; cursor:pointer;"><input type="checkbox" id="entries-browser-flagged-only"' + (entriesBrowserFlaggedOnly ? ' checked' : '') + '> Show flagged only' + (flaggedCount ? ' (' + flaggedCount + ')' : '') + '</label>';
   html += '<div id="entries-browser-results">' + renderEntriesBrowserResults() + '</div>';
   html += '</div>';
@@ -4050,7 +4064,7 @@ function renderEntriesBrowserCard() {
 function renderEntriesBrowserResults() {
   const query = entriesBrowserSearchQuery.trim().toLowerCase();
   let matches = state.suggestions.filter(e => {
-    if (entriesBrowserFlaggedOnly && !entryContainsFlaggedContent(e)) return false;
+    if (entriesBrowserFlaggedOnly && !entryNeedsFlagReview(e)) return false;
     if (!query) return true;
     return e.restaurant.toLowerCase().includes(query) || (e.friendName || '').toLowerCase().includes(query);
   });
@@ -4099,11 +4113,12 @@ function renderEntriesBrowserResults() {
     } else {
       html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">';
       html += '<div style="min-width:0;">';
-      html += '<p style="font-size:14px; color:var(--text-on-paper); margin:0; font-weight:600;">' + escapeHtml(e.restaurant) + (entryContainsFlaggedContent(e) ? ' <span class="meta-badge meta-badge-warn">flagged</span>' : '') + '</p>';
+      html += '<p style="font-size:14px; color:var(--text-on-paper); margin:0; font-weight:600;">' + escapeHtml(e.restaurant) + (entryNeedsFlagReview(e) ? ' <span class="meta-badge meta-badge-warn">flagged</span>' : (entryContainsFlaggedContent(e) ? ' <span class="meta-badge" title="Matched the keyword list but already reviewed and dismissed">reviewed</span>' : '')) + '</p>';
       html += '<p class="track-record" style="margin-top:2px;">' + escapeHtml(e.cuisine || 'unspecified') + (city ? ' — ' + escapeHtml(city.name) : '') + ' — ' + escapeHtml(e.friendName) + '</p>';
       html += '<p class="track-record">Taste ' + '\u2605'.repeat(e.ratingTaste || 0) + '\u2606'.repeat(5 - (e.ratingTaste || 0)) + (e.note ? ' — "' + escapeHtml(e.note.slice(0, 60)) + (e.note.length > 60 ? '…' : '') + '"' : '') + '</p>';
       html += '</div>';
       html += '<div style="display:flex; gap:6px; flex-shrink:0;">';
+      if (entryNeedsFlagReview(e)) html += '<button class="btn btn-ghost btn-small" data-eb-mark-reviewed="' + e.id + '" title="Looks fine as-is, e.g. a real restaurant name like Dick\'s Drive-In -- dismiss this from the queue">Mark reviewed</button>';
       html += '<button class="btn btn-ghost btn-small" data-eb-edit="' + e.id + '">Edit</button>';
       html += '<button class="btn btn-ghost btn-small" data-eb-delete="' + e.id + '">Delete</button>';
       html += '</div>';
@@ -4122,6 +4137,16 @@ function updateEntriesBrowserResults() {
 }
 
 function attachEntriesBrowserHandlers() {
+  document.querySelectorAll('[data-eb-mark-reviewed]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-eb-mark-reviewed');
+      const entry = state.suggestions.find(s => s.id === id);
+      if (!entry) return;
+      entry.flagReviewed = true;
+      saveData();
+      render();
+    });
+  });
   document.querySelectorAll('[data-eb-edit]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-eb-edit');
@@ -5595,7 +5620,7 @@ function renderPage() {
     html += '<button class="tab-btn' + (currentTab === 'discover' ? ' active' : '') + '" data-switch-tab="discover"><span class="tab-icon">\u2726</span>Discover</button>';
     html += '<button class="tab-btn' + (currentTab === 'board' ? ' active' : '') + '" data-switch-tab="board"><span class="tab-icon">\u2261</span>My Ratings</button>';
     html += '<button class="tab-btn' + (currentTab === 'circle' ? ' active' : '') + '" data-switch-tab="circle"><span class="tab-icon-wrap"><span class="tab-icon">\u25d0</span>' + (unratedReciprocityList().length > 0 ? '<span class="tab-badge">' + unratedReciprocityList().length + '</span>' : '') + '</span>Circle</button>';
-    if (isCurrentUserAdmin()) html += '<button class="tab-btn' + (currentTab === 'admin' ? ' active' : '') + '" data-switch-tab="admin"><span class="tab-icon">\u2699</span>Admin</button>';
+    if (isCurrentUserAdmin()) html += '<button class="tab-btn' + (currentTab === 'admin' ? ' active' : '') + '" data-switch-tab="admin"><span class="tab-icon-wrap"><span class="tab-icon">\u2699</span>' + (countEntriesNeedingFlagReview() > 0 ? '<span class="tab-badge">' + countEntriesNeedingFlagReview() + '</span>' : '') + '</span>Admin</button>';
     html += '</div>';
 
     if (currentTab === 'discover') {
