@@ -2659,7 +2659,16 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
 
   const fullName = first + (mi ? ' ' + mi.toUpperCase() + '.' : '') + ' ' + last;
 
-  let existing = state.friends.find(f => f.phone && f.phone === phoneDigits);
+  // Phone-match "reunite with my existing account" is meant for someone
+  // recovering their own session after clearing cookies or switching
+  // devices -- but phone numbers are routinely known between friends and
+  // family, unlike a password. Matching on phone ALONE means anyone who
+  // knows a friend's phone number could type their own name and silently
+  // get logged into that friend's actual account, with full read/write
+  // access -- not a data leak, a real account takeover. Requiring the name
+  // to also reasonably match closes that: a genuine returning user's name
+  // matches their own stored name, while someone else's name won't.
+  let existing = state.friends.find(f => f.phone && f.phone === phoneDigits && f.name.toLowerCase() === fullName.toLowerCase());
   if (!existing) {
     existing = state.friends.find(f => !f.phone && f.name.toLowerCase() === fullName.toLowerCase());
     if (existing) existing.phone = phoneDigits;
@@ -3343,19 +3352,17 @@ function renderQuickConnectCard() {
 
   let html = '<div class="card">';
   html += '<h2>Fast-track your trust circle</h2>';
-  html += '<p class="hint">' + escapeHtml(inviter.name) + ' already trusts these ' + candidateIds.length + ' people. Add any of them to your own list to rate yourself -- shown alongside how much ' + escapeHtml(inviter.name) + ' trusts them, for context, but the rating is always your own call.</p>';
+  html += '<p class="hint">' + escapeHtml(inviter.name) + ' already trusts these ' + candidateIds.length + ' people. Add any of them to your own list to rate yourself -- how much someone else trusts them stays private to that person, so you\'ll be starting your own rating fresh.</p>';
 
   candidateIds.forEach(fid => {
     const candidate = state.friends.find(f => f.id === fid);
     if (!candidate) return;
-    const rating = inviter.trustRatings[fid] || 0;
     const checked = !!quickConnectSelections[fid];
     html += '<div class="friend-row">';
     html += '<label style="display:flex; align-items:center; gap:10px; cursor:pointer; flex:1;">';
     html += '<input type="checkbox" data-quickconnect-toggle="' + fid + '"' + (checked ? ' checked' : '') + '>';
     html += '<span class="friend-name">' + escapeHtml(candidate.name) + '</span>';
     html += '</label>';
-    html += '<span class="track-record">' + escapeHtml(inviter.name).split(' ')[0] + '\u2019s trust: ' + '\u2605'.repeat(rating) + '\u2606'.repeat(5 - rating) + '</span>';
     html += '</div>';
   });
 
