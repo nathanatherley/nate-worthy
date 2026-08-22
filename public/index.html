@@ -2045,6 +2045,7 @@ let editingSelfReportedCity = false;
 let showFeedbackForm = false;
 let reportFormStatus = null; // null | 'sending' | 'sent' | 'error'
 let inviteEmailStatus = null; // null | 'sending' | 'sent' | 'error'
+let inviteAlreadyExistsMatch = null; // { friend, channel: 'email'|'phone' } when the typed email/phone already belongs to an existing account
 let postRatingInviteEntryId = null; // null | the entry id, so shares can reference which pick
 let previewPickId = null;
 let previewData = null;
@@ -3086,6 +3087,33 @@ function renderFeedbackFormCard() {
   html += '</div>';
   if (reportFormStatus === 'sent') html += '<p class="hint" style="color:var(--brass-dim); margin-bottom:0;">Thanks — that\'s on its way.</p>';
   if (reportFormStatus === 'error') html += '<p class="hint" style="color:#c0392b; margin-bottom:0;">Something went wrong sending that — try again in a moment.</p>';
+  html += '</div>';
+  return html;
+}
+
+// Clicking someone's invite link previously only did anything useful for a
+// brand-new signup -- if the person already had their own account and was
+// already logged in on that browser/device, the ?ref= id got silently
+// parsed and then never acted on anywhere, so the link just opened the
+// app normally with nothing to indicate why they'd been sent there. This
+// surfaces that context explicitly and lets both people connect in one
+// tap, reusing the same rate-directly-in-a-callout pattern already used
+// for the reciprocity-gap card.
+function renderInviterConnectCard() {
+  if (!me || !inviterFriendId || inviterFriendId === me.friendId) return '';
+  const inviter = state.friends.find(f => f.id === inviterFriendId);
+  if (!inviter) return '';
+  const myRatings = myTrustRatings();
+  if ((myRatings[inviter.id] || 0) > 0) return '';
+  const rating = myRatings[inviter.id] || 0;
+  let html = '<div class="card" style="border: 1px solid var(--card-border); background: rgba(255,140,100,0.08); margin-bottom:16px;">';
+  html += '<h2 style="margin-bottom:4px;">' + escapeHtml(inviter.name.split(' ')[0]) + ' invited you</h2>';
+  html += '<p class="hint">Add them to your circle so their picks count in your recommendations too — and yours in theirs.</p>';
+  html += '<div class="friend-row" data-rate-friend-row="' + inviter.id + '"><span class="friend-name">' + escapeHtml(inviter.name) + '</span><div class="rate-dots">';
+  for (let i = 1; i <= 5; i++) {
+    html += '<button type="button" class="rate-star rate-star-trust' + (rating >= i ? ' filled' : '') + '" data-trust-star="' + inviter.id + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(inviter.name) + ' ' + i + ' of 5 stars">' + (rating >= i ? '\u2605' : '\u2606') + '</button>';
+  }
+  html += '</div></div>';
   html += '</div>';
   return html;
 }
@@ -5164,6 +5192,20 @@ function renderShareCard() {
       html += '<input type="tel" id="invite-phone-input" placeholder="Their phone number">';
       html += '<button class="btn btn-primary btn-small" id="invite-phone-btn">Text</button>';
       html += '</div>';
+      if (inviteAlreadyExistsMatch) {
+        const existing = inviteAlreadyExistsMatch.friend;
+        const myRatings = myTrustRatings();
+        const rating = myRatings[existing.id] || 0;
+        html += '<div style="border: 1px solid var(--card-border); background: rgba(255,140,100,0.08); border-radius: 10px; padding: 12px; margin-top: 10px;">';
+        html += '<p class="hint" style="margin:0 0 8px; color: var(--text-on-paper);"><strong>' + escapeHtml(existing.name) + ' already has an account</strong> — add them to your circle instead of sending an invite?</p>';
+        html += '<div class="friend-row" data-rate-friend-row="' + existing.id + '"><span class="friend-name">' + escapeHtml(existing.name) + '</span><div class="rate-dots">';
+        for (let i = 1; i <= 5; i++) {
+          html += '<button type="button" class="rate-star rate-star-trust' + (rating >= i ? ' filled' : '') + '" data-trust-star="' + existing.id + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(existing.name) + ' ' + i + ' of 5 stars">' + (rating >= i ? '\u2605' : '\u2606') + '</button>';
+        }
+        html += '</div></div>';
+        html += '<button type="button" class="btn-text-link" id="dismiss-invite-exists-match" style="background:none; border:none; font-size:11px; color:var(--text-on-paper-dim); text-decoration:underline; cursor:pointer; padding:0; margin-top:6px;">Send an invite anyway</button>';
+        html += '</div>';
+      }
     }
     if (me) {
       const referred = state.friends.filter(f => f.referredBy === me.friendId);
@@ -5529,6 +5571,7 @@ function renderPage() {
     html += '</div>';
 
     if (currentTab === 'discover') {
+      html += renderInviterConnectCard();
       html += renderRecommendCard();
       const myRatingCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
       const myCircleCount = Object.values(myTrustRatings()).filter(v => v > 0).length;
@@ -6642,6 +6685,50 @@ function escapeHtml(str) {
 // since a full render's attachHandlers() and the lightweight group-pick
 // partial update can both run in the same pass -- without the guard,
 // double-binding would send an invite twice per click.
+async function sendEmailInvite(toEmail) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  let shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+  let pickRestaurant = null;
+  if (postRatingInviteEntryId) {
+    shareUrl += '&pick=' + encodeURIComponent(postRatingInviteEntryId);
+    const pickEntry = state.suggestions.find(s => s.id === postRatingInviteEntryId);
+    if (pickEntry) pickRestaurant = pickEntry.restaurant;
+  }
+  inviteEmailStatus = 'sending';
+  render();
+  try {
+    const res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ toEmail, fromName: me ? me.name : '', shareUrl, pickRestaurant }),
+    });
+    if (!res.ok) throw new Error('invite send failed');
+    inviteEmailStatus = 'sent';
+    setTimeout(() => { inviteEmailStatus = null; render(); }, 3000);
+    render();
+  } catch (e) {
+    inviteEmailStatus = 'error';
+    render();
+  }
+}
+
+function sendPhoneInvite(phone) {
+  const baseUrl = window.location.origin + window.location.pathname;
+  let shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
+  let message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
+  if (postRatingInviteEntryId) {
+    shareUrl += '&pick=' + encodeURIComponent(postRatingInviteEntryId);
+    const pickEntry = state.suggestions.find(s => s.id === postRatingInviteEntryId);
+    if (pickEntry && me) {
+      message = me.name.split(' ')[0] + ' rated ' + pickEntry.restaurant + ' ' + pickEntry.ratingTaste + ' stars on Nate-Worthy — check it out: ' + shareUrl;
+    }
+  }
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const cleanPhone = phone.replace(/[^\d+]/g, '');
+  const smsUrl = (isIOS ? 'sms:' + cleanPhone + '&body=' : 'sms:' + cleanPhone + '?body=') + encodeURIComponent(message);
+  window.location.href = smsUrl;
+}
+
 function wireInviteButtons() {
   const inviteEmailBtn = document.getElementById('invite-email-btn');
   if (inviteEmailBtn && !inviteEmailBtn.dataset.wired) {
@@ -6650,30 +6737,29 @@ function wireInviteButtons() {
       const input = document.getElementById('invite-email-input');
       const toEmail = (input.value || '').trim();
       if (!toEmail || !toEmail.includes('@')) return;
-      const baseUrl = window.location.origin + window.location.pathname;
-      let shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
-      let pickRestaurant = null;
-      if (postRatingInviteEntryId) {
-        shareUrl += '&pick=' + encodeURIComponent(postRatingInviteEntryId);
-        const pickEntry = state.suggestions.find(s => s.id === postRatingInviteEntryId);
-        if (pickEntry) pickRestaurant = pickEntry.restaurant;
-      }
-      inviteEmailStatus = 'sending';
-      render();
+      inviteAlreadyExistsMatch = null;
+      // Sending a "come sign up" invite to someone who already has an
+      // account just lands them back on the app with nothing useful to
+      // do -- checking first and offering to connect circles directly
+      // instead is a better outcome for both people. Reuses the same
+      // lookup already used for search-by-email.
       try {
-        const res = await fetch('/api/invite', {
+        const lookupRes = await fetch('/api/friend-lookup-by-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ toEmail, fromName: me ? me.name : '', shareUrl, pickRestaurant }),
+          body: JSON.stringify({ email: toEmail }),
         });
-        if (!res.ok) throw new Error('invite send failed');
-        inviteEmailStatus = 'sent';
-        setTimeout(() => { inviteEmailStatus = null; render(); }, 3000);
-        render();
-      } catch (e) {
-        inviteEmailStatus = 'error';
-        render();
-      }
+        const lookupData = await lookupRes.json();
+        if (lookupData.friendId && lookupData.friendId !== (me ? me.friendId : null)) {
+          const existingFriend = state.friends.find(f => f.id === lookupData.friendId);
+          if (existingFriend) {
+            inviteAlreadyExistsMatch = { friend: existingFriend, channel: 'email' };
+            render();
+            return;
+          }
+        }
+      } catch (e) { /* lookup failing just falls through to a normal invite send */ }
+      await sendEmailInvite(toEmail);
     });
   }
   const invitePhoneBtn = document.getElementById('invite-phone-btn');
@@ -6683,20 +6769,35 @@ function wireInviteButtons() {
       const input = document.getElementById('invite-phone-input');
       const phone = (input.value || '').trim();
       if (!phone) return;
-      const baseUrl = window.location.origin + window.location.pathname;
-      let shareUrl = me ? (baseUrl + '?ref=' + encodeURIComponent(me.friendId)) : baseUrl;
-      let message = 'Check out Nate-Worthy, a site for foodies I trust: ' + shareUrl;
-      if (postRatingInviteEntryId) {
-        shareUrl += '&pick=' + encodeURIComponent(postRatingInviteEntryId);
-        const pickEntry = state.suggestions.find(s => s.id === postRatingInviteEntryId);
-        if (pickEntry && me) {
-          message = me.name.split(' ')[0] + ' rated ' + pickEntry.restaurant + ' ' + pickEntry.ratingTaste + ' stars on Nate-Worthy — check it out: ' + shareUrl;
-        }
+      inviteAlreadyExistsMatch = null;
+      // Same reasoning as the email check above -- if this number already
+      // belongs to a real account, a signup text is a dead end for them.
+      const phoneDigits = normalizePhone(phone);
+      const existingFriend = state.friends.find(f => f.phone && f.phone === phoneDigits && f.id !== (me ? me.friendId : null));
+      if (existingFriend) {
+        inviteAlreadyExistsMatch = { friend: existingFriend, channel: 'phone' };
+        render();
+        return;
       }
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const cleanPhone = phone.replace(/[^\d+]/g, '');
-      const smsUrl = (isIOS ? 'sms:' + cleanPhone + '&body=' : 'sms:' + cleanPhone + '?body=') + encodeURIComponent(message);
-      window.location.href = smsUrl;
+      sendPhoneInvite(phone);
+    });
+  }
+  const dismissExistsMatchBtn = document.getElementById('dismiss-invite-exists-match');
+  if (dismissExistsMatchBtn && !dismissExistsMatchBtn.dataset.wired) {
+    dismissExistsMatchBtn.dataset.wired = '1';
+    dismissExistsMatchBtn.addEventListener('click', () => {
+      if (!inviteAlreadyExistsMatch) return;
+      const channel = inviteAlreadyExistsMatch.channel;
+      inviteAlreadyExistsMatch = null;
+      if (channel === 'email') {
+        const input = document.getElementById('invite-email-input');
+        const toEmail = (input && input.value || '').trim();
+        if (toEmail) sendEmailInvite(toEmail);
+      } else {
+        const input = document.getElementById('invite-phone-input');
+        const phone = (input && input.value || '').trim();
+        if (phone) sendPhoneInvite(phone);
+      }
     });
   }
 }
