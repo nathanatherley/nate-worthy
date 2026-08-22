@@ -7451,10 +7451,30 @@ function attachHandlers() {
   if (collapseTrustBtn) collapseTrustBtn.addEventListener('click', () => { trustCardExpanded = false; render(); });
   const circleNudgeBtn = document.getElementById('circle-nudge-go');
   if (circleNudgeBtn) circleNudgeBtn.addEventListener('click', () => {
+    // "Rate them back" specifically (the reciprocity-gap card) needs to
+    // land on the actual person, not just the tab -- the trust circle list
+    // can already be long, and re-opening it in the same scroll position
+    // with nothing visibly different is exactly why this looked like the
+    // button did nothing. Reuses the same scroll-and-highlight pattern
+    // already used for data-rate-community elsewhere in this file.
+    const reciprocityTarget = unratedReciprocityList()[0];
     currentTab = 'circle';
     trustCardExpanded = true;
     render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (reciprocityTarget) {
+      setTimeout(() => {
+        const row = document.querySelector('[data-rate-friend-row="' + reciprocityTarget.id + '"]');
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('highlight-pulse');
+          setTimeout(() => row.classList.remove('highlight-pulse'), 2000);
+          return;
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   });
   const circleNudgeInviteBtn = document.getElementById('circle-nudge-invite');
   if (circleNudgeInviteBtn) circleNudgeInviteBtn.addEventListener('click', () => {
