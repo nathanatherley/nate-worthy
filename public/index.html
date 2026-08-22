@@ -2844,8 +2844,15 @@ function getJumpstartInfo() {
   if (!sourceIds.size) return null;
 
   // Never show anyone's specific trust number here (could cause hurt feelings) —
-  // just track who among your connections vouches for each candidate, and
-  // silently average their ratings for the value actually applied if selected.
+  // just track who among your connections vouches for each candidate.
+  // Excludes anyone already rated AND anyone already added via a previous
+  // "Add selected to my circle" (now sitting in pendingToRate, waiting for
+  // an actual rating) -- otherwise a person you just added would keep
+  // reappearing here as an unchecked discovery candidate even while
+  // simultaneously showing up in the main rateable list below, the exact
+  // duplicate-display problem this whole selection/rating split exists to
+  // avoid.
+  const alreadyPending = new Set(Array.isArray(myFriend.pendingToRate) ? myFriend.pendingToRate : []);
   const candidateInfo = {};
   sourceIds.forEach(sourceId => {
     if (sourceId === me.friendId) return;
@@ -2855,6 +2862,7 @@ function getJumpstartInfo() {
       if (candidateId === me.friendId) return;
       if (source.trustRatings[candidateId] <= 0) return;
       if ((myRatings[candidateId] || 0) > 0) return;
+      if (alreadyPending.has(candidateId)) return;
       if (!candidateInfo[candidateId]) candidateInfo[candidateId] = { sourceNames: [], ratings: [] };
       candidateInfo[candidateId].sourceNames.push(source.name);
       candidateInfo[candidateId].ratings.push(source.trustRatings[candidateId]);
@@ -3739,15 +3747,16 @@ function renderTrustCard() {
   } else {
     const myFriendRecord = state.friends.find(f => f.id === me.friendId);
     const unknownMarks = (myFriendRecord && myFriendRecord.unknownMarks) || {};
-    const jumpstartIds = new Set(jumpstartInfo ? jumpstartInfo.candidateIds : []);
     // Default visible set: people already trusted (naturally the ones
-    // worth seeing again), plus anyone surfaced through the jumpstart
-    // suggestions, plus anyone explicitly found and added via search this
-    // session. Not literally everyone in the app -- at any real scale that
-    // becomes the same unusable wall of names the admin and account-claim
-    // screens had, and it's also just not how someone naturally finds a
-    // specific person, the same way Facebook's friend list isn't "rate
-    // every single person on the platform."
+    // worth seeing again), plus anyone explicitly found and added via
+    // search this session. Not literally everyone in the app -- at any
+    // real scale that becomes the same unusable wall of names the admin
+    // and account-claim screens had, and it's also just not how someone
+    // naturally finds a specific person, the same way Facebook's friend
+    // list isn't "rate every single person on the platform." Jumpstart
+    // candidates are deliberately NOT included here -- they live only in
+    // their own "Discovered through your circle" checkbox section until
+    // actually added.
     const alreadyRatedIds = new Set(others.filter(f => (ratings[f.id] || 0) > 0).map(f => f.id));
     const pendingToRateIds = new Set((myFriendRecord && Array.isArray(myFriendRecord.pendingToRate)) ? myFriendRecord.pendingToRate : []);
     const connectionSuggestions = allConnectionSuggestionsFor(me.friendId);
@@ -3761,7 +3770,17 @@ function renderTrustCard() {
     // their own callout, separate from the general list, so there's no
     // hunting required -- the name you came here for is right at the top.
     const reciprocityIds = new Set(unratedReciprocityList().map(f => f.id));
-    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds, ...Object.keys(connectionSuggestionLabels), ...reciprocityIds]);
+    // Jumpstart candidates deliberately do NOT go into defaultVisibleIds --
+    // they already have their own dedicated "Discovered through your
+    // circle" section with checkboxes above. Including them here too meant
+    // an unselected candidate showed up in both places simultaneously: an
+    // unchecked box asking "add them?" right next to a star row asking
+    // "rate them?", for someone not actually in the circle yet. Once
+    // they're genuinely added (jumpstart-add sets a real trustRatings
+    // entry), alreadyRatedIds already covers them independently, so
+    // nothing is lost -- they just don't show twice before that decision
+    // is made.
+    const defaultVisibleIds = new Set([...alreadyRatedIds, ...friendSearchAddedIds, ...pendingToRateIds, ...Object.keys(connectionSuggestionLabels), ...reciprocityIds]);
     const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id) && !reciprocityIds.has(f.id));
     const reciprocityToRate = others.filter(f => !unknownMarks[f.id] && reciprocityIds.has(f.id));
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
@@ -7796,12 +7815,20 @@ function attachHandlers() {
       if (!info) return;
       const myFriend = state.friends.find(f => f.id === me.friendId);
       if (!myFriend) return;
-      if (!myFriend.trustRatings || typeof myFriend.trustRatings !== 'object') myFriend.trustRatings = {};
+      // Previously this silently computed an average of your connections'
+      // own ratings and wrote it straight into your trustRatings as if it
+      // were your own judgment -- the exact same problem as the QuickConnect
+      // privacy leak fixed earlier: someone else's rating standing in for a
+      // decision you never actually made. This now only makes a selected
+      // person visible in the rateable list (the same pendingToRate
+      // mechanism QuickConnect's "Add selected to my list" already uses),
+      // with a genuinely blank rating -- so selecting someone here is step
+      // one, and rating them yourself, afterward, is a separate step.
+      if (!Array.isArray(myFriend.pendingToRate)) myFriend.pendingToRate = [];
       let addedCount = 0;
       info.candidateIds.forEach(fid => {
-        if (referrerJumpstartSelections[fid] && info.candidateInfo[fid] && info.candidateInfo[fid].ratings.length) {
-          const avgRating = Math.round(avg(info.candidateInfo[fid].ratings));
-          myFriend.trustRatings[fid] = Math.max(1, Math.min(5, avgRating));
+        if (referrerJumpstartSelections[fid] && !myFriend.pendingToRate.includes(fid)) {
+          myFriend.pendingToRate.push(fid);
           addedCount++;
         }
       });
