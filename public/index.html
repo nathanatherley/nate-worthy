@@ -2053,6 +2053,7 @@ let friendSearchAddedIds = new Set();
 let cleanupSearchQuery = '';
 let claimAccountSearchQuery = '';
 let editingSelfReportedCity = false;
+let selfReportedCityError = '';
 let showFeedbackForm = false;
 let reportFormStatus = null; // null | 'sending' | 'sent' | 'error'
 let inviteEmailStatus = null; // null | 'sending' | 'sent' | 'error'
@@ -2577,6 +2578,7 @@ async function saveIdentity() {
 async function forgetIdentity() {
   me = null;
   editingSelfReportedCity = false;
+  selfReportedCityError = '';
   cuisineTrustPickerOpenFor = null;
   formState = { city: null, state: '', restaurant: '', cuisine: '', note: '', taste: 0, ambiance: 0, cost: 0, photos: [], recommendationSource: null, placeId: null };
   cuisineOtherMode = false;
@@ -5605,6 +5607,7 @@ function renderPage() {
       html += '<button class="btn btn-primary btn-small" id="save-self-reported-city">Save</button>';
       html += '<button class="btn btn-ghost btn-small" id="cancel-self-reported-city">Cancel</button>';
       html += '</div>';
+      if (selfReportedCityError) html += '<p class="hint" style="color:#c0392b; margin:6px 0 0;">' + escapeHtml(selfReportedCityError) + '</p>';
     } else if (me.selfReportedCity) {
       html += '<div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px; margin-top:4px;">';
       html += '<p class="hint" style="margin:0;">Local to <strong>' + escapeHtml(me.selfReportedCity) + '</strong> &middot; <button type="button" class="btn-text-link" id="edit-self-reported-city" style="background:none; border:none; font-size:inherit; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Edit</button></p>';
@@ -6709,6 +6712,18 @@ function buildCityDatalist(id) {
   return '<datalist id="' + (id || 'city-suggestions') + '">' + options + '</datalist>';
 }
 
+// Validates against the exact same source list buildCityDatalist draws its
+// suggestions from -- state.cities plus the built-in coordinate table --
+// so "is this a real place" always means the same thing as "does it show
+// up in the dropdown." Case-insensitive, since a person picking a
+// suggestion by typing shouldn't get rejected over capitalization alone.
+function isKnownCityName(name) {
+  const typed = (name || '').trim().toLowerCase();
+  if (!typed) return false;
+  if (state.cities.some(c => c.name.toLowerCase() === typed)) return true;
+  return Object.keys(US_CITY_COORDS).some(k => titleCase(k).toLowerCase() === typed);
+}
+
 const US_STATE_ABBREVIATIONS = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA",
   "ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK",
@@ -7690,7 +7705,7 @@ function attachHandlers() {
   const collapseCuisineBtn = document.getElementById('collapse-cuisine-card');
   if (collapseCuisineBtn) collapseCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = false; render(); });
   const editSelfReportedCityBtn = document.getElementById('edit-self-reported-city');
-  if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; render(); });
+  if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; selfReportedCityError = ''; render(); });
   const selfReportedCityInput = document.getElementById('self-reported-city-input');
   if (selfReportedCityInput) {
     // Same treatment as the rating form's State field: force the full
@@ -7705,12 +7720,24 @@ function attachHandlers() {
     });
   }
   const cancelSelfReportedCityBtn = document.getElementById('cancel-self-reported-city');
-  if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; render(); });
+  if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; selfReportedCityError = ''; render(); });
   const saveSelfReportedCityBtn = document.getElementById('save-self-reported-city');
   if (saveSelfReportedCityBtn) {
     saveSelfReportedCityBtn.addEventListener('click', () => {
       const input = document.getElementById('self-reported-city-input');
       const val = (input.value || '').trim();
+      // Free text here previously accepted literally anything, including
+      // gibberish -- meaning "local to" could show something that isn't a
+      // real place at all. Requiring an exact match against the same list
+      // the dropdown suggests from means this can only ever hold a
+      // genuine, recognized city, the same standard the rating form's
+      // city field is held to.
+      if (val && !isKnownCityName(val)) {
+        selfReportedCityError = 'Pick a city from the suggestions -- "' + val + '" doesn\'t match a recognized city.';
+        render();
+        return;
+      }
+      selfReportedCityError = '';
       me.selfReportedCity = val || null;
       editingSelfReportedCity = false;
       saveIdentity();
