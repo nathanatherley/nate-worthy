@@ -2705,7 +2705,7 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
           showQuickConnect = true;
           quickConnectInviterId = inviterFriendId;
           quickConnectSelections = {};
-          candidates.forEach(fid => { quickConnectSelections[fid] = true; });
+          candidates.forEach(fid => { quickConnectSelections[fid] = false; });
         }
       }
     }
@@ -3685,7 +3685,7 @@ function renderTrustCard() {
   const jumpstartInfo = getJumpstartInfo();
   if (jumpstartInfo) {
     const { candidateInfo, candidateIds, totalCandidateCount } = jumpstartInfo;
-    candidateIds.forEach(fid => { if (typeof referrerJumpstartSelections[fid] === 'undefined') referrerJumpstartSelections[fid] = true; });
+    candidateIds.forEach(fid => { if (typeof referrerJumpstartSelections[fid] === 'undefined') referrerJumpstartSelections[fid] = false; });
     jumpstartHtml += '<div class="group-pick-list" style="margin-bottom:16px;">';
     jumpstartHtml += '<p style="margin:0 0 8px; font-weight:600; font-size:13px;">Discovered through your circle</p>';
     jumpstartHtml += '<p class="hint" style="margin:0 0 10px;">People trusted by connections you already have — select any to add them to your own circle.' + (totalCandidateCount > candidateIds.length ? ' Showing ' + candidateIds.length + ' of ' + totalCandidateCount + ' — a fresh set rotates in each time you log on.' : '') + '</p>';
