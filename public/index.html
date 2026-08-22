@@ -3606,11 +3606,16 @@ function renderSelfReportedCityResults() {
   return html;
 }
 
-function updateSelfReportedCityDropdown() {
-  const container = document.getElementById('self-reported-city-results');
-  if (!container) return;
-  container.innerHTML = renderSelfReportedCityResults();
+// Called from both the lightweight update below (typing) AND from the
+// main attachHandlers() pass (any full page re-render) -- if only the
+// lightweight path wired these clicks, a full re-render happening while
+// the dropdown was open (for any unrelated reason) would silently replace
+// these rows with fresh, completely unwired ones, and clicking would do
+// nothing despite the dropdown itself still rendering correctly.
+function wireSelfReportedCityDropdown() {
   document.querySelectorAll('[data-select-self-reported-city]').forEach(row => {
+    if (row.dataset.wired) return;
+    row.dataset.wired = '1';
     row.addEventListener('click', () => {
       const idx = parseInt(row.getAttribute('data-select-self-reported-city'), 10);
       const name = selfReportedCitySuggestions[idx];
@@ -3622,6 +3627,13 @@ function updateSelfReportedCityDropdown() {
       updateSelfReportedCityDropdown();
     });
   });
+}
+
+function updateSelfReportedCityDropdown() {
+  const container = document.getElementById('self-reported-city-results');
+  if (!container) return;
+  container.innerHTML = renderSelfReportedCityResults();
+  wireSelfReportedCityDropdown();
 }
 
 function updatePlaceAutocompleteResults() {
@@ -7777,6 +7789,7 @@ function attachHandlers() {
       }
     });
   }
+  wireSelfReportedCityDropdown();
   const cancelSelfReportedCityBtn = document.getElementById('cancel-self-reported-city');
   if (cancelSelfReportedCityBtn) cancelSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = false; selfReportedCityError = ''; selfReportedCitySuggestions = []; render(); });
   const saveSelfReportedCityBtn = document.getElementById('save-self-reported-city');
