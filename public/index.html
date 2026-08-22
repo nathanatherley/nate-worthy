@@ -31,13 +31,13 @@
     --surface: #24495D;
     --brass: #2E8B8B;
     --brass-dim: #3FA5A5;
-    --rust: #E07856;
+    --rust: #FF8C64;
     --text-on-ink: #1B3A4B;
     --text-on-ink-dim: #22333F;
     --text-on-paper: #F5F0E6;
     --text-on-paper-dim: #B7C7CE;
     --line: rgba(245,240,230,0.14);
-    --card-border: rgba(224,120,86,0.55);
+    --card-border: rgba(255,140,100,0.75);
   }
   * { box-sizing: border-box; }
   .sr-only {
@@ -394,7 +394,7 @@
     text-transform: uppercase;
     font-weight: 700;
     color: var(--rust);
-    border: 1px solid rgba(224,120,86,0.5);
+    border: 1px solid rgba(255,140,100,0.5);
     border-radius: 2px;
     padding: 2px 6px;
     margin-left: 6px;
@@ -478,7 +478,7 @@
     margin-left: 6px;
   }
   @keyframes highlightPulse {
-    0% { background: rgba(224,120,86,0.18); }
+    0% { background: rgba(255,140,100,0.18); }
     100% { background: transparent; }
   }
   .highlight-pulse {
@@ -694,7 +694,7 @@
     letter-spacing: 0.03em; padding: 1px 6px; border-radius: 8px; margin-left: 3px;
     background: rgba(46,139,139,0.14); color: var(--brass-dim); vertical-align: middle; cursor: default;
   }
-  .meta-badge-warn { background: rgba(224,120,86,0.16); color: var(--rust); }
+  .meta-badge-warn { background: rgba(255,140,100,0.16); color: var(--rust); }
   .board-controls { padding: 16px 20px; margin-bottom: 16px; }
   .board-controls-row { display: flex; gap: 10px; }
   .board-controls-row input[type="text"] { flex: 1; }
@@ -750,13 +750,13 @@
   <div class="masthead">
     <div class="wordmark">
       <svg class="seal" width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
-        <circle cx="26" cy="26" r="24" fill="none" stroke="#E07856" stroke-width="1.6"/>
+        <circle cx="26" cy="26" r="24" fill="none" stroke="#FF8C64" stroke-width="1.6"/>
         <circle cx="26" cy="26" r="19" fill="none" stroke="#2E8B8B" stroke-width="1"/>
         <line x1="18" y1="14" x2="18" y2="30" stroke="#2E8B8B" stroke-width="1.6" stroke-linecap="round"/>
         <line x1="15" y1="14" x2="15" y2="22" stroke="#2E8B8B" stroke-width="1.3" stroke-linecap="round"/>
         <line x1="21" y1="14" x2="21" y2="22" stroke="#2E8B8B" stroke-width="1.3" stroke-linecap="round"/>
         <path d="M32 14 C32 20 35 20 35 26 L35 38" fill="none" stroke="#2E8B8B" stroke-width="1.6" stroke-linecap="round"/>
-        <circle cx="26" cy="26" r="2" fill="#E07856"/>
+        <circle cx="26" cy="26" r="2" fill="#FF8C64"/>
       </svg>
       <div>
         <h1>Nate<span class="wordmark-dash">-</span>Worthy</h1>
@@ -3335,7 +3335,7 @@ function renderAdminClaimCard() {
   if (isCurrentUserAdmin()) return '';
   const anyAdminExists = state.friends.some(f => friendHasAnyAdminAccess(f));
   if (anyAdminExists) return '';
-  let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+  let html = '<div class="card" style="border: 1px solid rgba(255,140,100,0.4);">';
   html += '<h2>No admin set up yet</h2>';
   html += '<p class="hint">This app has no admin — whoever claims it first gets full access to data export, seed-pick import, and admin management tools. This button disappears for everyone else the moment someone claims it — from then on, only an existing admin can grant access to anyone else, via Admin tools \u2192 Manage admins.</p>';
   html += '<div class="actions"><button class="btn btn-primary" id="claim-admin-btn">Claim admin access</button><span class="msg" id="claim-admin-msg"></span></div>';
@@ -3739,7 +3739,7 @@ function renderTrustCard() {
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
 
     if (reciprocityToRate.length) {
-      html += '<div style="border: 1px solid rgba(224,120,86,0.4); background: rgba(224,120,86,0.08); border-radius: 10px; padding: 12px; margin-bottom: 16px;">';
+      html += '<div style="border: 1px solid rgba(255,140,100,0.4); background: rgba(255,140,100,0.08); border-radius: 10px; padding: 12px; margin-bottom: 16px;">';
       html += '<p class="hint" style="margin:0 0 8px; color: var(--text-on-paper);"><strong>' + (reciprocityToRate.length === 1 ? 'They' : 'They') + ' rated you \u2014 rate ' + (reciprocityToRate.length === 1 ? 'them' : 'them') + ' back:</strong></p>';
       reciprocityToRate.forEach(f => {
         const rating = ratings[f.id] || 0;
@@ -4135,7 +4135,7 @@ function attachEntriesBrowserHandlers() {
 
 function renderAccountCleanupCard() {
   const others = state.friends.filter(f => !me || f.id !== me.friendId);
-  let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+  let html = '<div class="card" style="border: 1px solid rgba(255,140,100,0.4);">';
   html += '<h2>Clean up accounts</h2>';
 
   if (pendingCleanupConfirm) {
@@ -4183,7 +4183,7 @@ function renderAccountCleanupCard() {
 // exists) get cleared out via cascade, so their next signup starts
 // genuinely fresh instead of re-loading a dangling reference.
 function renderDeleteAccountByEmailCard() {
-  let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+  let html = '<div class="card" style="border: 1px solid rgba(255,140,100,0.4);">';
   html += '<h2>Remove a person completely</h2>';
 
   if (pendingDeleteAccountEmail) {
@@ -4412,7 +4412,7 @@ function renderAutoBackupsCard() {
 }
 
 function renderDataImportCard() {
-  let html = '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+  let html = '<div class="card" style="border: 1px solid rgba(255,140,100,0.4);">';
   html += '<h2>Restore from a backup</h2>';
 
   if (pendingDataImport) {
@@ -4893,7 +4893,7 @@ function renderRecommendCard() {
   let html = '<div class="card rec-card hero-panel">';
   html += '<h2>What sounds good?</h2>';
   if (me && !isFollowUp && Object.values(myTrustRatings()).filter(v => v > 0).length === 0) {
-    html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(224,120,86,0.25); border: 1px solid rgba(224,120,86,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — you\'ll still get community and web picks, but rating a few people whose taste you trust makes your recommendations significantly better.</p>';
+    html += '<p class="hint" style="color: #fff; font-weight: 600; background: rgba(255,140,100,0.25); border: 1px solid rgba(255,140,100,0.5); border-radius: 8px; padding: 10px 12px;">You haven\'t rated anyone in your circle yet — you\'ll still get community and web picks, but rating a few people whose taste you trust makes your recommendations significantly better.</p>';
   }
   if (isFollowUp) {
     html += '<p class="hint">Want to adjust that? Ask for something like "cheaper" or "not that one" and it\'ll refine from the same options.</p>';
@@ -5438,7 +5438,7 @@ function renderShareFavoriteForm() {
   html += '</div>';
 
   if (pendingCityConfirm) {
-    html += '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+    html += '<div class="card" style="border: 1px solid rgba(255,140,100,0.4);">';
     html += '<h2>Did you mean this city?</h2>';
     html += '<p class="hint">You typed "' + escapeHtml(pendingCityConfirm.typedName) + '" — did you mean "' + escapeHtml(pendingCityConfirm.suggestedName) + '"? Confirming keeps everyone\'s entries for this city together instead of splitting into separate, disconnected versions.</p>';
     html += '<div class="actions"><button class="btn btn-primary" id="city-confirm-yes-btn">Yes, use "' + escapeHtml(pendingCityConfirm.suggestedName) + '"</button><button class="btn btn-ghost" id="city-confirm-no-btn">No, this is a different city</button></div>';
@@ -5446,7 +5446,7 @@ function renderShareFavoriteForm() {
   }
 
   if (pendingMergeConfirm) {
-    html += '<div class="card" style="border: 1px solid rgba(224,120,86,0.4);">';
+    html += '<div class="card" style="border: 1px solid rgba(255,140,100,0.4);">';
     if (pendingMergeConfirm.type === 'own') {
       html += '<h2>Same restaurant?</h2>';
       html += '<p class="hint">This looks similar to "' + escapeHtml(pendingMergeConfirm.matchEntry.restaurant) + '" you already have listed — is this the same restaurant?</p>';
