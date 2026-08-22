@@ -3431,6 +3431,12 @@ function renderFriendSearchResults(others, visibleIds, unknownMarks, reachableId
   let matches = others.filter(f => {
     if (visibleIds.has(f.id) || unknownMarks[f.id]) return false;
     const name = f.name.toLowerCase();
+    // Someone shouldn't need to know or type a middle initial to find a
+    // person by name -- "Eric Gunderson" should match "Eric J. Gunderson"
+    // just as well as typing the full name would. Stripping a standalone
+    // single-letter-plus-period middle token gives a second version of the
+    // name to match against, alongside the original.
+    const nameNoMiddle = name.replace(/\s+[a-z]\.\s+/, ' ');
     // A full phone match is already a strong signal you actually know this
     // person, so it works regardless of reachability tier -- unlike names,
     // nobody types a few digits expecting to browse partial matches, so
@@ -3438,8 +3444,8 @@ function renderFriendSearchResults(others, visibleIds, unknownMarks, reachableId
     // was built to close.
     const queryDigits = query.replace(/[^\d]/g, '');
     if (queryDigits.length >= 7 && f.phone && f.phone === queryDigits) return true;
-    if (reachableIds.has(f.id)) return name.includes(query);
-    return name === query;
+    if (reachableIds.has(f.id)) return name.includes(query) || nameNoMiddle.includes(query);
+    return name === query || nameNoMiddle === query;
   }).slice(0, 8);
   if (emailMatchFriendId && !matches.some(f => f.id === emailMatchFriendId) && !visibleIds.has(emailMatchFriendId) && !unknownMarks[emailMatchFriendId]) {
     const emailFriend = others.find(f => f.id === emailMatchFriendId);
@@ -3719,9 +3725,32 @@ function renderTrustCard() {
     const connectionSuggestions = allConnectionSuggestionsFor(me.friendId);
     const connectionSuggestionLabels = {};
     connectionSuggestions.forEach(s => { connectionSuggestionLabels[s.friend.id] = s.label; });
-    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds, ...Object.keys(connectionSuggestionLabels)]);
-    const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id));
+    // Someone who already rated YOU (a reciprocity gap) needs to be in the
+    // default-visible set just like everyone else here -- otherwise their
+    // row never exists on the page at all, which is exactly why the "Rate
+    // them back" nudge could take you to this tab and still show nothing
+    // to act on. reciprocityIds is also used below to split them into
+    // their own callout, separate from the general list, so there's no
+    // hunting required -- the name you came here for is right at the top.
+    const reciprocityIds = new Set(unratedReciprocityList().map(f => f.id));
+    const defaultVisibleIds = new Set([...alreadyRatedIds, ...jumpstartIds, ...friendSearchAddedIds, ...pendingToRateIds, ...Object.keys(connectionSuggestionLabels), ...reciprocityIds]);
+    const toRate = others.filter(f => !unknownMarks[f.id] && defaultVisibleIds.has(f.id) && !reciprocityIds.has(f.id));
+    const reciprocityToRate = others.filter(f => !unknownMarks[f.id] && reciprocityIds.has(f.id));
     const markedUnknown = others.filter(f => unknownMarks[f.id]);
+
+    if (reciprocityToRate.length) {
+      html += '<div style="border: 1px solid rgba(224,120,86,0.4); background: rgba(224,120,86,0.08); border-radius: 10px; padding: 12px; margin-bottom: 16px;">';
+      html += '<p class="hint" style="margin:0 0 8px; color: var(--text-on-paper);"><strong>' + (reciprocityToRate.length === 1 ? 'They' : 'They') + ' rated you \u2014 rate ' + (reciprocityToRate.length === 1 ? 'them' : 'them') + ' back:</strong></p>';
+      reciprocityToRate.forEach(f => {
+        const rating = ratings[f.id] || 0;
+        html += '<div class="friend-row" data-rate-friend-row="' + f.id + '"><span class="friend-name">' + escapeHtml(f.name) + '</span><div class="rate-dots">';
+        for (let i = 1; i <= 5; i++) {
+          html += '<button type="button" class="rate-star rate-star-trust' + (rating >= i ? ' filled' : '') + '" data-trust-star="' + f.id + '" data-val="' + i + '" aria-label="Trust ' + escapeHtml(f.name) + ' ' + i + ' of 5 stars">' + (rating >= i ? '\u2605' : '\u2606') + '</button>';
+        }
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
 
     if (!toRate.length) {
       html += '<p class="empty">Search below to find and add specific people to rate.</p>';
@@ -4775,10 +4804,11 @@ function renderGroupPickResults(others, reachableIds, emailMatchFriendId) {
     let matches = others.filter(f => {
       if (groupPickSelectedIds.has(f.id)) return false;
       const name = f.name.toLowerCase();
+      const nameNoMiddle = name.replace(/\s+[a-z]\.\s+/, ' ');
       const queryDigits = query.replace(/[^\d]/g, '');
       if (queryDigits.length >= 7 && f.phone && f.phone === queryDigits) return true;
-      if (reachableIds.has(f.id)) return name.includes(query);
-      return name === query;
+      if (reachableIds.has(f.id)) return name.includes(query) || nameNoMiddle.includes(query);
+      return name === query || nameNoMiddle === query;
     }).slice(0, 6);
     if (emailMatchFriendId && !matches.some(f => f.id === emailMatchFriendId) && !groupPickSelectedIds.has(emailMatchFriendId)) {
       const emailFriend = others.find(f => f.id === emailMatchFriendId);
