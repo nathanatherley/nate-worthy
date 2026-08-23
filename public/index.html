@@ -5691,8 +5691,18 @@ function renderPage() {
       html += renderRecommendCard();
       const myRatingCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
       const myCircleCount = Object.values(myTrustRatings()).filter(v => v > 0).length;
-      html += '<div style="display:flex; justify-content:space-between; align-items:center; margin:12px 4px 0;">';
-      html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:0;"><b style="color:var(--text-on-paper);">' + myRatingCount + '</b> ' + (myRatingCount === 1 ? 'rating' : 'ratings') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
+      // Deliberately counts every restaurant in the system, not just this
+      // person's own ratings or seed picks specifically -- the point is to
+      // show the breadth of what's actually explorable here, the same way
+      // the personal stats below show what one person has done with it.
+      const totalWorthyCount = state.suggestions.length;
+      const myFriendRecordForStats = state.friends.find(f => f.id === me.friendId);
+      const myHomeCityId = myFriendRecordForStats ? myFriendRecordForStats.homeCityId : null;
+      const myHomeCity = myHomeCityId ? state.cities.find(c => c.id === myHomeCityId) : null;
+      const localWorthyCount = myHomeCityId ? state.suggestions.filter(s => s.cityId === myHomeCityId).length : 0;
+      html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:12px 4px 0;"><b style="color:var(--text-on-paper);">' + totalWorthyCount.toLocaleString() + '</b> worthy restaurants' + (myHomeCity ? ' &middot; <b style="color:var(--text-on-paper);">' + localWorthyCount + '</b> in ' + escapeHtml(myHomeCity.name) : '') + '</p>';
+      html += '<div style="display:flex; justify-content:space-between; align-items:center; margin:4px 4px 0;">';
+      html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:0;">Your <b style="color:var(--text-on-paper);">' + myRatingCount + '</b> ' + (myRatingCount === 1 ? 'rating' : 'ratings') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
       html += '<button class="switch-link" id="open-feedback-form" style="font-size:11px;">Report a problem</button>';
       html += '</div>';
     } else if (currentTab === 'board') {
