@@ -5703,8 +5703,21 @@ function renderPage() {
       const activeSeedPicks = webSeedPicks.filter(p => !seedPickIsSuperseded(p));
       const totalWorthyCount = state.suggestions.length + activeSeedPicks.length;
       const myFriendRecordForStats = state.friends.find(f => f.id === me.friendId);
-      const myHomeCityId = myFriendRecordForStats ? myFriendRecordForStats.homeCityId : null;
-      const myHomeCity = myHomeCityId ? state.cities.find(c => c.id === myHomeCityId) : null;
+      // The "Local to X" label above this uses me.selfReportedCity directly
+      // -- what the person actually typed in -- but homeCityId on the
+      // shared friend record deliberately favors geolocation once it's
+      // confirmed (see computeHomeCityId above), since that's a better
+      // signal for board-sorting purposes generally. Those two are allowed
+      // to disagree elsewhere in the app, but showing "Local to Salt Lake
+      // City" right above a restaurant count for Midvale reads as a bug
+      // even when both numbers are individually correct. This stat
+      // specifically should always agree with the label directly above
+      // it, so it resolves self-reported city first (already validated
+      // against real city records earlier) and only falls back to the
+      // geolocated homeCityId when there's no self-report to work with.
+      const selfReportedCityMatch = me.selfReportedCity ? state.cities.find(c => c.name.toLowerCase() === me.selfReportedCity.toLowerCase()) : null;
+      const myHomeCityId = selfReportedCityMatch ? selfReportedCityMatch.id : (myFriendRecordForStats ? myFriendRecordForStats.homeCityId : null);
+      const myHomeCity = selfReportedCityMatch || (myHomeCityId ? state.cities.find(c => c.id === myHomeCityId) : null);
       const localSuggestionCount = myHomeCityId ? state.suggestions.filter(s => s.cityId === myHomeCityId).length : 0;
       const localSeedCount = myHomeCity ? activeSeedPicks.filter(p => (p.city || '').toLowerCase() === myHomeCity.name.toLowerCase()).length : 0;
       const localWorthyCount = localSuggestionCount + localSeedCount;
