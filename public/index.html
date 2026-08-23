@@ -5691,15 +5691,23 @@ function renderPage() {
       html += renderRecommendCard();
       const myRatingCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
       const myCircleCount = Object.values(myTrustRatings()).filter(v => v > 0).length;
-      // Deliberately counts every restaurant in the system, not just this
-      // person's own ratings or seed picks specifically -- the point is to
-      // show the breadth of what's actually explorable here, the same way
-      // the personal stats below show what one person has done with it.
-      const totalWorthyCount = state.suggestions.length;
+      // Counts every restaurant actually explorable here, not just this
+      // person's own ratings. That means combining two genuinely separate
+      // pools: state.suggestions (real friend/community ratings) and
+      // webSeedPicks (the researched seed database, which is where the
+      // vast majority of the total actually lives). A seed pick that's
+      // been superseded by a real rating for the same restaurant is
+      // excluded here the same way it's excluded from what the AI search
+      // sees, so a restaurant that exists in both pools is never counted
+      // twice.
+      const activeSeedPicks = webSeedPicks.filter(p => !seedPickIsSuperseded(p));
+      const totalWorthyCount = state.suggestions.length + activeSeedPicks.length;
       const myFriendRecordForStats = state.friends.find(f => f.id === me.friendId);
       const myHomeCityId = myFriendRecordForStats ? myFriendRecordForStats.homeCityId : null;
       const myHomeCity = myHomeCityId ? state.cities.find(c => c.id === myHomeCityId) : null;
-      const localWorthyCount = myHomeCityId ? state.suggestions.filter(s => s.cityId === myHomeCityId).length : 0;
+      const localSuggestionCount = myHomeCityId ? state.suggestions.filter(s => s.cityId === myHomeCityId).length : 0;
+      const localSeedCount = myHomeCity ? activeSeedPicks.filter(p => (p.city || '').toLowerCase() === myHomeCity.name.toLowerCase()).length : 0;
+      const localWorthyCount = localSuggestionCount + localSeedCount;
       html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:12px 4px 0;"><b style="color:var(--text-on-paper);">' + totalWorthyCount.toLocaleString() + '</b> worthy restaurants' + (myHomeCity ? ' &middot; <b style="color:var(--text-on-paper);">' + localWorthyCount + '</b> in ' + escapeHtml(myHomeCity.name) : '') + ' &middot; Your <b style="color:var(--text-on-paper);">' + myRatingCount + '</b> ' + (myRatingCount === 1 ? 'rating' : 'ratings') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
       html += '<div style="text-align:right; margin:4px 4px 0;"><button class="switch-link" id="open-feedback-form" style="font-size:11px;">Report a problem</button></div>';
     } else if (currentTab === 'board') {
