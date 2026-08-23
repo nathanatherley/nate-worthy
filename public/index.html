@@ -4589,7 +4589,7 @@ function renderDataImportCard() {
 function renderSeedImportCard() {
   let html = '<div class="card">';
   html += '<h2>Import baseline seed picks</h2>';
-  html += '<p class="hint">Add starting recommendations for a new city — these show up in "What sounds good?" labeled as "Internet match, not a friend" until someone in the trust network actually rates them. Persists for everyone once imported; safe to re-run with updates (matches by city + restaurant name).</p>';
+  html += '<p class="hint">Add starting recommendations for a new city — these show up in "What sounds good?" labeled as "Researched pick" until someone in the trust network actually rates them. Persists for everyone once imported; safe to re-run with updates (matches by city + restaurant name).</p>';
   html += '<label for="seed-import-file">Upload a JSON file</label>';
   html += '<input type="file" id="seed-import-file" accept=".json,application/json">';
   html += '<p class="hint" style="margin-top:8px;">Or paste it directly:</p>';
@@ -5169,7 +5169,7 @@ function renderRecommendCard() {
           html += '</div>';
         } else {
           html += '<div class="rec-pick">';
-          html += '<p class="rec-pick-title">' + escapeHtml(webPick.restaurant) + (webPick.cost ? ' <span class="cost-tag">' + costLabel(webPick.cost) + '</span>' : '') + (webPick.michelin ? ' <span class="michelin-tag" title="Michelin Guide recognition">&#9733; ' + escapeHtml(webPick.michelin) + '</span>' : '') + '<span class="web-source-tag">Internet match, not a friend</span></p>';
+          html += '<p class="rec-pick-title">' + escapeHtml(webPick.restaurant) + (webPick.cost ? ' <span class="cost-tag">' + costLabel(webPick.cost) + '</span>' : '') + (webPick.michelin ? ' <span class="michelin-tag" title="Michelin Guide recognition">&#9733; ' + escapeHtml(webPick.michelin) + '</span>' : '') + '<span class="web-source-tag">Researched pick</span></p>';
           html += '<p class="rec-pick-meta">' + escapeHtml(webPick.cuisine || 'unspecified') + ' — ' + escapeHtml(webPick.city) + '</p>';
           html += '<p class="rec-pick-reason">' + escapeHtml(reason) + '</p>';
           html += '<div style="display:flex; gap:8px; margin-top:8px;">';
