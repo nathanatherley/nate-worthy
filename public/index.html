@@ -5700,9 +5700,8 @@ function renderPage() {
       const myHomeCityId = myFriendRecordForStats ? myFriendRecordForStats.homeCityId : null;
       const myHomeCity = myHomeCityId ? state.cities.find(c => c.id === myHomeCityId) : null;
       const localWorthyCount = myHomeCityId ? state.suggestions.filter(s => s.cityId === myHomeCityId).length : 0;
-      html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:12px 4px 0;"><b style="color:var(--text-on-paper);">' + totalWorthyCount.toLocaleString() + '</b> worthy restaurants' + (myHomeCity ? ' &middot; <b style="color:var(--text-on-paper);">' + localWorthyCount + '</b> in ' + escapeHtml(myHomeCity.name) : '') + '</p>';
-      html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:4px 4px 0;">Your <b style="color:var(--text-on-paper);">' + myRatingCount + '</b> ' + (myRatingCount === 1 ? 'rating' : 'ratings') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
-      html += '<div style="margin:6px 4px 0;"><button class="switch-link" id="open-feedback-form" style="font-size:11px;">Report a problem</button></div>';
+      html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:12px 4px 0;"><b style="color:var(--text-on-paper);">' + totalWorthyCount.toLocaleString() + '</b> worthy restaurants' + (myHomeCity ? ' &middot; <b style="color:var(--text-on-paper);">' + localWorthyCount + '</b> in ' + escapeHtml(myHomeCity.name) : '') + ' &middot; Your <b style="color:var(--text-on-paper);">' + myRatingCount + '</b> ' + (myRatingCount === 1 ? 'rating' : 'ratings') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
+      html += '<div style="text-align:right; margin:4px 4px 0;"><button class="switch-link" id="open-feedback-form" style="font-size:11px;">Report a problem</button></div>';
     } else if (currentTab === 'board') {
       html += renderShareFavoriteForm();
       if (postRatingInviteEntryId) html += renderPostRatingInviteCard();
