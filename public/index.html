@@ -8517,8 +8517,30 @@ async function runRecommendation() {
         .sort((a, b) => b._avgForSorting - a._avgForSorting)
         .map(({ _avgForSorting, ...rest }) => rest);
 
+      // Hard cap on top of the per-entry trimming above. The per-entry
+      // savings (shorter notes, capped nearbyCities) helped, but they were
+      // never going to be enough once the underlying seed database grew
+      // from the "hundreds" this whole cached-block design assumed into
+      // the thousands -- a real request just measured at 258k tokens
+      // against Claude's 200k ceiling, a hard failure, not a cost issue.
+      // Slicing by a STABLE order (not randomly sampled) before mapping
+      // keeps the selected set identical across requests, which is what
+      // actually matters for the cache breakpoint below -- Anthropic only
+      // discounts a cache entry that matches byte-for-byte, so a
+      // consistent cap preserves that benefit; a different random subset
+      // each request would defeat it entirely. 500 is a conservative
+      // number chosen to leave real headroom under 200k once system
+      // prompt and personalPayload are added on top, not a precisely
+      // measured ceiling -- this is a stopgap to stop search from being
+      // completely broken today, not a real fix for "thousands of
+      // restaurants, one request." The actual fix is proper city-scoped
+      // retrieval instead of sending the whole database on every search,
+      // which is a bigger change worth doing deliberately rather than
+      // rushed under a broken-search fire drill.
+      const MAX_WEB_SEED_PICKS_PER_REQUEST = 500;
       let webPayload = webSeedPicks
         .filter(p => !seedPickIsSuperseded(p))
+        .slice(0, MAX_WEB_SEED_PICKS_PER_REQUEST)
         .map(p => {
           // Full note text only meaningfully matters for whichever handful
           // of candidates the model actually picks -- but every one of the
