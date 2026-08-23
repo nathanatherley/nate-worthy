@@ -8514,19 +8514,33 @@ async function runRecommendation() {
         .map(p => {
           // Full note text only meaningfully matters for whichever handful
           // of candidates the model actually picks -- but every one of the
-          // hundreds of entries here gets sent on every request regardless,
+          // thousands of entries here gets sent on every request regardless,
           // since this is the shared cached block. Truncating trims real
-          // tokens off the majority that won't be chosen, while 160 chars
-          // is generous enough to preserve a full sentence or two for the
-          // ones that are.
+          // tokens off the majority that won't be chosen. 90 chars still
+          // preserves a real sentence fragment for the ones that ARE
+          // chosen; this got tightened from 160 once the seed database grew
+          // into the thousands and pushed a request over Claude's 200k
+          // token limit outright (268k tokens on a real query, a hard
+          // failure, not just a cost concern).
           const rawNote = p.note || '';
-          const trimmedNote = rawNote.length > 160 ? rawNote.slice(0, 160).trim() + '…' : rawNote;
+          const trimmedNote = rawNote.length > 90 ? rawNote.slice(0, 90).trim() + '…' : rawNote;
+          // citiesWithinRadius is purely a function of the city name, not
+          // the individual restaurant -- every restaurant in the same city
+          // was getting an identical array recomputed and re-embedded here,
+          // and dense metro areas (the Wasatch Front especially, with
+          // dozens of adjacent suburb cities within radius) could produce a
+          // genuinely large array duplicated across hundreds of entries
+          // that all share that city. Capping at 8 keeps the field the
+          // exact same shape and purpose -- still a real, useful nearby-city
+          // list -- just without the long tail of increasingly marginal
+          // matches that were mostly padding out the payload.
+          const nearby = citiesWithinRadius(p.city, null, allCandidateCityNames).slice(0, 8);
           return {
             id: p.id,
             source: "web reviews, not a friend",
             restaurant: p.restaurant,
             city: p.city,
-            nearbyCities: citiesWithinRadius(p.city, null, allCandidateCityNames),
+            nearbyCities: nearby,
             cuisine: p.cuisine || 'unspecified',
             cost: p.cost ? '$'.repeat(p.cost) : 'unknown',
             note: trimmedNote
