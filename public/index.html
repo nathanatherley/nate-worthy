@@ -8563,6 +8563,34 @@ async function runRecommendation() {
         ? (cuisine) => detectedCuisines.has((cuisine || '').toLowerCase())
         : null;
 
+      // A genuinely ambiguous query ("something good tonight") still had
+      // no location signal at this point, which meant it fell all the way
+      // through to sending the full, capped-but-still-large webPayload --
+      // the one remaining expensive path even after the filtering above.
+      // Someone who doesn't name a place almost always means near
+      // themselves, not the entire database, so this applies the same
+      // home-city idea as a soft DEFAULT rather than a hard requirement:
+      // it only restricts webPayload (never the personal tiers, which are
+      // small enough that filtering them saves nothing and risks hiding a
+      // friend's pick from a city they're actually asking about), and it
+      // only takes effect if doing so would leave a genuinely non-empty
+      // result -- an open-ended request in a city with thin web coverage
+      // should still see options elsewhere rather than come back empty,
+      // matching the system prompt's own existing philosophy for thin
+      // coverage. No cityRestrictionInstruction is set here since this is
+      // an inferred default, not something the person actually asked for,
+      // so the model isn't told to treat it as a hard boundary the way an
+      // explicit "near me" or named city is.
+      let webPayloadHomeCityFallback = null;
+      if (!locationMatchFn) {
+        const fallbackCityId = geoDetectedCityId || computeHomeCityId();
+        const fallbackCity = fallbackCityId ? state.cities.find(c => c.id === fallbackCityId) : null;
+        if (fallbackCity) {
+          const fallbackMatchList = new Set([fallbackCity.name.toLowerCase(), ...citiesWithinRadius(fallbackCity.name, fallbackCity.state, allCandidateCityNames).map(c => c.toLowerCase())]);
+          webPayloadHomeCityFallback = (cityName) => fallbackMatchList.has((cityName || '').toLowerCase());
+        }
+      }
+
       let friendPayload = candidateSuggestions
         .map(s => {
           const city = state.cities.find(c => c.id === s.cityId);
@@ -8671,9 +8699,28 @@ async function runRecommendation() {
       // unfiltered pool that had grown into the thousands. This is a
       // straightforward net win on cost per request, not a bet on cache
       // hit rates panning out.
-      const MAX_WEB_SEED_PICKS_PER_REQUEST = 500;
+      // Cap dropped from the original 500 down to 200 -- that number was
+      // sized as an emergency ceiling back when webPayload had no real
+      // filtering at all and was routinely the full, multi-thousand-entry
+      // database. Now that location and cuisine filtering (plus the new
+      // home-city default just above) usually narrow this to a few dozen
+      // candidates before the cap is even reached, 500 was leftover
+      // headroom for a problem that mostly doesn't happen anymore. 200
+      // still comfortably covers a broad query in a single very
+      // well-covered city (Tokyo, NYC) without ever needing to trim a
+      // genuinely relevant candidate.
+      const MAX_WEB_SEED_PICKS_PER_REQUEST = 200;
       let webPayload = webSeedPicks.filter(p => !seedPickIsSuperseded(p));
-      if (locationMatchFn) webPayload = webPayload.filter(p => locationMatchFn(p.city));
+      if (locationMatchFn) {
+        webPayload = webPayload.filter(p => locationMatchFn(p.city));
+      } else if (webPayloadHomeCityFallback) {
+        const homeFiltered = webPayload.filter(p => webPayloadHomeCityFallback(p.city));
+        // Only actually apply the default if it leaves something to work
+        // with -- an ambiguous query in a city with thin web coverage
+        // should still see options from elsewhere rather than come back
+        // empty just because nothing local happened to match.
+        if (homeFiltered.length) webPayload = homeFiltered;
+      }
       if (cuisineMatchFn) webPayload = webPayload.filter(p => cuisineMatchFn(p.cuisine));
       webPayload = webPayload
         .slice(0, MAX_WEB_SEED_PICKS_PER_REQUEST)
