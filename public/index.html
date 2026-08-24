@@ -1754,6 +1754,73 @@ function citiesWithinRadius(cityName, stateName, allCandidateCityNames) {
   return nearby;
 }
 
+// Deterministic cuisine detection for the recommend flow. This is
+// intentionally a soft, permissive pre-filter, not a strict one -- it
+// only engages when a query contains a clearly recognizable cuisine word,
+// and even then it matches an entire synonym group (e.g. "pizza" pulls in
+// everything tagged "Italian" too), so it narrows the huge web-picks pool
+// before it ever reaches the model without risking excluding something
+// the AI would have reasonably included. Applied only to webPayload, not
+// friend/community picks -- those pools are already small, and the
+// system prompt's own nuance about trust mattering more than a strict
+// cuisine match is worth preserving there rather than hard-filtering it
+// away in code.
+const CUISINE_SYNONYM_GROUPS = {
+  "Chinese": ["chinese","cantonese","taiwanese","sichuan","szechuan","dim sum"],
+  "Mexican": ["mexican","tex-mex","tex mex","taco","tacos","taqueria"],
+  "Indian": ["indian","punjabi","biryani"],
+  "Italian": ["italian","pizza","pasta","trattoria"],
+  "Thai": ["thai"],
+  "Korean": ["korean"],
+  "Japanese": ["japanese","ramen","sushi","izakaya","yakiniku","takoyaki","kushikatsu","omakase"],
+  "Vietnamese": ["vietnamese","pho","banh mi"],
+  "Greek": ["greek"],
+  "Jamaican": ["jamaican"],
+  "French": ["french","bistro"],
+  "Spanish": ["spanish","tapas"],
+  "Mediterranean": ["mediterranean"],
+  "Middle Eastern": ["middle eastern","lebanese","turkish","persian","israeli"],
+  "Ethiopian": ["ethiopian"],
+  "Peruvian": ["peruvian"],
+  "Brazilian": ["brazilian","churrasco"],
+  "German": ["german"],
+  "Southern": ["southern","soul food"],
+  "Barbecue": ["barbecue","bbq"],
+  "Seafood": ["seafood"],
+  "Steakhouse": ["steakhouse","steak"],
+  "Vegan": ["vegan"],
+  "Vegetarian": ["vegetarian"],
+  "American": ["american"],
+  "Cuban": ["cuban"],
+  "Caribbean": ["caribbean"],
+  "Hawaiian": ["hawaiian","poke"],
+  "Filipino": ["filipino"],
+  "Indonesian": ["indonesian"],
+  "Malaysian": ["malaysian"],
+  "Singaporean": ["singaporean"]
+};
+
+// Returns the set of cuisine tag values (as they actually appear in the
+// data, e.g. "Italian") that a query's language confidently implies, or
+// null if nothing recognizable was found. A query can imply more than one
+// group (e.g. "pizza or ramen") -- all matched groups' words are combined
+// into a single set for the filter to check membership against.
+function detectCuisineGroupsFromQuery(query) {
+  const lower = (query || '').toLowerCase();
+  const matchedTags = new Set();
+  for (const [tag, words] of Object.entries(CUISINE_SYNONYM_GROUPS)) {
+    for (const word of words) {
+      if (new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(lower)) {
+        matchedTags.add(tag.toLowerCase());
+        // also add every synonym in this group's own tag name in case the
+        // data uses a slightly different casing/spelling for the same idea
+        break;
+      }
+    }
+  }
+  return matchedTags.size ? matchedTags : null;
+}
+
 async function loadData() {
   try {
     const res = await window.storage.get('scout-data', true);
@@ -8441,6 +8508,61 @@ async function runRecommendation() {
         ])
       ];
 
+      // Location and cuisine detection now happen up front, before any of
+      // the three payload tiers are built, so all three can be filtered
+      // consistently -- previously only friendPayload/communityPayload got
+      // a real filter, while webPayload (by far the largest pool, now in
+      // the thousands) was sent in full every time with only a soft
+      // "please restrict yourself" instruction for the model to interpret.
+      // That's the piece that actually caused the 268k-token failure
+      // earlier tonight, and it meant every single search paid for
+      // sending the entire database regardless of how specific the
+      // request was. Narrowing the candidate pool here with plain,
+      // deterministic matching -- the same city-radius logic already
+      // trusted for the personal tiers, plus a new permissive cuisine
+      // synonym match -- means a specific query like "tacos in Denver"
+      // now sends dozens of genuinely relevant candidates instead of
+      // thousands of irrelevant ones, with no change in what the person
+      // sees or how the results read.
+      const NEARBY_QUERY_MILES = 10;
+      let locationMatchFn = null;
+      let cityRestrictionInstruction = '';
+      const impliesNearMe = /\b(near\s*me|nearby(\s*me)?|close\s*to\s*me|around\s*me|by\s*me)\b/i.test(query);
+      if (impliesNearMe) {
+        const originCityId = geoDetectedCityId || computeHomeCityId();
+        const originCity = originCityId ? state.cities.find(c => c.id === originCityId) : null;
+        const originCoords = originCity ? getCityCoords(originCity.name, originCity.state) : null;
+        if (originCoords) {
+          locationMatchFn = (cityName) => {
+            const coords = getCityCoords(cityName, null);
+            if (!coords) return false;
+            const miles = distKm(originCoords[0], originCoords[1], coords[0], coords[1]) * 0.621371;
+            return miles <= NEARBY_QUERY_MILES;
+          };
+          cityRestrictionInstruction = 'IMPORTANT: This is a "near me" request. Only choose restaurants located within ' + NEARBY_QUERY_MILES + ' miles of ' + originCity.name + ' from the list below -- do not include anything farther away, even if it otherwise looks like a great fit.';
+          lastQueryWasNearMeFiltered = true;
+        }
+      }
+      if (!locationMatchFn) {
+        const queryLower = query.toLowerCase();
+        const namedCity = allCandidateCityNames
+          .filter(name => name && name.trim())
+          .sort((a, b) => b.length - a.length) // longest match first, e.g. "New York City" before "New York"
+          .find(name => new RegExp('\\b' + name.trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(queryLower));
+        if (namedCity) {
+          const cityMatchList = new Set([namedCity.toLowerCase(), ...citiesWithinRadius(namedCity, null, allCandidateCityNames).map(c => c.toLowerCase())]);
+          locationMatchFn = (cityName) => cityMatchList.has((cityName || '').toLowerCase());
+          cityRestrictionInstruction = 'IMPORTANT: The request explicitly names "' + namedCity + '". Only choose restaurants from the list below whose city is "' + namedCity + '" or one of these nearby cities: [' + [...cityMatchList].join(', ') + '] -- do not include restaurants from any other city, even if a Michelin rating or strong cuisine match makes it seem tempting.';
+        }
+      }
+      // Soft, permissive cuisine pre-filter -- see detectCuisineGroupsFromQuery
+      // for why this only engages on a confident match and only restricts
+      // webPayload, not the already-small personal tiers.
+      const detectedCuisines = detectCuisineGroupsFromQuery(query);
+      const cuisineMatchFn = detectedCuisines
+        ? (cuisine) => detectedCuisines.has((cuisine || '').toLowerCase())
+        : null;
+
       let friendPayload = candidateSuggestions
         .map(s => {
           const city = state.cities.find(c => c.id === s.cityId);
@@ -8488,6 +8610,7 @@ async function runRecommendation() {
 
           return item;
         });
+      if (locationMatchFn) friendPayload = friendPayload.filter(item => locationMatchFn(item.city));
 
       // Community tier: aggregated by actual restaurant identity, not shown
       // as individual entries from named strangers. The whole point is
@@ -8529,42 +8652,38 @@ async function runRecommendation() {
         })
         .sort((a, b) => b._avgForSorting - a._avgForSorting)
         .map(({ _avgForSorting, ...rest }) => rest);
+      if (locationMatchFn) communityPayload = communityPayload.filter(item => locationMatchFn(item.city));
 
-      // Hard cap on top of the per-entry trimming above. The per-entry
-      // savings (shorter notes, capped nearbyCities) helped, but they were
-      // never going to be enough once the underlying seed database grew
-      // from the "hundreds" this whole cached-block design assumed into
-      // the thousands -- a real request just measured at 258k tokens
-      // against Claude's 200k ceiling, a hard failure, not a cost issue.
-      // Slicing by a STABLE order (not randomly sampled) before mapping
-      // keeps the selected set identical across requests, which is what
-      // actually matters for the cache breakpoint below -- Anthropic only
-      // discounts a cache entry that matches byte-for-byte, so a
-      // consistent cap preserves that benefit; a different random subset
-      // each request would defeat it entirely. 500 is a conservative
-      // number chosen to leave real headroom under 200k once system
-      // prompt and personalPayload are added on top, not a precisely
-      // measured ceiling -- this is a stopgap to stop search from being
-      // completely broken today, not a real fix for "thousands of
-      // restaurants, one request." The actual fix is proper city-scoped
-      // retrieval instead of sending the whole database on every search,
-      // which is a bigger change worth doing deliberately rather than
-      // rushed under a broken-search fire drill.
+      // webPayload: now filtered by location and/or cuisine BEFORE the
+      // size cap, not after -- filtering after the cap risked silently
+      // dropping genuine matches that happened to sit past position 500
+      // in an unfiltered list of thousands. With the filters applied
+      // first, the cap becomes a rarely-triggered safety net rather than
+      // the primary size control, and a specific query now sends a real
+      // short list instead of hitting the ceiling every time.
+      //
+      // Filtering this block per-query does mean it's no longer byte-for-
+      // byte identical across every request, which reduces how often the
+      // cache breakpoint below actually gets reused -- a real tradeoff
+      // against the previous design's full-block-always-cached approach.
+      // But a smaller filtered block, even paying full price with zero
+      // cache reuse, still costs far less than repeatedly sending an
+      // unfiltered pool that had grown into the thousands. This is a
+      // straightforward net win on cost per request, not a bet on cache
+      // hit rates panning out.
       const MAX_WEB_SEED_PICKS_PER_REQUEST = 500;
-      let webPayload = webSeedPicks
-        .filter(p => !seedPickIsSuperseded(p))
+      let webPayload = webSeedPicks.filter(p => !seedPickIsSuperseded(p));
+      if (locationMatchFn) webPayload = webPayload.filter(p => locationMatchFn(p.city));
+      if (cuisineMatchFn) webPayload = webPayload.filter(p => cuisineMatchFn(p.cuisine));
+      webPayload = webPayload
         .slice(0, MAX_WEB_SEED_PICKS_PER_REQUEST)
         .map(p => {
           // Full note text only meaningfully matters for whichever handful
-          // of candidates the model actually picks -- but every one of the
-          // thousands of entries here gets sent on every request regardless,
-          // since this is the shared cached block. Truncating trims real
-          // tokens off the majority that won't be chosen. 90 chars still
-          // preserves a real sentence fragment for the ones that ARE
-          // chosen; this got tightened from 160 once the seed database grew
-          // into the thousands and pushed a request over Claude's 200k
-          // token limit outright (268k tokens on a real query, a hard
-          // failure, not just a cost concern).
+          // of candidates the model actually picks -- but every entry
+          // that survives the filters above still gets sent regardless.
+          // Truncating trims real tokens off the majority that won't be
+          // chosen. 90 chars still preserves a real sentence fragment for
+          // the ones that are.
           const rawNote = p.note || '';
           const trimmedNote = rawNote.length > 90 ? rawNote.slice(0, 90).trim() + '…' : rawNote;
           // citiesWithinRadius is purely a function of the city name, not
@@ -8590,66 +8709,6 @@ async function runRecommendation() {
           };
         });
 
-      // Both "near me" and an explicitly named city (e.g. "Osaka") can
-      // restrict which cities are actually eligible -- but removing
-      // candidates from webPayload itself reshapes that block differently
-      // on every request, which defeats the cache breakpoint below almost
-      // entirely, since Anthropic only discounts a cache entry that matches
-      // byte-for-byte. webPayload therefore always stays as the full,
-      // unfiltered list here, and any city restriction is instead expressed
-      // as an explicit instruction placed in the separate, small, uncached
-      // block further down. friendPayload/communityPayload are personal
-      // data and already sent uncached every request regardless, so
-      // filtering those directly costs nothing extra and stays as a real
-      // hard filter, same as before.
-      let cityRestrictionInstruction = '';
-
-      const NEARBY_QUERY_MILES = 10;
-      const impliesNearMe = /\b(near\s*me|nearby(\s*me)?|close\s*to\s*me|around\s*me|by\s*me)\b/i.test(query);
-      if (impliesNearMe) {
-        const originCityId = geoDetectedCityId || computeHomeCityId();
-        const originCity = originCityId ? state.cities.find(c => c.id === originCityId) : null;
-        const originCoords = originCity ? getCityCoords(originCity.name, originCity.state) : null;
-        if (originCoords) {
-          const isWithinRange = (cityName) => {
-            const coords = getCityCoords(cityName, null);
-            if (!coords) return false;
-            const miles = distKm(originCoords[0], originCoords[1], coords[0], coords[1]) * 0.621371;
-            return miles <= NEARBY_QUERY_MILES;
-          };
-          friendPayload = friendPayload.filter(item => isWithinRange(item.city));
-          communityPayload = communityPayload.filter(item => isWithinRange(item.city));
-          cityRestrictionInstruction = 'IMPORTANT: This is a "near me" request. Only choose restaurants located within ' + NEARBY_QUERY_MILES + ' miles of ' + originCity.name + ' from the baseline list below -- do not include anything farther away, even if it otherwise looks like a great fit.';
-          lastQueryWasNearMeFiltered = true;
-        }
-      }
-
-      // Same problem, different trigger: someone typing "Osaka" shouldn't
-      // get a Macao restaurant just because the AI loosely associated the
-      // two -- with hundreds of web picks spanning dozens of cities now in
-      // the data, the full global list was being handed to the model with
-      // only a soft "nearbyCities" annotation as a hint it was free to
-      // ignore. If the query text explicitly names one of the real
-      // candidate cities, that becomes an explicit instruction the same way
-      // "near me" does above -- restrict to that city (plus anything
-      // genuinely within RADIUS_MATCH_MILES of it). Skipped when the
-      // near-me filter above already fired, since that's already a
-      // stricter, coordinate-based version of the same idea.
-      if (!impliesNearMe) {
-        const queryLower = query.toLowerCase();
-        const namedCity = allCandidateCityNames
-          .filter(name => name && name.trim())
-          .sort((a, b) => b.length - a.length) // longest match first, e.g. "New York City" before "New York"
-          .find(name => new RegExp('\\b' + name.trim().toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(queryLower));
-        if (namedCity) {
-          const cityMatchList = new Set([namedCity.toLowerCase(), ...citiesWithinRadius(namedCity, null, allCandidateCityNames).map(c => c.toLowerCase())]);
-          const matchesNamedCity = (cityName) => cityMatchList.has((cityName || '').toLowerCase());
-          friendPayload = friendPayload.filter(item => matchesNamedCity(item.city));
-          communityPayload = communityPayload.filter(item => matchesNamedCity(item.city));
-          cityRestrictionInstruction = 'IMPORTANT: The request explicitly names "' + namedCity + '". Only choose restaurants from the baseline list below whose city is "' + namedCity + '" or one of these nearby cities: [' + [...cityMatchList].join(', ') + '] -- do not include restaurants from any other city, even if a Michelin rating or strong cuisine match makes it seem tempting.';
-        }
-      }
-
       const personalPayload = friendPayload.concat(communityPayload);
 
       if (!webPayload.length && !personalPayload.length) {
@@ -8660,18 +8719,20 @@ async function runRecommendation() {
       }
 
       // Split into two content blocks rather than one combined string.
-      // webPayload is identical for every user and barely ever changes
-      // (only when seed data is imported), so it's marked as a cache
-      // breakpoint -- Anthropic charges close to full price the first time
-      // any user's request creates this cache entry, then a small fraction
-      // of that on every subsequent request from anyone, for up to 5
-      // minutes of inactivity (refreshed on each hit). Given this block is
-      // typically the majority of the tokens in a request, this is the
-      // actual cost saving, not just a token gesture. personalPayload
-      // varies per person and per request, so it's sent uncached, right
-      // after the cached block -- and cityRestrictionInstruction, when
-      // present, rides along in that same small uncached block rather than
-      // touching webPayload itself.
+      // webPayload still gets the cache breakpoint since it costs nothing
+      // to mark and helps whenever two different people happen to ask
+      // about the same city or cuisine within the same hour -- but since
+      // it's now filtered by location/cuisine before this point, it's no
+      // longer byte-for-byte identical across every request the way it
+      // used to be, so it won't get the same universal cache-hit rate the
+      // old unfiltered version did. That tradeoff is fine: the block being
+      // cached is now genuinely small for a specific query instead of
+      // being the entire database every time, which is the bigger win
+      // regardless of how often any individual cache entry gets reused.
+      // personalPayload varies per person and per request regardless, so
+      // it stays uncached, right after the cached block -- and
+      // cityRestrictionInstruction, when present, rides along in that same
+      // small uncached block rather than touching webPayload itself.
       userTurnContent = [
         {
           type: "text",
