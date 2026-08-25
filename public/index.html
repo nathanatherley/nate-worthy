@@ -3559,6 +3559,12 @@ function computeReachableFriendIds() {
 
   unratedReciprocityList().forEach(f => reachable.add(f.id));
 
+  // Circle members (people you've already rated 1-5 stars trust) should
+  // always get easy type-ahead matching -- there's no reason to force an
+  // exact full-name match for someone already in your circle.
+  const myRatings = myTrustRatings();
+  Object.keys(myRatings).forEach(id => { if (myRatings[id] > 0) reachable.add(id); });
+
   const jumpstartInfo = getJumpstartInfo();
   if (jumpstartInfo) Object.keys(jumpstartInfo.candidateInfo).forEach(id => reachable.add(id));
 
