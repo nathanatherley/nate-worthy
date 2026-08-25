@@ -1863,7 +1863,11 @@ async function loadData() {
   } catch (e) {
     state = { cities: [], friends: [], suggestions: [], adminConnections: [] };
   }
-  if (state.cities.length && !selectedCityId) selectedCityId = state.cities[0].id;
+  // Previously defaulted selectedCityId to state.cities[0] -- an arbitrary
+  // "whichever city happens to come back first from the DB" pick,
+  // completely unrelated to where the person actually is. Left unset here;
+  // tryGeolocate() (actual GPS-based matching) or the person's own
+  // self-report are the only things that should ever set this.
 
   webSeedPicks = DEFAULT_WEB_SEED_PICKS.slice();
   try {
