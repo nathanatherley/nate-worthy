@@ -942,6 +942,15 @@ let quickConnectSelections = {};
 let referrerJumpstartSelections = {};
 let me = null;
 let geoDetectedCityId = null;
+// Tracks *why* live geolocation isn't giving us a city, so the Share form
+// can show a helpful, accurate hint instead of just leaving the city field
+// silently blank. null = still pending / not yet attempted. 'denied' =
+// browser permission was refused (most common real-world case, and the
+// one thing a hint can actually help with, since the person can go
+// re-enable it). 'unsupported' = no geolocation API at all. 'no-match' =
+// permission granted and a real reading came back, but no known city was
+// within range.
+let geoStatus = null;
 let recQuery = '';
 let recConversation = [];
 let groupPickExpanded = false;
@@ -2824,7 +2833,7 @@ function distKm(lat1, lon1, lat2, lon2) {
 }
 
 function tryGeolocate() {
-  if (!navigator.geolocation) return;
+  if (!navigator.geolocation) { geoStatus = 'unsupported'; return; }
   const withCoords = state.cities.filter(c => typeof c.lat === 'number' && typeof c.lon === 'number');
   if (!withCoords.length) return;
   // Cap how far away the "nearest" known city is allowed to be before we
@@ -2846,10 +2855,19 @@ function tryGeolocate() {
         geoDetectedCityId = nearest.id;
         selectedCityId = nearest.id;
         recordCityObservation(nearest.id);
-        render();
+      } else {
+        geoStatus = 'no-match';
       }
+      render();
     },
-    () => {},
+    (err) => {
+      // err.code === 1 is PERMISSION_DENIED across all browsers -- the
+      // only case where the hint can actually tell someone how to fix it.
+      // Codes 2 (POSITION_UNAVAILABLE) and 3 (TIMEOUT) are transient/device
+      // issues a re-typed city won't be helped by explaining further.
+      geoStatus = err && err.code === 1 ? 'denied' : 'unavailable';
+      render();
+    },
     { timeout: 5000 }
   );
 }
@@ -5595,6 +5613,14 @@ function renderShareFavoriteForm() {
   html += buildStateDatalist();
   if (fromGeo && !formState.restaurant) {
     html += '<p class="geo-note">Detected from your location — just type over it if that\'s wrong.</p>';
+  } else if (!fromGeo && !formState.restaurant && !formState.city) {
+    if (geoStatus === 'denied') {
+      html += '<p class="geo-note">Location access is off, so we couldn\'t fill this in automatically. <a href="#" id="geo-retry-link" style="color:var(--brass-dim); text-decoration:underline; font-style:normal;">Allow location</a> for a faster start, or just type your city.</p>';
+    } else if (geoStatus === 'no-match') {
+      html += '<p class="geo-note">We couldn\'t find a matching city nearby — just type yours in.</p>';
+    } else if (geoStatus === 'unsupported' || geoStatus === 'unavailable') {
+      html += '<p class="geo-note">Just type your city in.</p>';
+    }
   }
 
   html += '<div class="row2">';
@@ -7872,6 +7898,16 @@ function attachHandlers() {
   if (expandCuisineBtn) expandCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = true; render(); });
   const collapseCuisineBtn = document.getElementById('collapse-cuisine-card');
   if (collapseCuisineBtn) collapseCuisineBtn.addEventListener('click', () => { cuisineCardExpanded = false; render(); });
+  const geoRetryLink = document.getElementById('geo-retry-link');
+  if (geoRetryLink) geoRetryLink.addEventListener('click', (evt) => {
+    evt.preventDefault();
+    // If the browser is still remembering an earlier "denied" answer, this
+    // won't show a new permission prompt -- the person needs to flip it on
+    // in their browser's site settings first. But once they've done that,
+    // this retry (rather than requiring a full page reload) is what
+    // actually picks up the change.
+    tryGeolocate();
+  });
   const editSelfReportedCityBtn = document.getElementById('edit-self-reported-city');
   if (editSelfReportedCityBtn) editSelfReportedCityBtn.addEventListener('click', () => { editingSelfReportedCity = true; selfReportedCityError = ''; selfReportedCitySuggestions = []; render(); });
   const selfReportedCityInput = document.getElementById('self-reported-city-input');
