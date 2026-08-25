@@ -960,6 +960,14 @@ let lastGroupModeParticipants = null;
 let recLoading = false;
 let recError = '';
 let lastQueryWasNearMeFiltered = false;
+// The person's live coordinates, captured once by tryGeolocate() and kept
+// here (not just inside that function's own callback) so anything else in
+// the app -- like the "as the crow flies" distance shown alongside a
+// restaurant's address -- can reuse the same reading without prompting for
+// location again. Straight-line distance only; this is NOT routed via
+// Google's Distance Matrix/Directions APIs, so it deliberately doesn't
+// account for actual streets, one-ways, or walking vs. driving time.
+let userCoords = null;
 let recResults = null;
 let recResultsShownCount = 5;
 let boardSortMode = 'rating';
@@ -1967,6 +1975,12 @@ async function fetchPlaceDetailsCached(placeId) {
       address: data.formattedAddress || null,
       phone: data.nationalPhoneNumber || null,
       website: data.websiteUri || null,
+      // Google's Place object returns { latitude, longitude } here; keep
+      // our own lat/lon naming so this lines up with distKm/crowFliesMiles
+      // and every other coordinate pair already in the app (city.lat/lon,
+      // userCoords.lat/lon) instead of introducing a third naming style.
+      lat: (data.location && typeof data.location.latitude === 'number') ? data.location.latitude : null,
+      lon: (data.location && typeof data.location.longitude === 'number') ? data.location.longitude : null,
     };
     placeDetailsCache[placeId] = { loading: false, data: details, fetchedAt: Date.now() };
     return details;
@@ -2000,14 +2014,21 @@ function renderPlaceDetailsContent(placeId) {
   const cached = placeDetailsCache[placeId];
   if (!cached || cached.loading) return '<p class="hint">Loading…</p>';
   if (cached.error || !cached.data) return '<p class="hint">Couldn\'t load details right now.</p>';
-  const { address, phone, website } = cached.data;
-  if (!address && !phone && !website) return '<p class="hint">No additional details available.</p>';
+  const { address, phone, website, lat, lon } = cached.data;
+  const distanceMiles = userCoords ? crowFliesMiles(userCoords.lat, userCoords.lon, lat, lon) : null;
+  const distanceLabel = distanceMiles !== null ? formatCrowFliesMiles(distanceMiles) : null;
+  if (!address && !phone && !website && !distanceLabel) return '<p class="hint">No additional details available.</p>';
   const linkStyle = 'color:var(--brass-dim); text-decoration:underline;';
   let html = '<div style="font-size:12.5px; color:var(--text-on-paper-dim); line-height:1.7;">';
   if (address) {
     const mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(address) + '&query_place_id=' + encodeURIComponent(placeId);
     html += '<div><a href="' + mapsUrl + '" target="_blank" rel="noopener" style="' + linkStyle + '">' + escapeHtml(address) + '</a></div>';
   }
+  // Straight-line distance only -- not a walking/driving route, so it can
+  // read shorter than what a map app would actually route you. Shown
+  // right under the address since that's the other geographic fact on
+  // this card, rather than off on its own.
+  if (distanceLabel) html += '<div>' + escapeHtml(distanceLabel) + '</div>';
   if (phone) html += '<div><a href="tel:' + escapeHtml(phone.replace(/[^\d+]/g, '')) + '" style="' + linkStyle + '">' + escapeHtml(phone) + '</a></div>';
   if (website) html += '<div><a href="' + escapeHtml(website) + '" target="_blank" rel="noopener" style="' + linkStyle + '">Website</a></div>';
   html += '</div>';
@@ -2832,6 +2853,27 @@ function distKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+// Straight-line ("as the crow flies") distance in miles between the
+// person's last-known location and a restaurant's coordinates. Reuses
+// distKm rather than re-deriving haversine a second time, then converts.
+// Returns null (not 0) when either coordinate is missing, so callers can
+// tell "no data" apart from "you're standing on top of it."
+function crowFliesMiles(lat1, lon1, lat2, lon2) {
+  if (typeof lat1 !== 'number' || typeof lon1 !== 'number' || typeof lat2 !== 'number' || typeof lon2 !== 'number') return null;
+  return distKm(lat1, lon1, lat2, lon2) * 0.621371;
+}
+
+// Formats a miles figure the way the rest of the app already writes
+// distance (see NEARBY_QUERY_MILES usage): one decimal under 10 miles,
+// whole number above it, since a whole mile is precise enough once you're
+// that far out and a decimal just adds visual noise.
+function formatCrowFliesMiles(miles) {
+  if (miles === null) return null;
+  if (miles < 0.1) return 'Less than 0.1 mi away (as the crow flies)';
+  const rounded = miles < 10 ? miles.toFixed(1) : Math.round(miles).toString();
+  return rounded + ' mi away (as the crow flies)';
+}
+
 function tryGeolocate() {
   if (!navigator.geolocation) { geoStatus = 'unsupported'; return; }
   const withCoords = state.cities.filter(c => typeof c.lat === 'number' && typeof c.lon === 'number');
@@ -2846,6 +2888,7 @@ function tryGeolocate() {
   const MAX_GEOLOCATE_DISTANCE_KM = 40;
   navigator.geolocation.getCurrentPosition(
     (pos) => {
+      userCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
       let nearest = null, best = Infinity;
       withCoords.forEach(c => {
         const d = distKm(pos.coords.latitude, pos.coords.longitude, c.lat, c.lon);
