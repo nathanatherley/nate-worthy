@@ -2823,6 +2823,14 @@ function tryGeolocate() {
   if (!navigator.geolocation) return;
   const withCoords = state.cities.filter(c => typeof c.lat === 'number' && typeof c.lon === 'number');
   if (!withCoords.length) return;
+  // Cap how far away the "nearest" known city is allowed to be before we
+  // trust it. Without this, someone in a metro area that's missing (or
+  // missing lat/lon) from the cities table gets silently matched to
+  // whatever known city happens to be closest, even if that's 50+ miles
+  // away and flatly wrong (e.g. Philadelphia getting matched to New York).
+  // Better to detect nothing and let the person self-report than to guess
+  // confidently wrong.
+  const MAX_GEOLOCATE_DISTANCE_KM = 40;
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       let nearest = null, best = Infinity;
@@ -2830,7 +2838,7 @@ function tryGeolocate() {
         const d = distKm(pos.coords.latitude, pos.coords.longitude, c.lat, c.lon);
         if (d < best) { best = d; nearest = c; }
       });
-      if (nearest) {
+      if (nearest && best <= MAX_GEOLOCATE_DISTANCE_KM) {
         geoDetectedCityId = nearest.id;
         selectedCityId = nearest.id;
         recordCityObservation(nearest.id);
