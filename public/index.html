@@ -5880,6 +5880,7 @@ function renderPage() {
     } else if (currentTab === 'board') {
       html += renderShareFavoriteForm();
       if (postRatingInviteEntryId) html += renderPostRatingInviteCard();
+      html += renderCuisineExpertiseCard();
       html += renderBoard();
       html += '<div class="quiet-zone">';
       html += renderTrendingCard();
@@ -5889,7 +5890,6 @@ function renderPage() {
       html += renderShareCard();
       html += renderYourImpactCard();
       html += '<div class="quiet-zone">';
-      html += renderCuisineExpertiseCard();
       html += renderStatsCard();
       html += '</div>';
     } else if (currentTab === 'admin' && isCurrentUserAdmin()) {
@@ -6384,7 +6384,7 @@ const MAJOR_CUISINES = [
   "American", "Italian", "Mexican", "Chinese", "Japanese", "Sushi", "Thai", "Vietnamese",
   "Korean", "Indian", "Mediterranean", "Greek", "French", "Middle Eastern", "Lebanese",
   "BBQ", "Pizza", "Burger", "Seafood", "Steakhouse", "Vegan", "Vegetarian", "Bakery",
-  "Dessert", "Cafe", "Breakfast/Brunch"
+  "Dessert", "Cafe", "Breakfast/Brunch", "Coffee", "Cocktail Bar", "Brewery", "Food Hall"
 ];
 
 const DEFAULT_WEB_SEED_PICKS = [
