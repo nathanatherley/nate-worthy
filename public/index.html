@@ -5759,7 +5759,7 @@ function renderPage() {
     if (isCurrentUserAdmin()) html += '<button class="tab-btn' + (currentTab === 'admin' ? ' active' : '') + '" data-switch-tab="admin"><span class="tab-icon-wrap"><span class="tab-icon">\u2699</span>' + (countEntriesNeedingFlagReview() > 0 ? '<span class="tab-badge">' + countEntriesNeedingFlagReview() + '</span>' : '') + '</span>Admin</button>';
     html += '</div>';
 
-    if (currentTab === 'discover') {
+    if (currentTab === 'discover' && !showFeedbackForm) {
       html += renderInviterConnectCard();
       html += renderRecommendCard();
       const myRatingCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
