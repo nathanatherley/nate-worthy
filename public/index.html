@@ -5943,6 +5943,14 @@ function renderPage() {
     } else {
       html += '<p class="hint">Enter your email and we\'ll send you a one-time sign-in link. No password needed.</p>';
       html += '<input type="text" id="auth-email-input" placeholder="you@example.com">';
+      // Honeypot -- invisible to a real person (off-screen, aria-hidden,
+      // unreachable by keyboard tab order), but an easy target for a bot
+      // that blindly fills every input it finds on the page. A real
+      // browser never puts anything in here; anything filled in means
+      // this wasn't a person. "website" is a deliberately generic,
+      // plausible-looking field name -- the kind of field bots are
+      // specifically trained to look for and fill on contact/signup forms.
+      html += '<div style="position:absolute; left:-9999px; top:-9999px;" aria-hidden="true"><label for="auth-website-input">Leave this field blank</label><input type="text" id="auth-website-input" name="website" tabindex="-1" autocomplete="off"></div>';
       html += '<div class="actions"><button class="btn btn-primary" id="auth-email-submit-btn">Send sign-in link</button><span class="msg" id="auth-email-msg"></span></div>';
     }
     html += '</div>';
@@ -7315,6 +7323,7 @@ function attachHandlers() {
     authEmailBtn.addEventListener('click', async () => {
       const input = document.getElementById('auth-email-input');
       const msg = document.getElementById('auth-email-msg');
+      const websiteInput = document.getElementById('auth-website-input');
       const email = (input.value || '').trim();
       if (!email.includes('@')) { msg.textContent = 'Enter a valid email.'; return; }
       authEmailBtn.disabled = true;
@@ -7323,7 +7332,7 @@ function attachHandlers() {
         const res = await fetch('/api/auth/request-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, ref: inviterFriendId || undefined, publicInvite: isPublicInvite || undefined }),
+          body: JSON.stringify({ email, ref: inviterFriendId || undefined, publicInvite: isPublicInvite || undefined, website: websiteInput ? websiteInput.value : '' }),
         });
         if (res.ok) { emailLinkSent = true; render(); }
         else { msg.textContent = 'Something went wrong — try again.'; authEmailBtn.disabled = false; }

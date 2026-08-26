@@ -17,11 +17,28 @@ const router = express.Router();
 const TOKEN_TTL_MINUTES = 15;
 const SESSION_TTL_DAYS = 30;
 
-// POST /api/auth/request-link   body: { email }
+// POST /api/auth/request-link   body: { email, website }
 router.post('/request-link', signupLimiter, rateLimitLoginRequests, async (req, res) => {
   const email = (req.body.email || '').trim().toLowerCase();
   const ref = (req.body.ref || '').trim();
   const publicInvite = !!req.body.publicInvite;
+
+  // Honeypot: "website" is a hidden field on the real signup form, kept
+  // invisible to a real person (off-screen, aria-hidden, unreachable by
+  // tab order) but visible to a bot that blindly fills every input it
+  // finds. A real browser never sends anything here, so any non-empty
+  // value means this request didn't come from the actual form a person
+  // sees. Respond with the exact same shape as a genuine success --
+  // never a 4xx, never a different message -- so a bot tuning itself
+  // against error responses gets no signal that it was caught, and
+  // quietly do none of the real work (no token, no email) behind that
+  // fake success.
+  const website = (req.body.website || '').trim();
+  if (website) {
+    console.warn('honeypot triggered on request-link', { email, ip: req.ip });
+    return res.json({ sent: true });
+  }
+
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'valid email required' });
 
   try {
