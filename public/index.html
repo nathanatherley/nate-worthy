@@ -1469,6 +1469,32 @@ async function logEvent(type, meta) {
   }
 }
 
+// Fires once per signed-in person per calendar day (their local day, not
+// server time), the first time they open the app that day — regardless of
+// whether they go on to actually do anything once they're in. This is what
+// makes real daily/weekly/monthly active-user counts possible; the other
+// event types (signup, entry, search) only fire on specific actions, so on
+// their own they'd undercount anyone who just browses. Deliberately a plain
+// localStorage flag rather than a server round-trip to check "have I
+// already logged today" — this is Nate-Worthy's own real deployed site, not
+// a sandboxed context, so ordinary localStorage is fine here and avoids an
+// extra network request just to decide whether to make another one.
+function logDailySessionIfNeeded() {
+  if (!me) return;
+  const todayKey = new Date().toDateString();
+  const storageKey = 'nw-last-session-day';
+  try {
+    if (localStorage.getItem(storageKey) === todayKey) return;
+    localStorage.setItem(storageKey, todayKey);
+  } catch (e) {
+    // If localStorage is unavailable (private browsing, storage disabled),
+    // fall through and log anyway rather than silently never counting this
+    // person — an occasional duplicate same-day event is a much smaller
+    // problem than that person never appearing in DAU at all.
+  }
+  logEvent('session', {});
+}
+
 async function loadAnalytics() {
   if (analyticsLoading) return;
   analyticsLoading = true;
@@ -1481,9 +1507,15 @@ async function loadAnalytics() {
       signup_started: 0, signup_completed: 0,
       entry_form_started: 0, entry_form_submitted: 0,
       rec_query_started: 0, rec_query_completed: 0,
+      session: 0,
       error: 0
     };
     const recentErrors = [];
+    // day string (YYYY-MM-DD, person's local calendar day at log time) ->
+    // Set of friendIds who had a 'session' event that day. This is the raw
+    // material for DAU/WAU/MAU and the 30-day trend below — computed
+    // entirely from the existing event log, no separate backend query.
+    const activeByDay = {};
 
     for (const key of keys) {
       try {
@@ -1492,6 +1524,11 @@ async function loadAnalytics() {
         const record = JSON.parse(res.value);
         if (Object.prototype.hasOwnProperty.call(counts, record.type)) counts[record.type]++;
         if (record.type === 'error') recentErrors.push(record);
+        if (record.type === 'session' && record.friendId) {
+          const dayStr = new Date(record.ts).toISOString().slice(0, 10);
+          if (!activeByDay[dayStr]) activeByDay[dayStr] = new Set();
+          activeByDay[dayStr].add(record.friendId);
+        }
       } catch (e) {
         // A single unreadable event shouldn't block the whole dashboard.
       }
@@ -1506,12 +1543,32 @@ async function loadAnalytics() {
       ? Math.max(0, Math.round((1 - counts.entry_form_submitted / counts.entry_form_started) * 100))
       : null;
 
+    // Build the last 30 calendar days (oldest first) with an active-user
+    // count for each, and DAU/WAU/MAU as distinct-friendId unions over the
+    // trailing 1/7/30 day windows — a person active on multiple days within
+    // a window is only counted once, same as any standard active-user metric.
+    const dayMs = 24 * 60 * 60 * 1000;
+    const trend = [];
+    const wauUnion = new Set();
+    const mauUnion = new Set();
+    const todayStr = new Date().toISOString().slice(0, 10);
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * dayMs);
+      const dayStr = d.toISOString().slice(0, 10);
+      const activeSet = activeByDay[dayStr] || new Set();
+      trend.push({ dayStr, label: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), count: activeSet.size });
+      if (i < 7) activeSet.forEach(id => wauUnion.add(id));
+      activeSet.forEach(id => mauUnion.add(id));
+    }
+    const dau = (activeByDay[todayStr] || new Set()).size;
+
     analyticsData = {
       signupStarted: counts.signup_started, signupCompleted: counts.signup_completed, signupDropoffPct,
       entryStarted: counts.entry_form_started, entrySubmitted: counts.entry_form_submitted, entryDropoffPct,
       recStarted: counts.rec_query_started, recCompleted: counts.rec_query_completed,
       errorCount: counts.error, recentErrors: recentErrors.slice(0, 10),
-      totalEvents: keys.length
+      totalEvents: keys.length,
+      dau, wau: wauUnion.size, mau: mauUnion.size, trend
     };
   } catch (e) {
     console.error('analytics load failed', e);
@@ -4132,11 +4189,25 @@ function renderAdminStatsCard() {
   if (analyticsData) {
     const d = analyticsData;
     html += '<div style="margin-top:14px; display:flex; flex-direction:column; gap:6px;">';
+    html += '<p class="track-record"><strong style="color:var(--text-on-paper);">' + d.dau + '</strong> active today &middot; <strong style="color:var(--text-on-paper);">' + d.wau + '</strong> active this week &middot; <strong style="color:var(--text-on-paper);">' + d.mau + '</strong> active this month</p>';
     html += '<p class="track-record">Sign-ups: ' + d.signupStarted + ' started → ' + d.signupCompleted + ' completed' + (d.signupDropoffPct !== null ? ' (' + d.signupDropoffPct + '% drop-off)' : '') + '</p>';
     html += '<p class="track-record">New entries: ' + d.entryStarted + ' started → ' + d.entrySubmitted + ' submitted' + (d.entryDropoffPct !== null ? ' (' + d.entryDropoffPct + '% drop-off)' : '') + '</p>';
     html += '<p class="track-record">Recommendation searches: ' + d.recStarted + ' run → ' + d.recCompleted + ' returned results</p>';
     html += '<p class="track-record">Errors logged: ' + d.errorCount + ' (out of ' + d.totalEvents + ' total events tracked)</p>';
     html += '</div>';
+
+    if (d.trend && d.trend.length) {
+      const maxCount = Math.max(1, ...d.trend.map(t => t.count));
+      html += '<div class="section-label" style="margin:16px 0 8px;">Active users, last 30 days</div>';
+      html += '<div style="display:flex; align-items:flex-end; gap:2px; height:60px;">';
+      d.trend.forEach(t => {
+        const barHeight = Math.max(2, Math.round((t.count / maxCount) * 56));
+        html += '<div title="' + escapeHtml(t.label) + ': ' + t.count + ' active" style="flex:1; height:' + barHeight + 'px; background:var(--brass-dim); border-radius:2px 2px 0 0; min-width:2px;"></div>';
+      });
+      html += '</div>';
+      html += '<div style="display:flex; justify-content:space-between; margin-top:4px;"><span class="hint" style="font-size:10px;">' + escapeHtml(d.trend[0].label) + '</span><span class="hint" style="font-size:10px;">' + escapeHtml(d.trend[d.trend.length - 1].label) + '</span></div>';
+    }
+
     if (d.recentErrors.length) {
       html += '<div class="section-label" style="margin:16px 0 8px;">Most recent errors</div>';
       d.recentErrors.forEach(e => {
@@ -9507,6 +9578,7 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
   if (me) {
     syncMyHomeCityToSharedRecord();
     loadCuisineShrinkageData().then(() => render());
+    logDailySessionIfNeeded();
   }
 
   await applyAdminBootstrapIfRequested();
