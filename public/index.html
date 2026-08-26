@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <script src="/db-client.js"></script>
+<script src="/js/pure-functions.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Nate-Worthy — for foodies who trust their circle</title>
@@ -1249,10 +1250,7 @@ function tasteSimilarityScore(friendIdA, friendIdB) {
 // -- so it can exceed 1 and isn't itself a percentage. A genuine "match"
 // figure needs the AVERAGE closeness per shared rating instead. Returns
 // null when there's no shared data at all, never a fabricated number.
-function formatMatchPercent(score, sharedCount) {
-  if (!sharedCount || sharedCount <= 0) return null;
-  return Math.round((score / sharedCount) * 100);
-}
+// formatMatchPercent now lives in /js/pure-functions.js (see note above).
 
 // Same math as tasteSimilarityScore, but restricted to one specific
 // cuisine instead of blending every cuisine together. This is what
@@ -2900,36 +2898,10 @@ async function signIn(firstName, middleInitial, lastName, phone, cuisines) {
   return true;
 }
 
-function distKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-// Straight-line ("as the crow flies") distance in miles between the
-// person's last-known location and a restaurant's coordinates. Reuses
-// distKm rather than re-deriving haversine a second time, then converts.
-// Returns null (not 0) when either coordinate is missing, so callers can
-// tell "no data" apart from "you're standing on top of it."
-function crowFliesMiles(lat1, lon1, lat2, lon2) {
-  if (typeof lat1 !== 'number' || typeof lon1 !== 'number' || typeof lat2 !== 'number' || typeof lon2 !== 'number') return null;
-  return distKm(lat1, lon1, lat2, lon2) * 0.621371;
-}
-
-// Formats a miles figure the way the rest of the app already writes
-// distance (see NEARBY_QUERY_MILES usage): one decimal under 10 miles,
-// whole number above it, since a whole mile is precise enough once you're
-// that far out and a decimal just adds visual noise.
-function formatCrowFliesMiles(miles) {
-  if (miles === null) return null;
-  if (miles < 0.1) return 'Less than 0.1 mi away (as the crow flies)';
-  const rounded = miles < 10 ? miles.toFixed(1) : Math.round(miles).toString();
-  return rounded + ' mi away (as the crow flies)';
-}
+// distKm / crowFliesMiles / formatCrowFliesMiles now live in
+// /js/pure-functions.js, loaded via <script src> above -- kept there
+// (not duplicated here) so the unit tests and this app call the exact
+// same implementation instead of two copies that could drift apart.
 
 function tryGeolocate() {
   if (!navigator.geolocation) { geoStatus = 'unsupported'; return; }
@@ -3499,17 +3471,7 @@ function myTrustWeightForCuisine(friendId, cuisine) {
 // result naturally lands back in 1-5 range (sqrt(5*5)=5, sqrt(1*1)=1).
 // This is the same math driving the sort order, so the displayed number
 // and the actual ranking never disagree.
-function blendedStarRating(trustWeight, tasteRating) {
-  if (!(trustWeight > 0) || !(tasteRating > 0)) return null;
-  // Trust can only ever discount a rating downward, never inflate it above
-  // what the rater actually said -- trusting someone doesn't create new
-  // information about the restaurant beyond their own stated rating. The
-  // geometric mean of two different numbers sits between them, so without
-  // this cap, trust higher than the rating itself would push the blended
-  // score ABOVE the rating -- e.g. trust 5 + rating 4 would show 4.5,
-  // higher than what the rater actually said.
-  return Math.min(Math.sqrt(trustWeight * tasteRating), tasteRating);
-}
+// blendedStarRating now lives in /js/pure-functions.js (see note above).
 
 function visibleFriendIds() {
   const ids = new Set();
@@ -7022,9 +6984,7 @@ function buildCityDatalist(id) {
 // coordinate table uses the short form), so a person typing the natural,
 // correct name for a place they actually know shouldn't get rejected over
 // a difference that isn't really about whether the place is real.
-function normalizeCityForMatch(name) {
-  return (name || '').trim().toLowerCase().replace(/\s+city$/, '');
-}
+// normalizeCityForMatch now lives in /js/pure-functions.js (see note above).
 function isKnownCityName(name) {
   const typed = normalizeCityForMatch(name);
   if (!typed) return false;
