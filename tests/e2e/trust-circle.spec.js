@@ -52,13 +52,30 @@ test.describe('Trust circle', () => {
     // Clear any pre-existing rating first -- clicking a star that's
     // already set to that exact value is this app's own documented way
     // to reset it to 0 (see the data-trust-star click handler).
+    //
+    // Important: that click handler calls saveData() WITHOUT awaiting it
+    // (fire-and-forget -- the on-screen star updates immediately via an
+    // optimistic render(), but the actual network save can still be in
+    // flight). Two rating changes fired back-to-back can genuinely race
+    // each other at the database level if the test only waits for the
+    // on-screen class to update rather than the real save completing --
+    // this is exactly what caused a flaky, sometimes-wrong-end-state
+    // failure the first time this ran in CI. Explicitly waiting for the
+    // actual /api/storage network response after each click closes that
+    // gap.
     const existingFilledCount = await friendRow.locator('.rate-star-trust.filled').count();
     if (existingFilledCount > 0) {
-      await friendRow.locator(`[data-val="${existingFilledCount}"]`).click();
+      await Promise.all([
+        page.waitForResponse(r => r.url().includes('/api/storage') && r.request().method() === 'POST'),
+        friendRow.locator(`[data-val="${existingFilledCount}"]`).click(),
+      ]);
       await expect(friendRow.locator('.rate-star-trust.filled')).toHaveCount(0, { timeout: 5000 });
     }
 
-    await friendRow.locator(`[data-val="${TRUST_STARS}"]`).click();
+    await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/storage') && r.request().method() === 'POST'),
+      friendRow.locator(`[data-val="${TRUST_STARS}"]`).click(),
+    ]);
 
     // Confirms the click didn't just update what's on screen right now --
     // reloading and finding the same filled star proves it actually
@@ -73,8 +90,12 @@ test.describe('Trust circle', () => {
     // Clean up after the test rather than leaving an ever-growing pile of
     // stale trust ratings between the two test accounts -- clicking the
     // same star value again is this app's own documented way to clear a
-    // rating back to 0.
-    await friendRowAfterReload.locator(`[data-val="${TRUST_STARS}"]`).click();
+    // rating back to 0. Same explicit network-wait as above, for the same
+    // reason.
+    await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/storage') && r.request().method() === 'POST'),
+      friendRowAfterReload.locator(`[data-val="${TRUST_STARS}"]`).click(),
+    ]);
     await expect(friendRowAfterReload.locator('.rate-star-trust.filled')).toHaveCount(0, { timeout: 5000 });
   });
 });
