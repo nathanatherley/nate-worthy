@@ -64,6 +64,19 @@ test.describe('Critical path', () => {
 
     await page.locator('#f-submit').click();
 
+    // The app's own duplicate-detection can recognize this test entry as
+    // "similar to" an earlier PLAYWRIGHT TEST ENTRY from a previous run
+    // (they intentionally share most of their wording, just a different
+    // timestamp) and asks whether to merge them -- found this the hard
+    // way on the first real CI run, where it silently blocked the success
+    // message from ever appearing. Always keep them separate here: this
+    // test is specifically verifying that CREATING a new entry works, so
+    // merging into an old one would test something else entirely.
+    const mergeNoBtn = page.locator('#merge-own-no-btn');
+    if (await mergeNoBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await mergeNoBtn.click();
+    }
+
     // The success/duplicate message shares one element (#f-msg) with two
     // different CSS classes depending on which happened -- asserting the
     // success class specifically (not just that #f-msg has *some* text)
