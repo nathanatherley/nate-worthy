@@ -836,6 +836,21 @@ let feedbackText = '';
 let feedbackStatus = '';
 let feedbackSubmitting = false;
 
+// Per-entry content reporting -- distinct from the general "Report a
+// problem" app-feedback link above, which is for bugs/issues with the app
+// itself, not for flagging a specific person's specific entry as spam,
+// fake, or otherwise inappropriate. Only one report form is ever open at
+// a time (reportFormOpenFor holds that entry's id, or null), same pattern
+// as editingEntryId elsewhere in the app.
+let reportFormOpenFor = null;
+let reportReason = '';
+let reportDetails = '';
+let reportSubmitting = false;
+let reportStatus = '';
+const REPORT_REASONS = ['Spam', 'Fake or misleading', 'Offensive content', 'Inappropriate photo', 'Other'];
+let reportsLoading = false;
+let reportsData = null;
+
 function logSignupStartedOnce() {
   if (signupStartedLogged) return;
   signupStartedLogged = true;
@@ -1576,6 +1591,36 @@ async function loadAnalytics() {
   render();
 }
 
+// Pulls every stored report back out for an admin to review -- same
+// list-then-get pattern as loadAnalytics above, since reports use the
+// same self-contained window.storage mechanism rather than a dedicated
+// database table.
+async function loadReports() {
+  if (reportsLoading) return;
+  reportsLoading = true;
+  render();
+  try {
+    const listRes = await window.storage.list('report:', true);
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    const reports = [];
+    for (const key of keys) {
+      try {
+        const res = await window.storage.get(key, true);
+        if (res && res.value) reports.push(JSON.parse(res.value));
+      } catch (e) {
+        // A single unreadable report shouldn't block the whole list.
+      }
+    }
+    reports.sort((a, b) => b.ts - a.ts);
+    reportsData = reports;
+  } catch (e) {
+    console.error('reports load failed', e);
+    reportsData = [];
+  }
+  reportsLoading = false;
+  render();
+}
+
 async function submitFeedback() {
   if (feedbackSubmitting) return;
   const text = feedbackText.trim();
@@ -1595,6 +1640,46 @@ async function submitFeedback() {
     feedbackStatus = 'Couldn\'t send that — try again in a moment.';
   }
   feedbackSubmitting = false;
+  render();
+}
+
+// Reports a specific entry's content (as opposed to submitFeedback above,
+// which reports a problem with the app itself). Stored the same
+// self-contained way as feedback/analytics/photos -- one key per report,
+// shared:true so an admin session can list them back out. Deliberately
+// captures a snapshot of the entry's restaurant name and who posted it
+// at report time, not just the entry's id -- if the entry gets edited or
+// deleted before an admin reviews the report, the report itself still
+// reads clearly rather than pointing at content that's since changed or
+// vanished.
+async function submitReport(entry) {
+  if (reportSubmitting) return;
+  if (!reportReason) { reportStatus = 'Pick a reason first.'; render(); return; }
+  reportSubmitting = true;
+  render();
+  try {
+    const record = {
+      id: uid(),
+      entryId: entry.id,
+      restaurant: entry.restaurant,
+      reportedFriendId: entry.friendId,
+      reportedFriendName: entry.friendName,
+      reporterFriendId: me ? me.friendId : null,
+      reporterFriendName: me ? me.name : 'anonymous',
+      reason: reportReason,
+      details: reportDetails.trim().slice(0, 1000),
+      ts: Date.now(),
+    };
+    await window.storage.set('report:' + Date.now() + ':' + record.id, JSON.stringify(record), true);
+    reportFormOpenFor = null;
+    reportReason = '';
+    reportDetails = '';
+    reportStatus = 'Thanks — an admin will take a look.';
+  } catch (e) {
+    console.error('report submit failed', e);
+    reportStatus = 'Couldn\'t send that — try again in a moment.';
+  }
+  reportSubmitting = false;
   render();
 }
 
@@ -4178,6 +4263,24 @@ function renderAdminStatsCard() {
     }
   }
 
+  html += '<div class="actions" style="margin-top:14px;"><button class="btn btn-ghost btn-small" id="load-reports-btn"' + (reportsLoading ? ' disabled' : '') + '>' + (reportsLoading ? 'Loading…' : 'Load reported entries') + '</button></div>';
+
+  if (reportsData) {
+    if (!reportsData.length) {
+      html += '<p class="hint" style="margin-top:10px;">No reports on file.</p>';
+    } else {
+      html += '<div class="section-label" style="margin:16px 0 8px;">Reported entries (' + reportsData.length + ')</div>';
+      reportsData.forEach(r => {
+        html += '<div style="border:1px solid var(--card-border); border-radius:8px; padding:10px 12px; margin-bottom:8px;">';
+        html += '<p style="margin:0 0 4px; font-size:13px;"><strong style="color:var(--text-on-paper);">' + escapeHtml(r.restaurant || 'unknown restaurant') + '</strong> <span class="hint" style="font-size:12px;">posted by ' + escapeHtml(r.reportedFriendName || 'unknown') + '</span></p>';
+        html += '<p class="hint" style="margin:0 0 4px; font-size:12px;">Reason: <strong style="color:var(--rust);">' + escapeHtml(r.reason) + '</strong> — reported by ' + escapeHtml(r.reporterFriendName || 'anonymous') + ' on ' + escapeHtml(new Date(r.ts).toLocaleDateString()) + '</p>';
+        if (r.details) html += '<p class="hint" style="margin:0 0 6px; font-size:12px; font-style:italic;">"' + escapeHtml(r.details) + '"</p>';
+        html += '<button type="button" class="btn-text-link" data-jump-to-reported-entry="' + escapeHtml(r.entryId) + '" style="background:none; border:none; font-size:12px; color:var(--brass-dim); text-decoration:underline; cursor:pointer; padding:0;">Go to entry</button>';
+        html += '</div>';
+      });
+    }
+  }
+
   html += '</div>';
   return html;
 }
@@ -5591,6 +5694,7 @@ function renderOnboardingAbout() {
   html += '<p class="hint"><strong style="color:var(--text-on-paper);">City</strong> — keeps results local, not theoretical.</p>';
   html += '<p class="hint"><strong style="color:var(--text-on-paper);">Taste</strong> — a few cuisines gets you started, not from a blank slate.</p>';
   html += '<p class="hint"><strong style="color:var(--text-on-paper);">Circle</strong> — trust is the entire point of this app. Everything else is backup.</p>';
+  html += '<p class="hint" style="font-size:12px; margin-top:14px;">By continuing, you agree to our <a href="/terms.html" target="_blank" rel="noopener" style="color:var(--brass-dim); text-decoration:underline;">Terms of Service</a> and <a href="/privacy.html" target="_blank" rel="noopener" style="color:var(--brass-dim); text-decoration:underline;">Privacy Policy</a>.</p>';
   html += '<div class="actions"><button class="btn btn-primary" id="onboarding-next-2">Get started</button></div>';
   html += '</div>';
   return html;
@@ -5909,7 +6013,7 @@ function renderPage() {
       const localSeedCount = myHomeCity ? activeSeedPicks.filter(p => (p.city || '').toLowerCase() === myHomeCity.name.toLowerCase()).length : 0;
       const localWorthyCount = localSuggestionCount + localSeedCount;
       html += '<p style="font-family:\'IBM Plex Mono\', monospace; font-size:11px; color:var(--text-on-paper-dim); margin:12px 4px 0;"><b style="color:var(--text-on-paper);">' + totalWorthyCount.toLocaleString() + '</b> worthy restaurants' + (myHomeCity ? ' &middot; <b style="color:var(--text-on-paper);">' + localWorthyCount + '</b> in ' + escapeHtml(myHomeCity.name) : '') + ' &middot; Your <b style="color:var(--text-on-paper);">' + myRatingCount + '</b> ' + (myRatingCount === 1 ? 'rating' : 'ratings') + ' &middot; <b style="color:var(--text-on-paper);">' + myCircleCount + '</b> circle</p>';
-      html += '<div style="text-align:right; margin:4px 4px 0;"><button class="switch-link" id="open-feedback-form" style="font-size:11px;">Report a problem</button></div>';
+      html += '<div style="text-align:right; margin:4px 4px 0;"><button class="switch-link" id="open-feedback-form" style="font-size:11px;">Report a problem</button> <span style="color:var(--text-on-paper-dim); font-size:11px;">&middot;</span> <a href="/terms.html" target="_blank" rel="noopener" style="font-size:11px; color:var(--text-on-paper-dim); text-decoration:underline;">Terms</a> <span style="color:var(--text-on-paper-dim); font-size:11px;">&middot;</span> <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:var(--text-on-paper-dim); text-decoration:underline;">Privacy</a></div>';
     } else if (currentTab === 'board') {
       html += renderShareFavoriteForm();
       if (postRatingInviteEntryId) html += renderPostRatingInviteCard();
@@ -6076,12 +6180,35 @@ function renderEntryCard(e, showCityLabel) {
     const staleBadge = stale
       ? ' <span class="meta-badge meta-badge-warn" title="Last confirmed over a year ago">stale</span>'
       : '';
+    // Only shown on other people's entries -- reporting your own entry
+    // makes no sense, and you already have Edit/Delete for that case.
+    const reportLink = (e.friendId !== me.friendId)
+      ? ' <button type="button" class="btn-text-link" data-report-entry="' + e.id + '" style="background:none; border:none; font-size:11px; color:var(--text-on-paper-dim); text-decoration:underline; cursor:pointer; padding:0;">Report</button>'
+      : '';
     let cityLabelPart = '';
     if (showCityLabel) {
       const c = state.cities.find(ct => ct.id === e.cityId);
       cityLabelPart = c ? ' — ' + escapeHtml(c.name) : '';
     }
-    let out = '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + cityLabelPart + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + '</p>';
+    let out = '<p class="entry-meta">' + escapeHtml(e.cuisine || 'unspecified') + cityLabelPart + ' — ' + escapeHtml(e.friendName) + trustLabel + linkedBadge + outsideBadge + staleBadge + reportLink + '</p>';
+
+    if (reportFormOpenFor === e.id) {
+      out += '<div style="margin:6px 0; padding:10px; background:var(--surface); border:1px solid var(--card-border); border-radius:8px;">';
+      out += '<p style="font-size:12px; color:var(--text-on-paper-dim); margin:0 0 8px;">Report this entry to an admin. This doesn\'t notify ' + escapeHtml((e.friendName || '').split(' ')[0] || 'them') + ' — it\'s only reviewed by admins.</p>';
+      out += '<select id="report-reason-select" style="width:100%; margin-bottom:8px;">';
+      out += '<option value=""' + (!reportReason ? ' selected' : '') + '>Choose a reason…</option>';
+      REPORT_REASONS.forEach(r => {
+        out += '<option value="' + escapeHtml(r) + '"' + (reportReason === r ? ' selected' : '') + '>' + escapeHtml(r) + '</option>';
+      });
+      out += '</select>';
+      out += '<textarea id="report-details-input" placeholder="Anything else worth knowing? (optional)" style="min-height:44px;">' + escapeHtml(reportDetails) + '</textarea>';
+      if (reportStatus) out += '<p class="hint" style="margin:6px 0 0;">' + escapeHtml(reportStatus) + '</p>';
+      out += '<div class="actions" style="margin-top:8px;">';
+      out += '<button type="button" class="btn btn-primary btn-small" id="report-submit-btn"' + (reportSubmitting ? ' disabled' : '') + '>' + (reportSubmitting ? 'Sending…' : 'Submit report') + '</button>';
+      out += '<button type="button" class="btn btn-ghost btn-small" id="report-cancel-btn">Cancel</button>';
+      out += '</div>';
+      out += '</div>';
+    }
 
     if (cuisineTrustPickerOpenFor === cuisineKey && e.friendId !== me.friendId) {
       const myFriendRecord = state.friends.find(f => f.id === me.friendId);
@@ -7418,6 +7545,29 @@ function attachHandlers() {
   const claimAdminBtn = document.getElementById('claim-admin-btn');
   const loadAnalyticsBtn = document.getElementById('load-analytics-btn');
   if (loadAnalyticsBtn) loadAnalyticsBtn.addEventListener('click', loadAnalytics);
+  const loadReportsBtn = document.getElementById('load-reports-btn');
+  if (loadReportsBtn) loadReportsBtn.addEventListener('click', loadReports);
+  document.querySelectorAll('[data-jump-to-reported-entry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const entryId = btn.getAttribute('data-jump-to-reported-entry');
+      const entry = state.suggestions.find(s => s.id === entryId);
+      if (!entry) {
+        // The entry was deleted (by its owner or another admin) since the
+        // report was filed -- nothing left to jump to, but the report
+        // itself stays visible in the list above so there's still a
+        // record of what was flagged.
+        alert('This entry no longer exists -- it may have already been removed.');
+        return;
+      }
+      // startEditingEntry requires the board tab's #section-share-favorite
+      // to already exist in the DOM (it scrolls to that element directly)
+      // -- switch tabs first so that section is actually there by the
+      // time it looks for it.
+      currentTab = 'board';
+      render();
+      startEditingEntry(entryId);
+    });
+  });
   if (claimAdminBtn) {
     claimAdminBtn.addEventListener('click', async () => {
       const msgEl = document.getElementById('claim-admin-msg');
@@ -8046,6 +8196,40 @@ function attachHandlers() {
       cuisineTrustPickerOpenFor = (cuisineTrustPickerOpenFor === key) ? null : key;
       render();
     });
+  });
+  document.querySelectorAll('[data-report-entry]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const entryId = btn.getAttribute('data-report-entry');
+      // Toggling the same entry's report link closed again mirrors the
+      // cuisine-trust picker above -- one open form at a time, and
+      // clicking "Report" again is a natural way to back out of it.
+      reportFormOpenFor = (reportFormOpenFor === entryId) ? null : entryId;
+      reportReason = '';
+      reportDetails = '';
+      reportStatus = '';
+      render();
+    });
+  });
+  const reportReasonSelect = document.getElementById('report-reason-select');
+  if (reportReasonSelect) reportReasonSelect.addEventListener('change', () => {
+    reportReason = reportReasonSelect.value;
+  });
+  const reportDetailsInput = document.getElementById('report-details-input');
+  if (reportDetailsInput) reportDetailsInput.addEventListener('input', () => {
+    reportDetails = reportDetailsInput.value;
+  });
+  const reportSubmitBtn = document.getElementById('report-submit-btn');
+  if (reportSubmitBtn) reportSubmitBtn.addEventListener('click', () => {
+    const entry = state.suggestions.find(s => s.id === reportFormOpenFor) || activeSeedPicks.find(p => p.id === reportFormOpenFor);
+    if (entry) submitReport(entry);
+  });
+  const reportCancelBtn = document.getElementById('report-cancel-btn');
+  if (reportCancelBtn) reportCancelBtn.addEventListener('click', () => {
+    reportFormOpenFor = null;
+    reportReason = '';
+    reportDetails = '';
+    reportStatus = '';
+    render();
   });
   document.querySelectorAll('[data-toggle-place-details]').forEach(btn => {
     btn.addEventListener('click', async () => {
