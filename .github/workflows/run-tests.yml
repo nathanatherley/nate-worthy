@@ -1,0 +1,54 @@
+name: Run tests
+
+# Manual trigger only -- NOT on every push. The E2E suite below creates a
+# real entry in production data and rates a real (test) account every time
+# it runs, and depends on a saved login session that can eventually expire,
+# so it deliberately does not run unattended on every commit. Unit tests
+# could safely run on every push on their own, but are kept on this same
+# manual trigger so there's exactly one place to look for test results
+# instead of two.
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run unit tests (pure functions -- fast, free, no side effects)
+        run: node --test tests/pure-functions.test.js
+
+      - name: Install Playwright's browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Reconstruct the saved test-account login session
+        # auth.json is gitignored on purpose (it's a real, live login
+        # session -- see tests/e2e/README.md), so it isn't in the checked-
+        # out code at all. This writes it from a GitHub Actions secret
+        # instead, at the very last moment, only inside this run.
+        run: |
+          mkdir -p tests/e2e
+          echo '${{ secrets.PLAYWRIGHT_AUTH_JSON }}' > tests/e2e/auth.json
+
+      - name: Run end-to-end tests (against production -- creates real test data, see tests/e2e/README.md)
+        run: npx playwright test
+
+      - name: Upload failure diagnostics
+        # Only runs if a test above actually failed -- these are the same
+        # screenshots/traces you'd see running locally, just captured here
+        # too so a CI failure is debuggable without having to reproduce it
+        # on your own machine first.
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: test-results/
+          retention-days: 7
