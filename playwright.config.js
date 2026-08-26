@@ -11,9 +11,18 @@ module.exports = defineConfig({
   timeout: 60 * 1000, // generous -- this hits the real AI recommendation
                        // endpoint on a real run, which is slower than a
                        // typical page load
-  fullyParallel: false, // deliberately sequential -- all tests share the
-                         // one permanent test account, so two tests
-                         // touching it at the same time could race
+  fullyParallel: false, // keeps tests within one file in order
+  workers: 1, // the real fix for cross-file parallelism -- fullyParallel:
+              // false alone does NOT stop Playwright from running
+              // DIFFERENT spec files at the same time on separate workers.
+              // All the tests in this project share one permanent test
+              // account's login session (see tests/e2e/README.md), so two
+              // tests touching that same account simultaneously can race
+              // and corrupt each other's in-progress form state -- this is
+              // exactly what happened the first time this ran in CI, where
+              // GitHub's runner had multiple cores available and Playwright
+              // used 2 workers by default. Forcing workers:1 makes every
+              // test run strictly one at a time, no exceptions.
   retries: 1, // a single retry absorbs a one-off network hiccup against
               // production without masking a real, repeatable failure
   reporter: 'list',
