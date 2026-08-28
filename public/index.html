@@ -722,6 +722,12 @@
   .postcard-head-clickable { cursor: pointer; }
   .near-major-city { font-weight: 400; font-size: 0.7em; color: var(--text-on-paper-dim); }
   .trending-card { border: 1px solid rgba(46,139,139,0.3); }
+  /* Accent-colored so this reads as distinctly different from the neutral
+     Trending card below it -- a notification-style banner, not just
+     another card in the list. Rust matches the app's existing accent
+     color used elsewhere (masthead ring, badges). */
+  .circle-highlights-card { border: 1px solid rgba(255,140,100,0.45); background: rgba(255,140,100,0.06); }
+  .circle-highlights-card .collapsed-row h2 { color: var(--rust); }
   .best-of-best {
     background: rgba(46,139,139,0.08); border-radius: 8px; padding: 10px 14px; margin: 10px 0 14px;
   }
@@ -6015,6 +6021,7 @@ function renderPage() {
 
     if (currentTab === 'discover' && !showFeedbackForm) {
       html += renderInviterConnectCard();
+      html += renderCircleHighlightsCard();
       html += renderRecommendCard();
       const myRatingCount = state.suggestions.filter(s => s.friendId === me.friendId).length;
       const myCircleCount = Object.values(myTrustRatings()).filter(v => v > 0).length;
@@ -6187,6 +6194,63 @@ function renderTrendingCard() {
     inner += '</div>';
   });
   return renderCollapsibleWrapper('trending', 'Trending in your circle', inner, false, 'trending-card');
+}
+
+// New 5-star-caliber ratings from people in your circle, since your last
+// visit. Deliberately reuses the exact blendedStarRating formula that
+// already drives recommendation scoring/sorting elsewhere in the app,
+// rather than a separate hand-picked rule like "5 stars AND trust >= 4" --
+// that formula already has a built-in cap (a rating can never be inflated
+// above what the rater actually said), so a single blended-score
+// threshold naturally covers every combination worth surfacing without
+// listing them out one by one. 4.0 was chosen as the bar since that's
+// where a genuinely trusted recommendation starts, not just a good rating
+// from someone you barely know.
+const CIRCLE_HIGHLIGHT_THRESHOLD = 4.0;
+
+function getNewCircleHighlights() {
+  if (!me) return [];
+  const results = [];
+  state.suggestions.forEach(s => {
+    if (s.friendId === me.friendId) return; // your own ratings aren't "from your circle"
+    if (s.ts <= previousVisitTs) return; // only since last visit -- same timestamp already used for the NEW badge elsewhere
+    if (!(s.ratingTaste > 0)) return;
+    const trustWeight = myTrustWeightForCuisine(s.friendId, s.cuisine);
+    if (trustWeight <= 0) return; // not someone you've actually trusted
+    const blended = blendedStarRating(trustWeight, s.ratingTaste);
+    if (blended === null || blended < CIRCLE_HIGHLIGHT_THRESHOLD) return;
+    const friend = state.friends.find(f => f.id === s.friendId);
+    results.push({ suggestion: s, friendName: friend ? friend.name : 'someone', trustWeight, blended });
+  });
+  // Strongest signal first -- a 5-star from someone fully trusted floats
+  // above a 4-star from someone trusted less, even though both cleared
+  // the bar.
+  results.sort((a, b) => b.blended - a.blended);
+  return results;
+}
+
+function renderCircleHighlightsCard() {
+  const highlights = getNewCircleHighlights();
+  if (!highlights.length) return ''; // nothing to show -> nothing renders, no empty state taking up space
+
+  let inner = '<p class="hint">Rated highly by people whose taste you trust.</p>';
+  highlights.forEach(h => {
+    const s = h.suggestion;
+    const city = state.cities.find(c => c.id === s.cityId);
+    inner += '<div class="trend-row">';
+    inner += '<div>';
+    inner += '<p class="trend-title">' + escapeHtml(s.restaurant) + '</p>';
+    inner += '<p class="track-record">' + escapeHtml(h.friendName) + (s.cuisine ? ' · ' + escapeHtml(s.cuisine) : '') + (city ? ' · ' + escapeHtml(city.name) : '') + ' · trust ' + '\u2605'.repeat(h.trustWeight) + '\u2606'.repeat(5 - h.trustWeight) + '</p>';
+    inner += '</div>';
+    inner += '<span class="trend-score">' + s.ratingTaste.toFixed(0) + '\u2605</span>';
+    inner += '</div>';
+  });
+
+  const label = highlights.length === 1 ? '1 new pick from your circle' : highlights.length + ' new picks from your circle';
+  // defaultCollapsed=true -- starts as a compact teaser rather than a full
+  // open list, matching a notification-style banner rather than just
+  // another always-expanded card competing with Trending for attention.
+  return renderCollapsibleWrapper('circle-highlights', label, inner, true, 'circle-highlights-card');
 }
 
 
