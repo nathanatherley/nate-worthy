@@ -3120,11 +3120,54 @@ function syncMyHomeCityToSharedRecord() {
   }
 }
 
+// Maps a specific-dish cuisine tag (as used across regional seed data --
+// "Cheesecake", "Breakfast Tacos", "Detroit-Style Pizza", etc.) to its
+// umbrella MAJOR_CUISINES parent. Exists because a person can only ever
+// declare "cuisines you like" using the umbrella picker (MAJOR_CUISINES),
+// never a specific dish -- so comparing their preferences against an
+// entry's raw, specific cuisine string with exact equality means someone
+// who likes "Dessert" would incorrectly see a friend's "Cheesecake" entry
+// flagged as outside their taste. A few of these are genuine judgment
+// calls where a dish could reasonably sit under more than one umbrella
+// (Po'Boy could be Seafood or American depending on the filling, Gumbo
+// varies by recipe) -- picked the most representative single parent
+// rather than trying to support multiple parents per tag, since this is
+// about not-incorrectly-flagging matches, not building a full taxonomy.
+const CUISINE_PARENT_MAP = {
+  'bagels': 'Bakery', 'bagels & lox': 'Breakfast/Brunch', 'beignets': 'Dessert',
+  'biscuits': 'Breakfast/Brunch', 'black and white cookie': 'Dessert',
+  'boston cream pie': 'Dessert', 'bratwurst': 'American', 'breakfast tacos': 'Breakfast/Brunch',
+  'buffet': 'American', 'cheese curds': 'American', 'cheesecake': 'Dessert',
+  'cheesesteak': 'American', 'chicken wings': 'American', 'chicken and waffles': 'Breakfast/Brunch',
+  'cincinnati chili': 'American', 'clam chowder': 'Seafood', 'crab cakes': 'Seafood',
+  'cronuts': 'Bakery', 'cuban breakfast': 'Breakfast/Brunch', 'cuban coffee': 'Coffee',
+  'cuban sandwich': 'American', 'deep dish pizza': 'Pizza', 'denver omelette': 'Breakfast/Brunch',
+  'derby pie': 'Dessert', 'detroit-style pizza': 'Pizza', 'doughnuts': 'Bakery',
+  'frozen custard': 'Dessert', 'green chile breakfast burrito': 'Breakfast/Brunch',
+  'gumbo': 'American', 'hot brown': 'American', 'hot chicken': 'American', 'hot dog': 'American',
+  'hot fudge cream puff': 'Dessert', 'ice cream': 'Dessert', 'italian cookies': 'Dessert',
+  'key lime pie': 'Dessert', 'kolache': 'Bakery', 'korean bbq': 'Korean', 'lobster roll': 'Seafood',
+  'mission burrito': 'Mexican', 'new american': 'American', "po'boy": 'Seafood',
+  'scrapple': 'Breakfast/Brunch', 'shrimp and grits': 'Seafood', 'smith island cake': 'Dessert',
+  'sourdough bread': 'Bakery', 'southern biscuits': 'Breakfast/Brunch',
+  'southern diner breakfast': 'Breakfast/Brunch', 'tacos': 'Mexican', 'tex-mex': 'Mexican',
+  'utah scones': 'Dessert', 'water ice': 'Dessert',
+};
+function cuisineParentCategory(cuisine) {
+  if (!cuisine) return null;
+  return CUISINE_PARENT_MAP[cuisine.toLowerCase()] || null;
+}
+
 function isOutsideExpertise(e) {
   if (!e.cuisine) return false;
   const suggester = state.friends.find(f => f.id === e.friendId);
   if (!suggester || !Array.isArray(suggester.cuisineExpertise) || !suggester.cuisineExpertise.length) return false;
-  return !suggester.cuisineExpertise.some(c => c.toLowerCase() === e.cuisine.toLowerCase());
+  const entryCuisineLower = e.cuisine.toLowerCase();
+  const entryParent = cuisineParentCategory(e.cuisine); // e.g. "Cheesecake" -> "Dessert"
+  return !suggester.cuisineExpertise.some(c => {
+    const cLower = c.toLowerCase();
+    return cLower === entryCuisineLower || (entryParent && cLower === entryParent.toLowerCase());
+  });
 }
 
 function getJumpstartInfo() {
