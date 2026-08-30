@@ -1771,7 +1771,24 @@ const US_CITY_COORDS = {
   "kaysville": [41.0352, -111.9391], "clearfield": [41.1102, -112.0263], "centerville": [40.9163, -111.8722],
   "north salt lake": [40.8480, -111.9066], "woods cross": [40.8869, -111.8963], "lehi": [40.3916, -111.8508],
   "american fork": [40.3769, -111.7958], "layton": [41.0602, -111.9711], "farmington": [40.9805, -111.8873],
-  "bountiful": [40.8894, -111.8808]
+  "bountiful": [40.8894, -111.8808],
+  // Resort towns and national park gateway towns -- added because these
+  // are genuinely popular vacation destinations that were missing from
+  // the coordinate table entirely, unlike the metro areas above which
+  // came from the original top-50-city seed pass. Most are well under
+  // any "major city" population threshold, which is exactly why they
+  // weren't here already -- this table isn't population-gated, it's just
+  // whatever's been added by hand so far.
+  "aspen": [39.19, -106.82], "vail": [39.64, -106.37], "breckenridge": [39.48, -106.04],
+  "telluride": [37.94, -107.81], "steamboat springs": [40.48, -106.83], "jackson hole": [43.48, -110.76],
+  "sun valley": [43.70, -114.35], "south lake tahoe": [38.94, -119.98], "mammoth lakes": [37.65, -118.97],
+  "big bear lake": [34.24, -116.91], "moab": [38.57, -109.55],
+  "estes park": [40.38, -105.52], "west yellowstone": [44.66, -111.10], "gatlinburg": [35.71, -83.51],
+  "pigeon forge": [35.79, -83.55], "williams": [35.25, -112.19], "sedona": [34.87, -111.76],
+  "key west": [24.56, -81.78], "destin": [30.39, -86.50], "myrtle beach": [33.69, -78.89],
+  "hilton head island": [32.22, -80.75], "hilton head": [32.22, -80.75],
+  "outer banks": [35.91, -75.68], "cape cod": [41.67, -70.30], "martha's vineyard": [41.39, -70.61],
+  "nantucket": [41.28, -70.10], "newport": [41.49, -71.31], "ocean city": [38.34, -75.08]
 };
 
 // A handful of explicitly state-qualified entries for the classic
@@ -1805,6 +1822,11 @@ const STATE_QUALIFIED_COORDS = {
   // (built from real per-city records, not this static table) both
   // resolve correctly regardless.
   "syracuse,ut": [41.0894, -112.0656],
+  // Springdale, UT (the Zion National Park gateway town) needs the same
+  // state-qualified treatment -- Springdale, AR is a real, larger city
+  // that could reasonably get added to US_CITY_COORDS later, and an
+  // unqualified "springdale" entry would collide with it.
+  "springdale,ut": [37.1889, -112.9985],
 };
 function lookupCoords(name, stateAbbrev) {
   const key = name.trim().toLowerCase().replace(/[.,]/g, '');
