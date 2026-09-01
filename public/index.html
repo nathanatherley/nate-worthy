@@ -1982,7 +1982,8 @@ const CUISINE_SYNONYM_GROUPS = {
   "Filipino": ["filipino"],
   "Indonesian": ["indonesian"],
   "Malaysian": ["malaysian"],
-  "Singaporean": ["singaporean"]
+  "Singaporean": ["singaporean"],
+  "Dessert": ["dessert","desserts","sweets","sweet tooth","ice cream","gelato","frozen custard"]
 };
 
 // Returns the set of cuisine tag values (as they actually appear in the
@@ -9037,8 +9038,20 @@ async function runRecommendation() {
       // for why this only engages on a confident match and only restricts
       // webPayload, not the already-small personal tiers.
       const detectedCuisines = detectCuisineGroupsFromQuery(query);
+      // Checks the raw cuisine value first (e.g. entry tagged literally
+      // "Dessert"), then falls back to its umbrella parent via
+      // CUISINE_PARENT_MAP (e.g. entry tagged "Cheesecake" still counts as
+      // a Dessert match) -- same non-destructive mapping isOutsideExpertise
+      // already uses, so a "dessert" query actually surfaces specific-dish
+      // seed entries instead of only the handful literally tagged
+      // "Dessert".
       const cuisineMatchFn = detectedCuisines
-        ? (cuisine) => detectedCuisines.has((cuisine || '').toLowerCase())
+        ? (cuisine) => {
+            const lower = (cuisine || '').toLowerCase();
+            if (detectedCuisines.has(lower)) return true;
+            const parent = cuisineParentCategory(cuisine);
+            return !!(parent && detectedCuisines.has(parent.toLowerCase()));
+          }
         : null;
 
       // A genuinely ambiguous query ("something good tonight") still had
