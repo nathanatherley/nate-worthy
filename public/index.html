@@ -5887,10 +5887,17 @@ function renderShareFavoriteForm() {
 
   html += '<div class="row2">';
   html += '<div><label for="f-city" class="sr-only">City</label><input type="text" id="f-city" list="city-suggestions" placeholder="Start typing a city" value="' + escapeHtml(formState.city) + '"></div>';
-  html += '<div><label for="f-state" class="sr-only">State</label><div class="combobox-wrap"><input type="text" id="f-state" class="combobox-input" list="state-suggestions" placeholder="e.g. FL, or country if outside the US" value="' + escapeHtml(formState.state || '') + '" autocomplete="off"><span class="combobox-chevron" aria-hidden="true">▾</span></div></div>';
+  // If formState.state already holds something (editing an existing entry,
+  // or bad legacy data), the select defaults to it when it's a real state
+  // abbreviation; otherwise it defaults to "Other" with the existing value
+  // shown in the country field, rather than silently dropping it.
+  const knownStateAbbr = formState.state && US_STATE_NAMES[formState.state] ? formState.state : null;
+  const stateSelectValue = knownStateAbbr || (formState.state ? STATE_SELECT_OTHER_VALUE : '');
+  const showCountryField = stateSelectValue === STATE_SELECT_OTHER_VALUE;
+  html += '<div><label for="f-state" class="sr-only">State</label><select id="f-state">' + buildStateSelectOptions(stateSelectValue) + '</select>';
+  html += '<input type="text" id="f-state-other" placeholder="Country" autocomplete="off" value="' + escapeHtml(knownStateAbbr ? '' : (formState.state || '')) + '" style="margin-top:6px;' + (showCountryField ? '' : 'display:none;') + '"></div>';
   html += '</div>';
   html += buildCityDatalist();
-  html += buildStateDatalist();
   if (fromGeo && !formState.restaurant) {
     html += '<p class="geo-note">Detected from your location — just type over it if that\'s wrong.</p>';
   } else if (!fromGeo && !formState.restaurant && !formState.city) {
@@ -7290,11 +7297,36 @@ const US_STATE_ABBREVIATIONS = [
   "ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK",
   "OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"
 ];
-function buildStateDatalist() {
-  const names = new Set(US_STATE_ABBREVIATIONS);
-  state.cities.forEach(c => { if (c.state) names.add(c.state); });
-  const options = Array.from(names).sort().map(n => '<option value="' + escapeHtml(n) + '"></option>').join('');
-  return '<datalist id="state-suggestions">' + options + '</datalist>';
+const US_STATE_NAMES = {
+  AL:"Alabama", AK:"Alaska", AZ:"Arizona", AR:"Arkansas", CA:"California", CO:"Colorado",
+  CT:"Connecticut", DE:"Delaware", FL:"Florida", GA:"Georgia", HI:"Hawaii", ID:"Idaho",
+  IL:"Illinois", IN:"Indiana", IA:"Iowa", KS:"Kansas", KY:"Kentucky", LA:"Louisiana",
+  ME:"Maine", MD:"Maryland", MA:"Massachusetts", MI:"Michigan", MN:"Minnesota",
+  MS:"Mississippi", MO:"Missouri", MT:"Montana", NE:"Nebraska", NV:"Nevada",
+  NH:"New Hampshire", NJ:"New Jersey", NM:"New Mexico", NY:"New York", NC:"North Carolina",
+  ND:"North Dakota", OH:"Ohio", OK:"Oklahoma", OR:"Oregon", PA:"Pennsylvania",
+  RI:"Rhode Island", SC:"South Carolina", SD:"South Dakota", TN:"Tennessee", TX:"Texas",
+  UT:"Utah", VT:"Vermont", VA:"Virginia", WA:"Washington", WV:"West Virginia",
+  WI:"Wisconsin", WY:"Wyoming", DC:"District of Columbia"
+};
+const STATE_SELECT_OTHER_VALUE = "__OTHER__";
+// Real <select> options rather than a datalist -- a datalist is only ever a
+// suggestion, the browser still accepts any free-typed value regardless of
+// whether it matches, which is exactly how a city name like "Boston" ended
+// up saved as a state. A <select> can't hold a value that isn't one of its
+// own options, so this closes the gap structurally instead of trying to
+// catch bad input after the fact. Sorted by full name for scanability, but
+// the stored/submitted value is always the abbreviation, since that's what
+// lookupCoords/citiesWithinRadius and all the existing city data expect.
+function buildStateSelectOptions(selectedValue) {
+  const entries = Object.keys(US_STATE_NAMES).map(abbr => ({ abbr, name: US_STATE_NAMES[abbr] }));
+  entries.sort((a, b) => a.name.localeCompare(b.name));
+  let html = '<option value="" disabled' + (selectedValue ? '' : ' selected') + '>Select a state…</option>';
+  entries.forEach(({ abbr, name }) => {
+    html += '<option value="' + escapeHtml(abbr) + '"' + (selectedValue === abbr ? ' selected' : '') + '>' + escapeHtml(name) + ' (' + abbr + ')</option>';
+  });
+  html += '<option value="' + STATE_SELECT_OTHER_VALUE + '"' + (selectedValue === STATE_SELECT_OTHER_VALUE ? ' selected' : '') + '>Other / International</option>';
+  return html;
 }
 
 function buildCuisineDatalist() {
@@ -8585,20 +8617,33 @@ function attachHandlers() {
       }
     });
   }
+  const stateOtherInput = document.getElementById('f-state-other');
   if (stateInput) {
-    stateInput.addEventListener('input', () => { formState.state = stateInput.value; });
-    stateInput.addEventListener('click', () => {
-      // showPicker() forces the native suggestion list open immediately,
-      // even if the field already has a value -- without this, clicking a
-      // datalist-backed input that's already filled in doesn't reliably
-      // reopen the list in every browser, which undercuts the "it's a real
-      // dropdown too" feel. Not universally supported yet, so this fails
-      // silently and the person can just type instead, same as before.
-      if (typeof stateInput.showPicker === 'function') {
-        try { stateInput.showPicker(); } catch (e) { /* unsupported context, ignore */ }
+    stateInput.addEventListener('change', () => {
+      if (stateInput.value === STATE_SELECT_OTHER_VALUE) {
+        // "Other / International" selected -- reveal the country field and
+        // hand control of formState.state over to it. Don't clear an
+        // already-typed country just because the select fired again.
+        if (stateOtherInput) {
+          stateOtherInput.style.display = '';
+          formState.state = stateOtherInput.value;
+          stateOtherInput.focus();
+        }
+      } else {
+        // A real state was picked -- the select's own value is now the
+        // source of truth, so hide and clear the country field.
+        if (stateOtherInput) {
+          stateOtherInput.style.display = 'none';
+          stateOtherInput.value = '';
+        }
+        formState.state = stateInput.value;
       }
+      updateSelectedCityIdFromForm();
     });
-    stateInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
+  }
+  if (stateOtherInput) {
+    stateOtherInput.addEventListener('input', () => { formState.state = stateOtherInput.value; });
+    stateOtherInput.addEventListener('change', () => { updateSelectedCityIdFromForm(); });
   }
   const restaurantInput = document.getElementById('f-restaurant');
   if (restaurantInput) restaurantInput.addEventListener('input', () => {
@@ -9463,11 +9508,17 @@ async function submitSuggestionInner() {
   const msg = document.getElementById('f-msg');
 
   const cityInputEl = document.getElementById('f-city');
-  const stateInputEl = document.getElementById('f-state');
   const cityName = (cityInputEl ? cityInputEl.value : formState.city || '').trim();
-  const stateName = (stateInputEl ? stateInputEl.value : formState.state || '').trim();
+  // formState.state is the source of truth now rather than re-reading a
+  // single element's .value -- the state field is a <select> plus an
+  // optional country <input> that only exists when "Other" is picked, and
+  // formState.state is kept accurate across both by their change/input
+  // handlers. This also naturally guards against the raw select value ever
+  // being the literal "__OTHER__" placeholder string, since that value is
+  // never what gets copied into formState.state.
+  const stateName = (formState.state || '').trim();
   if (!cityName) { msg.textContent = 'Enter a city.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
-  if (!stateName) { msg.textContent = 'Enter a state (or country if outside the US) — this keeps cities with the same name in different places from getting mixed up.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
+  if (!stateName) { msg.textContent = 'Select a state (or Other, and type a country) — this keeps cities with the same name in different places from getting mixed up.'; isSubmittingSuggestion = false; if (submitBtn) submitBtn.disabled = false; return; }
 
   if (cityName !== cityConfirmBypassFor) {
     const similarCity = findSimilarCity(cityName);
