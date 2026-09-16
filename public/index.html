@@ -9859,7 +9859,18 @@ async function finishSubmission(existingEntry, crossFriendCanonicalId, context) 
       ? 'An entry for "' + restaurant + '" already exists under your name — it was updated with your new ratings and note instead of creating a duplicate.'
       : 'Shared — see it in the board below.';
   }
-  await saveData();
+  const saveOk = await saveData();
+  if (!saveOk) {
+    // saveData() already retried twice and logged the failure itself --
+    // if it still didn't work, don't tell the user it was shared, don't
+    // clear their form, and don't fire the success event. Let them retry
+    // instead of silently losing the entry.
+    confirmationMsg = 'Something went wrong saving this — please try again.';
+    isDuplicateEntryMsg = false;
+    isSubmittingSuggestion = false;
+    render();
+    return;
+  }
   logEvent('entry_form_submitted', { wasDuplicateUpdate: duplicateUpdated });
   entryFormStartedLogged = false;
   isSubmittingSuggestion = false;
