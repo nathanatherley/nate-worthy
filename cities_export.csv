@@ -1,0 +1,3409 @@
+id,name,lat,lon,state
+philadelphia,Philadelphia,39.9526,-75.1652,
+aberdeen-md,Aberdeen,39.50956,-76.16412,MD
+aberdeen-sd,Aberdeen,45.4647,-98.48648,SD
+aberdeen-wa,Aberdeen,46.97537,-123.81572,WA
+abilene-tx,Abilene,32.44874,-99.73314,TX
+abington-ma,Abington,42.10482,-70.94532,MA
+abington-pa,Abington,40.12067,-75.11795,PA
+acton-ma,Acton,42.48509,-71.43284,MA
+acworth-ga,Acworth,34.06635,-84.67837,GA
+ada-ok,Ada,34.77453,-96.67834,OK
+adams-morgan-dc,Adams Morgan,38.9215,-77.0422,DC
+addison-il,Addison,41.9317,-87.98896,IL
+addison-tx,Addison,32.96179,-96.82917,TX
+adelanto-ca,Adelanto,34.58277,-117.40922,CA
+adelphi-md,Adelphi,39.00317,-76.97192,MD
+adrian-mi,Adrian,41.89755,-84.03717,MI
+affton-mo,Affton,38.55061,-90.33317,MO
+agawam-ma,Agawam,42.06954,-72.61481,MA
+agoura-ca,Agoura,34.14306,-118.73787,CA
+agoura-hills-ca,Agoura Hills,34.13639,-118.77453,CA
+agua-caliente-ca,Agua Caliente,38.32408,-122.48804,CA
+ahwatukee-foothills-az,Ahwatukee Foothills,33.34171,-111.98403,AZ
+aiken-sc,Aiken,33.56042,-81.71955,SC
+airport-hi,Airport,21.3399,-157.92845,HI
+akron-oh,Akron,41.08144,-81.51901,OH
+ala-moana-kaka-ako-hi,Ala Moana - Kakaʻako,21.29649,-157.85671,HI
+alabaster-al,Alabaster,33.24428,-86.81638,AL
+alafaya-fl,Alafaya,28.5641,-81.2114,FL
+alameda-ca,Alameda,37.77099,-122.26087,CA
+alamo-tx,Alamo,26.18369,-98.12306,TX
+alamogordo-nm,Alamogordo,32.89953,-105.96027,NM
+albany-ca,Albany,37.88687,-122.29775,CA
+albany-ga,Albany,31.57851,-84.15574,GA
+albany-ny,Albany,42.65258,-73.75623,NY
+albany-or,Albany,44.63651,-123.10593,OR
+albany-park-il,Albany Park,41.96836,-87.72339,IL
+albemarle-nc,Albemarle,35.35014,-80.20006,NC
+albert-lea-mn,Albert Lea,43.64801,-93.36827,MN
+albertville-al,Albertville,34.26783,-86.20878,AL
+albuquerque-nm,Albuquerque,35.08449,-106.65114,NM
+aldine-tx,Aldine,29.93245,-95.38021,TX
+alexandria-la,Alexandria,31.31129,-92.44514,LA
+alexandria-va,Alexandria,38.80484,-77.04692,VA
+algonquin-il,Algonquin,42.16558,-88.29425,IL
+alhambra-az,Alhambra,33.49838,-112.13432,AZ
+alhambra-ca,Alhambra,34.09529,-118.12701,CA
+aliamanu-salt-lakes-foster-village-hi,Aliamanu / Salt Lakes / Foster Village,21.36022,-157.91838,HI
+alice-tx,Alice,27.75225,-98.06972,TX
+alief-tx,Alief,29.71106,-95.59633,TX
+aliso-viejo-ca,Aliso Viejo,33.56504,-117.72712,CA
+allapattah-fl,Allapattah,25.81454,-80.22394,FL
+allen-tx,Allen,33.10317,-96.67055,TX
+allen-park-mi,Allen Park,42.25754,-83.21104,MI
+allendale-mi,Allendale,42.97225,-85.95365,MI
+allentown-pa,Allentown,40.60843,-75.49018,PA
+alliance-oh,Alliance,40.91534,-81.10593,OH
+allison-park-pa,Allison Park,40.55951,-79.95867,PA
+allston-ma,Allston,42.35843,-71.12589,MA
+aloha-or,Aloha,45.49428,-122.86705,OR
+alpharetta-ga,Alpharetta,34.07538,-84.29409,GA
+alsip-il,Alsip,41.66892,-87.73866,IL
+altadena-ca,Altadena,34.18973,-118.13118,CA
+altamont-or,Altamont,42.20681,-121.73722,OR
+altamonte-springs-fl,Altamonte Springs,28.66111,-81.36562,FL
+alton-il,Alton,38.8906,-90.18428,IL
+alton-tx,Alton,26.28729,-98.31335,TX
+altoona-ia,Altoona,41.64416,-93.46466,IA
+altoona-pa,Altoona,40.51868,-78.39474,PA
+altus-ok,Altus,34.63813,-99.33398,OK
+alum-rock-ca,Alum Rock,37.36605,-121.82718,CA
+alvin-tx,Alvin,29.42385,-95.2441,TX
+amarillo-tx,Amarillo,35.222,-101.8313,TX
+american-canyon-ca,American Canyon,38.17492,-122.2608,CA
+american-fork-ut,American Fork,40.3769,-111.79576,UT
+americus-ga,Americus,32.07239,-84.23269,GA
+ames-ia,Ames,42.03471,-93.61994,IA
+amesbury-ma,Amesbury,42.85842,-70.93005,MA
+amherst-ma,Amherst,42.36723,-72.51852,MA
+amherst-ny,Amherst,42.97839,-78.79976,NY
+amherst-center-ma,Amherst Center,42.37537,-72.51925,MA
+amsterdam-ny,Amsterdam,42.93869,-74.18819,NY
+anacortes-wa,Anacortes,48.5126,-122.61267,WA
+anaheim-ca,Anaheim,33.83529,-117.9145,CA
+anchorage-ak,Anchorage,61.21806,-149.90028,AK
+anderson-in,Anderson,40.10532,-85.68025,IN
+anderson-sc,Anderson,34.50344,-82.65013,SC
+andover-mn,Andover,45.2333,-93.29134,MN
+angleton-tx,Angleton,29.16941,-95.43188,TX
+ankeny-ia,Ankeny,41.72971,-93.60577,IA
+ann-arbor-mi,Ann Arbor,42.27756,-83.74088,MI
+annandale-va,Annandale,38.83039,-77.19637,VA
+annapolis-md,Annapolis,38.97859,-76.49184,MD
+anniston-al,Anniston,33.65983,-85.83163,AL
+anoka-mn,Anoka,45.19774,-93.38718,MN
+ansonia-ct,Ansonia,41.34621,-73.079,CT
+antelope-ca,Antelope,38.70824,-121.32995,CA
+anthem-az,Anthem,33.86726,-112.14682,AZ
+antioch-ca,Antioch,38.00492,-121.80579,CA
+apache-junction-az,Apache Junction,33.41505,-111.54958,AZ
+apex-nc,Apex,35.73265,-78.85029,NC
+apopka-fl,Apopka,28.67617,-81.51186,FL
+apple-valley-ca,Apple Valley,34.50083,-117.18588,CA
+apple-valley-mn,Apple Valley,44.73191,-93.21772,MN
+appleton-wi,Appleton,44.26193,-88.41538,WI
+arbutus-md,Arbutus,39.25455,-76.69997,MD
+arcadia-ca,Arcadia,34.13973,-118.03534,CA
+arcata-ca,Arcata,40.86652,-124.08284,CA
+arden-arcade-ca,Arden-Arcade,38.6025,-121.37854,CA
+ardmore-ok,Ardmore,34.17426,-97.14363,OK
+arlington-ma,Arlington,42.41537,-71.15644,MA
+arlington-tx,Arlington,32.73569,-97.10807,TX
+arlington-va,Arlington,38.88101,-77.10428,VA
+arlington-wa,Arlington,48.19871,-122.12514,WA
+arlington-heights-il,Arlington Heights,42.08836,-87.98063,IL
+arnold-md,Arnold,39.03206,-76.50274,MD
+arnold-mo,Arnold,38.43283,-90.37762,MO
+arroyo-grande-ca,Arroyo Grande,35.11859,-120.59073,CA
+artesia-ca,Artesia,33.86585,-118.08312,CA
+arvada-co,Arvada,39.80276,-105.08748,CO
+arvin-ca,Arvin,35.20913,-118.82843,CA
+asbury-park-nj,Asbury Park,40.22039,-74.01208,NJ
+ashburn-il,Ashburn,41.74753,-87.71116,IL
+ashburn-va,Ashburn,39.04372,-77.48749,VA
+asheboro-nc,Asheboro,35.70791,-79.81364,NC
+asheville-nc,Asheville,35.60095,-82.55402,NC
+ashland-ca,Ashland,37.69465,-122.11385,CA
+ashland-ky,Ashland,38.47841,-82.63794,KY
+ashland-ma,Ashland,42.26121,-71.4634,MA
+ashland-oh,Ashland,40.86867,-82.31822,OH
+ashland-or,Ashland,42.19458,-122.70948,OR
+ashmont-ma,Ashmont,42.28343,-71.06894,MA
+ashtabula-oh,Ashtabula,41.86505,-80.78981,OH
+ashwaubenon-wi,Ashwaubenon,44.48221,-88.0701,WI
+aspen-hill-md,Aspen Hill,39.07955,-77.07303,MD
+astoria-ny,Astoria,40.77205,-73.93014,NY
+atascadero-ca,Atascadero,35.48942,-120.67073,CA
+atascocita-tx,Atascocita,29.99883,-95.1766,TX
+athens-al,Athens,34.80243,-86.97219,AL
+athens-ga,Athens,33.96095,-83.37794,GA
+athens-oh,Athens,39.32924,-82.10126,OH
+atlanta-ga,Atlanta,33.749,-84.38798,GA
+atlantic-city-nj,Atlantic City,39.36415,-74.42306,NJ
+attleboro-ma,Attleboro,41.94454,-71.28561,MA
+atwater-ca,Atwater,37.34772,-120.60908,CA
+atwater-village-ca,Atwater Village,34.1164,-118.25646,CA
+auburn-al,Auburn,32.60986,-85.48078,AL
+auburn-ma,Auburn,42.19454,-71.83563,MA
+auburn-me,Auburn,44.09785,-70.23117,ME
+auburn-ny,Auburn,42.93173,-76.56605,NY
+auburn-wa,Auburn,47.30732,-122.22845,WA
+auburn-gresham-il,Auburn Gresham,41.74179,-87.65322,IL
+auburn-hills-mi,Auburn Hills,42.68753,-83.2341,MI
+auburndale-fl,Auburndale,28.0653,-81.78869,FL
+augusta-ga,Augusta,33.47097,-81.97484,GA
+augusta-me,Augusta,44.31062,-69.77949,ME
+aurora-co,Aurora,39.72943,-104.83192,CO
+aurora-il,Aurora,41.76058,-88.32007,IL
+aurora-oh,Aurora,41.31755,-81.34539,OH
+austin-mn,Austin,43.66663,-92.97464,MN
+austin-tx,Austin,30.26715,-97.74306,TX
+austintown-oh,Austintown,41.10172,-80.76452,OH
+avenel-nj,Avenel,40.58038,-74.28515,NJ
+aventura-fl,Aventura,25.95648,-80.13921,FL
+avocado-heights-ca,Avocado Heights,34.03612,-117.99118,CA
+avon-ct,Avon,41.80982,-72.83065,CT
+avon-in,Avon,39.76282,-86.39972,IN
+avon-oh,Avon,41.45171,-82.03542,OH
+avon-center-oh,Avon Center,41.45976,-82.01959,OH
+avon-lake-oh,Avon Lake,41.50532,-82.0282,OH
+avondale-az,Avondale,33.4356,-112.3496,AZ
+avondale-il,Avondale,41.93892,-87.71117,IL
+azusa-ca,Azusa,34.13362,-117.90756,CA
+back-bay-ma,Back Bay,42.3501,-71.087,MA
+back-mountain-pa,Back Mountain,41.33591,-75.99631,PA
+badger-ak,Badger,64.8,-147.53333,AK
+baileys-crossroads-va,Baileys Crossroads,38.85039,-77.1297,VA
+bainbridge-island-wa,Bainbridge Island,47.62621,-122.52124,WA
+bakersfield-ca,Bakersfield,35.37329,-119.01871,CA
+balch-springs-tx,Balch Springs,32.72874,-96.62277,TX
+baldwin-ny,Baldwin,40.65649,-73.6093,NY
+baldwin-pa,Baldwin,40.33813,-79.97894,PA
+baldwin-park-ca,Baldwin Park,34.08529,-117.9609,CA
+ballenger-creek-md,Ballenger Creek,39.3726,-77.43526,MD
+ballwin-mo,Ballwin,38.59505,-90.54623,MO
+baltimore-md,Baltimore,39.29038,-76.61219,MD
+bangor-me,Bangor,44.79884,-68.77265,ME
+banning-ca,Banning,33.92557,-116.87641,CA
+barberton-oh,Barberton,41.01283,-81.60512,OH
+barnstable-ma,Barnstable,41.70011,-70.29947,MA
+barrington-ri,Barrington,41.74066,-71.30866,RI
+barstow-ca,Barstow,34.89859,-117.02282,CA
+barstow-heights-ca,Barstow Heights,34.86971,-117.05615,CA
+bartlesville-ok,Bartlesville,36.74731,-95.98082,OK
+bartlett-il,Bartlett,41.99503,-88.18563,IL
+bartlett-tn,Bartlett,35.20453,-89.87398,TN
+bartow-fl,Bartow,27.89641,-81.84314,FL
+basking-ridge-nj,Basking Ridge,40.70621,-74.54932,NJ
+batavia-il,Batavia,41.85003,-88.31257,IL
+batavia-ny,Batavia,42.99812,-78.18752,NY
+bath-beach-ny,Bath Beach,40.60455,-74.00431,NY
+baton-rouge-la,Baton Rouge,30.44332,-91.18747,LA
+battle-creek-mi,Battle Creek,42.3173,-85.17816,MI
+battle-ground-wa,Battle Ground,45.78095,-122.53343,WA
+bay-city-mi,Bay City,43.59447,-83.88886,MI
+bay-city-tx,Bay City,28.98276,-95.9694,TX
+bay-point-ca,Bay Point,38.02909,-121.96163,CA
+bay-shore-ny,Bay Shore,40.7251,-73.24539,NY
+bay-village-oh,Bay Village,41.48477,-81.92208,OH
+baychester-ny,Baychester,40.86928,-73.83645,NY
+bayonet-point-fl,Bayonet Point,28.32667,-82.68343,FL
+bayonne-nj,Bayonne,40.66871,-74.11431,NJ
+bayou-cane-la,Bayou Cane,29.6241,-90.7512,LA
+bayshore-gardens-fl,Bayshore Gardens,27.42532,-82.59038,FL
+bayside-ca,Bayside,40.84235,-124.06367,CA
+bayside-ny,Bayside,40.76844,-73.77708,NY
+baytown-tx,Baytown,29.7355,-94.97743,TX
+bayview-hunters-point-ca,Bayview-Hunters Point,37.72855,-122.38107,CA
+bayville-nj,Bayville,39.90929,-74.15486,NJ
+bear-de,Bear,39.62928,-75.65826,DE
+beaumont-ca,Beaumont,33.92946,-116.97725,CA
+beaumont-tx,Beaumont,30.08605,-94.10185,TX
+beaver-dam-wi,Beaver Dam,43.45777,-88.83733,WI
+beavercreek-oh,Beavercreek,39.70923,-84.06327,OH
+beaverton-or,Beaverton,45.48706,-122.80371,OR
+beckley-wv,Beckley,37.77817,-81.18816,WV
+bedford-nh,Bedford,42.94647,-71.5159,NH
+bedford-tx,Bedford,32.84402,-97.14307,TX
+bel-air-north-md,Bel Air North,39.55429,-76.37309,MD
+bel-air-south-md,Bel Air South,39.50506,-76.31977,MD
+bell-ca,Bell,33.97751,-118.18702,CA
+bell-gardens-ca,Bell Gardens,33.96529,-118.15146,CA
+bella-vista-ar,Bella Vista,36.4807,-94.27134,AR
+bellaire-tx,Bellaire,29.70579,-95.45883,TX
+belle-glade-fl,Belle Glade,26.68451,-80.66756,FL
+belleville-il,Belleville,38.52005,-89.98399,IL
+belleville-nj,Belleville,40.79371,-74.15014,NJ
+bellevue-ne,Bellevue,41.13667,-95.89084,NE
+bellevue-wa,Bellevue,47.61038,-122.20068,WA
+bellevue-wi,Bellevue,44.44416,-87.9201,WI
+bellflower-ca,Bellflower,33.88168,-118.11701,CA
+bellingham-wa,Bellingham,48.75955,-122.48822,WA
+bellmore-ny,Bellmore,40.66871,-73.52707,NY
+bellview-fl,Bellview,30.46159,-87.31497,FL
+bellwood-il,Bellwood,41.88142,-87.88312,IL
+belmont-ca,Belmont,37.52021,-122.2758,CA
+belmont-ma,Belmont,42.39593,-71.17867,MA
+belmont-cragin-il,Belmont Cragin,41.9317,-87.76867,IL
+beloit-wi,Beloit,42.50835,-89.03178,WI
+belton-mo,Belton,38.81195,-94.5319,MO
+belton-tx,Belton,31.05601,-97.46445,TX
+beltsville-md,Beltsville,39.03483,-76.90747,MD
+belvedere-park-ga,Belvedere Park,33.75483,-84.26742,GA
+belvidere-il,Belvidere,42.26391,-88.84427,IL
+benbrook-tx,Benbrook,32.67319,-97.46058,TX
+bend-or,Bend,44.05817,-121.31531,OR
+benicia-ca,Benicia,38.04937,-122.15858,CA
+bensalem-pa,Bensalem,40.10455,-74.95128,PA
+bensenville-il,Bensenville,41.95503,-87.94007,IL
+bensonhurst-ny,Bensonhurst,40.60177,-73.99403,NY
+benton-ar,Benton,34.56454,-92.58683,AR
+bentonville-ar,Bentonville,36.37285,-94.20882,AR
+berea-oh,Berea,41.36616,-81.8543,OH
+bergenfield-nj,Bergenfield,40.9276,-73.99736,NJ
+berkeley-ca,Berkeley,37.87159,-122.27275,CA
+berkley-mi,Berkley,42.50309,-83.18354,MI
+berwyn-il,Berwyn,41.85059,-87.79367,IL
+bessemer-al,Bessemer,33.40178,-86.95444,AL
+bethany-ok,Bethany,35.51867,-97.63226,OK
+bethany-or,Bethany,45.55789,-122.8676,OR
+bethel-park-pa,Bethel Park,40.32757,-80.0395,PA
+bethesda-md,Bethesda,38.98067,-77.10026,MD
+bethlehem-pa,Bethlehem,40.62593,-75.37046,PA
+bethpage-ny,Bethpage,40.74427,-73.48207,NY
+bettendorf-ia,Bettendorf,41.52448,-90.51569,IA
+beverly-ma,Beverly,42.55843,-70.88005,MA
+beverly-cove-ma,Beverly Cove,42.55343,-70.85366,MA
+beverly-hills-ca,Beverly Hills,34.07362,-118.40036,CA
+biddeford-me,Biddeford,43.49258,-70.45338,ME
+big-spring-tx,Big Spring,32.2504,-101.47874,TX
+billerica-ma,Billerica,42.55843,-71.26895,MA
+billings-mt,Billings,45.78329,-108.50069,MT
+biloxi-ms,Biloxi,30.39603,-88.88531,MS
+binghamton-ny,Binghamton,42.09869,-75.91797,NY
+birmingham-al,Birmingham,33.52066,-86.80249,AL
+birmingham-mi,Birmingham,42.5467,-83.21132,MI
+bismarck-nd,Bismarck,46.80833,-100.78374,ND
+bixby-ok,Bixby,35.94204,-95.88332,OK
+blacksburg-va,Blacksburg,37.22957,-80.41394,VA
+blaine-mn,Blaine,45.1608,-93.23495,MN
+bloomfield-ct,Bloomfield,41.82649,-72.73009,CT
+bloomfield-nj,Bloomfield,40.80677,-74.18542,NJ
+bloomingdale-fl,Bloomingdale,27.89364,-82.24037,FL
+bloomingdale-il,Bloomingdale,41.95753,-88.0809,IL
+bloomington-ca,Bloomington,34.07029,-117.39588,CA
+bloomington-il,Bloomington,40.4842,-88.99369,IL
+bloomington-in,Bloomington,39.16533,-86.52639,IN
+bloomington-mn,Bloomington,44.8408,-93.29828,MN
+blue-island-il,Blue Island,41.65726,-87.68005,IL
+blue-springs-mo,Blue Springs,39.01695,-94.28161,MO
+bluffton-sc,Bluffton,32.23715,-80.86039,SC
+blythe-ca,Blythe,33.6103,-114.59635,CA
+boardman-oh,Boardman,41.02423,-80.66285,OH
+boca-del-mar-fl,Boca Del Mar,26.34508,-80.14671,FL
+boca-raton-fl,Boca Raton,26.35869,-80.0831,FL
+boise-id,Boise,43.6135,-116.20345,ID
+bolingbrook-il,Bolingbrook,41.69864,-88.0684,IL
+bon-air-va,Bon Air,37.52487,-77.55777,VA
+bonita-springs-fl,Bonita Springs,26.33981,-81.7787,FL
+bonney-lake-wa,Bonney Lake,47.17705,-122.18651,WA
+boone-nc,Boone,36.21679,-81.67455,NC
+borough-park-ny,Borough Park,40.63399,-73.99681,NY
+bossier-city-la,Bossier City,32.51599,-93.73212,LA
+boston-ma,Boston,42.35843,-71.05977,MA
+bostonia-ca,Bostonia,32.80755,-116.93642,CA
+bothell-wa,Bothell,47.76232,-122.2054,WA
+bothell-west-wa,Bothell West,47.80527,-122.24064,WA
+boulder-co,Boulder,40.01499,-105.27055,CO
+boulder-city-nv,Boulder City,35.97859,-114.83249,NV
+bountiful-ut,Bountiful,40.88939,-111.88077,UT
+bourbonnais-il,Bourbonnais,41.15376,-87.88754,IL
+bowie-md,Bowie,38.94278,-76.73028,MD
+bowling-green-ky,Bowling Green,36.99032,-86.4436,KY
+bowling-green-oh,Bowling Green,41.37477,-83.65132,OH
+boyle-heights-ca,Boyle Heights,34.0339,-118.20535,CA
+boynton-beach-fl,Boynton Beach,26.52535,-80.06643,FL
+bozeman-mt,Bozeman,45.67965,-111.03856,MT
+bradenton-fl,Bradenton,27.49893,-82.57482,FL
+bradley-il,Bradley,41.14198,-87.86115,IL
+braintree-ma,Braintree,42.20384,-71.00215,MA
+brandon-fl,Brandon,27.9378,-82.28592,FL
+brandon-ms,Brandon,32.2732,-89.98592,MS
+branford-ct,Branford,41.27954,-72.8151,CT
+brawley-ca,Brawley,32.97866,-115.53027,CA
+brea-ca,Brea,33.91668,-117.90006,CA
+bremerton-wa,Bremerton,47.56732,-122.63264,WA
+brenham-tx,Brenham,30.16688,-96.39774,TX
+brent-fl,Brent,30.46881,-87.23608,FL
+brentwood-ca,Brentwood,37.93187,-121.69579,CA
+brentwood-ca-2,Brentwood,34.05195,-118.47397,CA
+brentwood-ny,Brentwood,40.78121,-73.24623,NY
+brentwood-tn,Brentwood,36.03312,-86.78278,TN
+brentwood-estates-tn,Brentwood Estates,36.02506,-86.77917,TN
+briarwood-ny,Briarwood,40.70935,-73.81529,NY
+brick-nj,Brick,40.05928,-74.13708,NJ
+bridgeport-ct,Bridgeport,41.17923,-73.18945,CT
+bridgeport-il,Bridgeport,41.83809,-87.65116,IL
+bridgeton-nj,Bridgeton,39.42734,-75.23408,NJ
+bridgeview-il,Bridgeview,41.75003,-87.80422,IL
+bridgewater-nj,Bridgewater,40.60079,-74.64815,NJ
+brigham-city-ut,Brigham City,41.51021,-112.0155,UT
+brighton-co,Brighton,39.98526,-104.82053,CO
+brighton-ma,Brighton,42.3501,-71.15644,MA
+brighton-ny,Brighton,43.14756,-77.55055,NY
+brighton-beach-ny,Brighton Beach,40.57788,-73.95958,NY
+brighton-park-il,Brighton Park,41.81892,-87.69894,IL
+brightwood-dc,Brightwood,38.96122,-77.02748,DC
+bristol-ct,Bristol,41.67176,-72.94927,CT
+bristol-ri,Bristol,41.67705,-71.26616,RI
+bristol-tn,Bristol,36.59511,-82.18874,TN
+bristol-va,Bristol,36.59649,-82.18847,VA
+broad-ripple-in,Broad Ripple,39.86671,-86.14165,IN
+broadview-heights-oh,Broadview Heights,41.31394,-81.68513,OH
+brockton-ma,Brockton,42.08343,-71.01838,MA
+broken-arrow-ok,Broken Arrow,36.0526,-95.79082,OK
+brook-park-oh,Brook Park,41.39838,-81.80458,OH
+brookfield-il,Brookfield,41.82392,-87.85173,IL
+brookfield-wi,Brookfield,43.06057,-88.10648,WI
+brookhaven-ga,Brookhaven,33.85844,-84.3402,GA
+brookings-sd,Brookings,44.31136,-96.79839,SD
+brookline-ma,Brookline,42.33176,-71.12116,MA
+brooklyn-ny,Brooklyn,40.6501,-73.94958,NY
+brooklyn-center-mn,Brooklyn Center,45.07608,-93.33273,MN
+brooklyn-heights-ny,Brooklyn Heights,40.69538,-73.99375,NY
+brooklyn-park-mn,Brooklyn Park,45.09413,-93.35634,MN
+broomfield-co,Broomfield,39.92054,-105.08665,CO
+brownsburg-in,Brownsburg,39.84338,-86.39777,IN
+brownsville-fl,Brownsville,25.82176,-80.24116,FL
+brownsville-ny,Brownsville,40.66094,-73.92014,NY
+brownsville-tx,Brownsville,25.90175,-97.49748,TX
+brownwood-tx,Brownwood,31.70932,-98.99116,TX
+brunswick-ga,Brunswick,31.15013,-81.49147,GA
+brunswick-me,Brunswick,43.91452,-69.96533,ME
+brunswick-oh,Brunswick,41.23811,-81.8418,OH
+brushy-creek-tx,Brushy Creek,30.51353,-97.73973,TX
+bryan-tx,Bryan,30.67436,-96.36996,TX
+bryant-ar,Bryant,34.59593,-92.48905,AR
+bryn-mawr-skyway-wa,Bryn Mawr-Skyway,47.4943,-122.24092,WA
+buckeye-az,Buckeye,33.37032,-112.58378,AZ
+buckhall-va,Buckhall,38.73178,-77.4311,VA
+buena-park-ca,Buena Park,33.86751,-117.99812,CA
+buenaventura-lakes-fl,Buenaventura Lakes,28.33584,-81.35313,FL
+buffalo-mn,Buffalo,45.17191,-93.87469,MN
+buffalo-ny,Buffalo,42.88645,-78.87837,NY
+buffalo-grove-il,Buffalo Grove,42.15141,-87.95979,IL
+bullhead-city-az,Bullhead City,35.14778,-114.5683,AZ
+burbank-ca,Burbank,34.18084,-118.30897,CA
+burbank-il,Burbank,41.73392,-87.7795,IL
+burien-wa,Burien,47.47038,-122.34679,WA
+burke-va,Burke,38.79345,-77.27165,VA
+burleson-tx,Burleson,32.54208,-97.32085,TX
+burlingame-ca,Burlingame,37.5841,-122.36608,CA
+burlington-ia,Burlington,40.80754,-91.11292,IA
+burlington-ky,Burlington,39.02756,-84.72411,KY
+burlington-ma,Burlington,42.50482,-71.19561,MA
+burlington-nc,Burlington,36.09569,-79.4378,NC
+burlington-vt,Burlington,44.47588,-73.21207,VT
+burnsville-mn,Burnsville,44.76774,-93.27772,MN
+burton-mi,Burton,42.99947,-83.61634,MI
+bushwick-ny,Bushwick,40.69427,-73.91875,NY
+bustleton-pa,Bustleton,40.08261,-75.03156,PA
+butte-mt,Butte,46.00382,-112.53474,MT
+cabot-ar,Cabot,34.97453,-92.01653,AR
+calabasas-ca,Calabasas,34.15778,-118.63842,CA
+caldwell-id,Caldwell,43.66294,-116.68736,ID
+caledonia-wi,Caledonia,42.8078,-87.92425,WI
+calexico-ca,Calexico,32.67895,-115.49888,CA
+calhoun-ga,Calhoun,34.50259,-84.95105,GA
+calumet-city-il,Calumet City,41.61559,-87.52949,IL
+calverton-md,Calverton,39.05761,-76.93581,MD
+camarillo-ca,Camarillo,34.21639,-119.0376,CA
+camas-wa,Camas,45.58706,-122.39954,WA
+cambria-heights-ny,Cambria Heights,40.69455,-73.73847,NY
+cambridge-ma,Cambridge,42.3751,-71.10561,MA
+camden-nj,Camden,39.92595,-75.11962,NJ
+cameron-park-ca,Cameron Park,38.66879,-120.98716,CA
+camp-springs-md,Camp Springs,38.804,-76.90664,MD
+campbell-ca,Campbell,37.28717,-121.94996,CA
+canarsie-ny,Canarsie,40.64372,-73.90069,NY
+canby-or,Canby,45.2629,-122.69259,OR
+candler-mcafee-ga,Candler-McAfee,33.72672,-84.27246,GA
+canoga-park-ca,Canoga Park,34.20112,-118.59814,CA
+canton-ga,Canton,34.23676,-84.49076,GA
+canton-ma,Canton,42.15843,-71.14477,MA
+canton-mi,Canton,42.30865,-83.48216,MI
+canton-oh,Canton,40.79895,-81.37845,OH
+cantonment-fl,Cantonment,30.60853,-87.33998,FL
+canyon-country-ca,Canyon Country,34.42333,-118.47203,CA
+canyon-lake-tx,Canyon Lake,29.87522,-98.26251,TX
+cape-coral-fl,Cape Coral,26.56285,-81.94953,FL
+cape-girardeau-mo,Cape Girardeau,37.30588,-89.51815,MO
+capitol-hill-dc,Capitol Hill,38.889,-77.00025,DC
+capitol-riverfront-dc,Capitol Riverfront,38.87796,-77.00314,DC
+carbondale-il,Carbondale,37.72727,-89.21675,IL
+carlisle-pa,Carlisle,40.20148,-77.18887,PA
+carlsbad-ca,Carlsbad,33.15809,-117.35059,CA
+carlsbad-nm,Carlsbad,32.42067,-104.22884,NM
+carmel-in,Carmel,39.97837,-86.11804,IN
+carmichael-ca,Carmichael,38.61713,-121.32828,CA
+carney-md,Carney,39.39427,-76.52358,MD
+carol-city-fl,Carol City,25.94065,-80.2456,FL
+carol-stream-il,Carol Stream,41.91253,-88.13479,IL
+carpentersville-il,Carpentersville,42.12114,-88.25786,IL
+carrboro-nc,Carrboro,35.91014,-79.07529,NC
+carrollton-ga,Carrollton,33.58011,-85.07661,GA
+carrollton-tx,Carrollton,32.95373,-96.89028,TX
+carrollwood-fl,Carrollwood,28.05002,-82.49287,FL
+carrollwood-village-fl,Carrollwood Village,28.06752,-82.52093,FL
+carson-ca,Carson,33.83141,-118.28202,CA
+carson-city-nv,Carson City,39.1638,-119.7674,NV
+carteret-nj,Carteret,40.57733,-74.2282,NJ
+cartersville-ga,Cartersville,34.16533,-84.80231,GA
+cary-il,Cary,42.21197,-88.23814,IL
+cary-nc,Cary,35.79154,-78.78112,NC
+casa-grande-az,Casa Grande,32.8795,-111.75735,AZ
+casa-de-oro-mount-helix-ca,Casa de Oro-Mount Helix,32.76397,-116.96877,CA
+casas-adobes-az,Casas Adobes,32.32341,-110.9951,AZ
+casper-wy,Casper,42.86663,-106.31308,WY
+casselberry-fl,Casselberry,28.67778,-81.32785,FL
+castaic-ca,Castaic,34.48888,-118.62287,CA
+castle-rock-co,Castle Rock,39.37221,-104.85609,CO
+castlewood-co,Castlewood,39.58471,-104.90109,CO
+castro-valley-ca,Castro Valley,37.6941,-122.08635,CA
+catalina-foothills-az,Catalina Foothills,32.29785,-110.9187,AZ
+cathedral-city-ca,Cathedral City,33.77974,-116.46529,CA
+catonsville-md,Catonsville,39.27205,-76.73192,MD
+cave-spring-va,Cave Spring,37.22764,-80.01282,VA
+ca-on-city-co,Cañon City,38.44098,-105.24245,CO
+cedar-city-ut,Cedar City,37.67748,-113.06189,UT
+cedar-falls-ia,Cedar Falls,42.52776,-92.44547,IA
+cedar-hill-tx,Cedar Hill,32.58847,-96.95612,TX
+cedar-park-tx,Cedar Park,30.5052,-97.82029,TX
+cedar-rapids-ia,Cedar Rapids,42.00833,-91.64407,IA
+celina-tx,Celina,33.32456,-96.78444,TX
+centennial-co,Centennial,39.57916,-104.87692,CO
+center-city-pa,Center City,39.9512,-75.15923,PA
+center-point-al,Center Point,33.64566,-86.6836,AL
+centereach-ny,Centereach,40.85843,-73.09955,NY
+centerville-oh,Centerville,39.62839,-84.15938,OH
+centerville-ut,Centerville,40.918,-111.87216,UT
+central-la,Central,30.55435,-91.03677,LA
+central-14th-street-spring-road-dc,Central 14th Street / Spring Road,38.93707,-77.03265,DC
+central-city-az,Central City,33.44001,-112.05805,AZ
+central-falls-ri,Central Falls,41.89066,-71.39228,RI
+central-islip-ny,Central Islip,40.79065,-73.20178,NY
+central-point-or,Central Point,42.37596,-122.91643,OR
+centralia-wa,Centralia,46.71621,-122.9543,WA
+centreville-va,Centreville,38.84039,-77.42888,VA
+ceres-ca,Ceres,37.59493,-120.95771,CA
+cerritos-ca,Cerritos,33.85835,-118.06479,CA
+chalmette-la,Chalmette,29.94296,-89.96537,LA
+chambersburg-pa,Chambersburg,39.93759,-77.6611,PA
+chamblee-ga,Chamblee,33.89205,-84.29881,GA
+champaign-il,Champaign,40.11642,-88.24338,IL
+champlin-mn,Champlin,45.18885,-93.39745,MN
+chandler-az,Chandler,33.30616,-111.84125,AZ
+chanhassen-mn,Chanhassen,44.86219,-93.53079,MN
+channelview-tx,Channelview,29.77606,-95.11465,TX
+chantilly-va,Chantilly,38.89428,-77.4311,VA
+chapel-hill-nc,Chapel Hill,35.9132,-79.05584,NC
+charleston-il,Charleston,39.49615,-88.17615,IL
+charleston-sc,Charleston,32.77632,-79.93275,SC
+charleston-wv,Charleston,38.34982,-81.63262,WV
+charlestown-ma,Charlestown,42.37787,-71.062,MA
+charlotte-nc,Charlotte,35.22709,-80.84313,NC
+charlottesville-va,Charlottesville,38.02931,-78.47668,VA
+chaska-mn,Chaska,44.78941,-93.60218,MN
+chatham-il,Chatham,41.74115,-87.61255,IL
+chatsworth-ca,Chatsworth,34.25723,-118.6012,CA
+chattanooga-tn,Chattanooga,35.04563,-85.30968,TN
+cheektowaga-ny,Cheektowaga,42.90339,-78.75475,NY
+chelmsford-ma,Chelmsford,42.59981,-71.36728,MA
+chelsea-ma,Chelsea,42.39176,-71.03283,MA
+cherry-hill-nj,Cherry Hill,39.93484,-75.03073,NJ
+cherry-hill-va,Cherry Hill,38.56984,-77.26693,VA
+chesapeake-va,Chesapeake,36.81904,-76.27494,VA
+cheshire-ct,Cheshire,41.49899,-72.90066,CT
+chester-pa,Chester,39.84753,-75.35785,PA
+chester-va,Chester,37.35682,-77.44165,VA
+chesterfield-mo,Chesterfield,38.66311,-90.57707,MO
+chestnut-hill-ma,Chestnut Hill,42.33065,-71.16616,MA
+cheyenne-wy,Cheyenne,41.13998,-104.82025,WY
+chicago-il,Chicago,41.85003,-87.65005,IL
+chicago-heights-il,Chicago Heights,41.50615,-87.6356,IL
+chicago-lawn-il,Chicago Lawn,41.77503,-87.69644,IL
+chicago-loop-il,Chicago Loop,41.88407,-87.6333,IL
+chickasha-ok,Chickasha,35.05257,-97.93643,OK
+chico-ca,Chico,39.72849,-121.83748,CA
+chicopee-ma,Chicopee,42.1487,-72.60787,MA
+chillicothe-oh,Chillicothe,39.33312,-82.9824,OH
+chillum-md,Chillum,38.96372,-76.99081,MD
+chinatown-ca,Chinatown,37.7966,-122.40858,CA
+chinatown-ny,Chinatown,40.71649,-73.99625,NY
+chino-ca,Chino,34.01223,-117.68894,CA
+chino-hills-ca,Chino Hills,33.9938,-117.75888,CA
+chowchilla-ca,Chowchilla,37.123,-120.26018,CA
+christiansburg-va,Christiansburg,37.12985,-80.40894,VA
+chula-vista-ca,Chula Vista,32.64005,-117.0842,CA
+cibolo-tx,Cibolo,29.56162,-98.22696,TX
+cicero-il,Cicero,41.84559,-87.75394,IL
+cicero-ny,Cicero,43.17562,-76.11937,NY
+cimarron-hills-co,Cimarron Hills,38.85861,-104.69886,CO
+cincinnati-oh,Cincinnati,39.12711,-84.51439,OH
+cinco-ranch-tx,Cinco Ranch,29.73884,-95.758,TX
+citrus-heights-ca,Citrus Heights,38.70712,-121.28106,CA
+citrus-park-fl,Citrus Park,28.07835,-82.56982,FL
+city-of-milford-balance-ct,City of Milford (balance),41.22374,-73.06164,CT
+city-of-sammamish-wa,City of Sammamish,47.60444,-122.03768,WA
+claremont-ca,Claremont,34.09668,-117.71978,CA
+claremore-ok,Claremore,36.3126,-95.61609,OK
+clark-fulton-oh,Clark-Fulton,41.46402,-81.70979,OH
+clarksburg-wv,Clarksburg,39.28065,-80.34453,WV
+clarksdale-ms,Clarksdale,34.20011,-90.57093,MS
+clarksville-in,Clarksville,38.29674,-85.75996,IN
+clarksville-tn,Clarksville,36.52977,-87.35945,TN
+clay-ny,Clay,43.1859,-76.17243,NY
+clayton-mo,Clayton,38.64255,-90.32373,MO
+clayton-nc,Clayton,35.65071,-78.45639,NC
+clearfield-ut,Clearfield,41.11078,-112.02605,UT
+clearlake-ca,Clearlake,38.95823,-122.62637,CA
+clearwater-fl,Clearwater,27.96585,-82.8001,FL
+cleburne-tx,Cleburne,32.34764,-97.38668,TX
+clemmons-nc,Clemmons,36.02153,-80.382,NC
+clemson-sc,Clemson,34.68344,-82.83737,SC
+clermont-fl,Clermont,28.54944,-81.77285,FL
+cleveland-oh,Cleveland,41.4995,-81.69541,OH
+cleveland-tn,Cleveland,35.15952,-84.87661,TN
+cleveland-heights-oh,Cleveland Heights,41.52005,-81.55624,OH
+cliffside-park-nj,Cliffside Park,40.82149,-73.98764,NJ
+clifton-co,Clifton,39.09193,-108.44898,CO
+clifton-nj,Clifton,40.85843,-74.16376,NJ
+clifton-park-ny,Clifton Park,42.86563,-73.77095,NY
+clinton-ia,Clinton,41.84447,-90.18874,IA
+clinton-md,Clinton,38.76511,-76.89831,MD
+clinton-ms,Clinton,32.34153,-90.32176,MS
+clinton-ut,Clinton,41.13967,-112.0505,UT
+clinton-township-mi,Clinton Township,42.58698,-82.91992,MI
+clive-ia,Clive,41.60304,-93.72411,IA
+cloverleaf-tx,Cloverleaf,29.77828,-95.17188,TX
+cloverly-md,Cloverly,39.10816,-76.99775,MD
+clovis-ca,Clovis,36.82523,-119.70292,CA
+clovis-nm,Clovis,34.4048,-103.20523,NM
+coachella-ca,Coachella,33.6803,-116.17389,CA
+coalinga-ca,Coalinga,36.13968,-120.36015,CA
+cobbs-creek-pa,Cobbs Creek,39.94761,-75.24018,PA
+cockeysville-md,Cockeysville,39.48122,-76.64386,MD
+cocoa-fl,Cocoa,28.38612,-80.742,FL
+coconut-creek-fl,Coconut Creek,26.25175,-80.17894,FL
+coconut-grove-fl,Coconut Grove,25.7126,-80.25699,FL
+coeur-d-alene-id,Coeur d'Alene,47.67768,-116.78047,ID
+cohoes-ny,Cohoes,42.77424,-73.70012,NY
+colchester-vt,Colchester,44.54394,-73.14791,VT
+college-park-md,College Park,38.98067,-76.93692,MD
+college-point-ny,College Point,40.7876,-73.84597,NY
+college-station-tx,College Station,30.62798,-96.33441,TX
+colleyville-tx,Colleyville,32.88096,-97.15501,TX
+collierville-tn,Collierville,35.04204,-89.66453,TN
+collinsville-il,Collinsville,38.67033,-89.98455,IL
+collinwood-oh,Collinwood,41.55838,-81.56929,OH
+colonia-nj,Colonia,40.57455,-74.30209,NJ
+colonial-heights-va,Colonial Heights,37.26804,-77.40726,VA
+colorado-springs-co,Colorado Springs,38.83388,-104.82136,CO
+colton-ca,Colton,34.0739,-117.31365,CA
+columbia-md,Columbia,39.24038,-76.83942,MD
+columbia-mo,Columbia,38.95171,-92.33407,MO
+columbia-sc,Columbia,34.00071,-81.03481,SC
+columbia-tn,Columbia,35.61507,-87.03528,TN
+columbia-city-wa,Columbia City,47.56399,-122.2754,WA
+columbia-heights-dc,Columbia Heights,38.92567,-77.02942,DC
+columbia-heights-mn,Columbia Heights,45.0408,-93.263,MN
+columbine-co,Columbine,39.58777,-105.06943,CO
+columbus-ga,Columbus,32.46098,-84.98771,GA
+columbus-in,Columbus,39.20144,-85.92138,IN
+columbus-ms,Columbus,33.49567,-88.42726,MS
+columbus-ne,Columbus,41.42973,-97.36838,NE
+columbus-oh,Columbus,39.96118,-82.99879,OH
+commack-ny,Commack,40.84288,-73.29289,NY
+commerce-city-co,Commerce City,39.80832,-104.93387,CO
+compton-ca,Compton,33.89585,-118.22007,CA
+concord-ca,Concord,37.97798,-122.03107,CA
+concord-ma,Concord,42.46037,-71.34895,MA
+concord-mo,Concord,38.5245,-90.35734,MO
+concord-nc,Concord,35.40888,-80.58158,NC
+concord-nh,Concord,43.20814,-71.53757,NH
+conda-id,Conda,42.72825,-111.53245,ID
+coney-island-ny,Coney Island,40.57788,-73.99403,NY
+conroe-tx,Conroe,30.31188,-95.45605,TX
+converse-tx,Converse,29.51801,-98.31612,TX
+conway-ar,Conway,35.0887,-92.4421,AR
+conway-sc,Conway,33.836,-79.04781,SC
+conyers-ga,Conyers,33.66761,-84.01769,GA
+cookeville-tn,Cookeville,36.16284,-85.50164,TN
+coon-rapids-mn,Coon Rapids,45.11997,-93.28773,MN
+cooper-city-fl,Cooper City,26.05731,-80.27172,FL
+coos-bay-or,Coos Bay,43.3665,-124.21789,OR
+copiague-ny,Copiague,40.68149,-73.39984,NY
+coppell-tx,Coppell,32.95457,-97.01501,TX
+copperas-cove-tx,Copperas Cove,31.12406,-97.90308,TX
+coral-gables-fl,Coral Gables,25.72149,-80.26838,FL
+coral-springs-fl,Coral Springs,26.27119,-80.2706,FL
+coral-terrace-fl,Coral Terrace,25.74593,-80.3045,FL
+coralville-ia,Coralville,41.6764,-91.58045,IA
+coram-ny,Coram,40.86871,-73.00149,NY
+corcoran-ca,Corcoran,36.09801,-119.5604,CA
+cordova-tn,Cordova,35.15565,-89.7762,TN
+corinth-tx,Corinth,33.15401,-97.06473,TX
+cornelius-nc,Cornelius,35.4868,-80.86007,NC
+corona-ca,Corona,33.87529,-117.56644,CA
+corona-ny,Corona,40.74705,-73.86014,NY
+coronado-ca,Coronado,32.68589,-117.18309,CA
+corpus-christi-tx,Corpus Christi,27.80058,-97.39638,TX
+corsicana-tx,Corsicana,32.09543,-96.46887,TX
+cortland-ny,Cortland,42.60118,-76.18048,NY
+cortlandt-manor-ny,Cortlandt Manor,41.28,-73.87164,NY
+corvallis-or,Corvallis,44.56457,-123.26204,OR
+costa-mesa-ca,Costa Mesa,33.64113,-117.91867,CA
+cottage-grove-mn,Cottage Grove,44.82774,-92.94382,MN
+cottage-lake-wa,Cottage Lake,47.74427,-122.07735,WA
+cottonwood-heights-ut,Cottonwood Heights,40.61967,-111.81021,UT
+council-bluffs-ia,Council Bluffs,41.26194,-95.86083,IA
+country-club-fl,Country Club,25.94815,-80.317,FL
+country-club-hills-il,Country Club Hills,41.56809,-87.72033,IL
+country-walk-fl,Country Walk,25.63399,-80.43228,FL
+coventry-ri,Coventry,41.7001,-71.68284,RI
+covina-ca,Covina,34.09001,-117.89034,CA
+covington-ky,Covington,39.08367,-84.50855,KY
+covington-wa,Covington,47.35818,-122.12216,WA
+cranberry-township-pa,Cranberry Township,40.68496,-80.10714,PA
+cranford-nj,Cranford,40.65844,-74.29959,NJ
+cranston-ri,Cranston,41.77982,-71.43728,RI
+crawfordsville-in,Crawfordsville,40.04115,-86.87445,IN
+crest-hill-il,Crest Hill,41.55475,-88.09867,IL
+crestview-fl,Crestview,30.76213,-86.57051,FL
+creve-coeur-mo,Creve Coeur,38.66089,-90.42262,MO
+crofton-md,Crofton,39.00178,-76.68747,MD
+crown-point-in,Crown Point,41.41698,-87.36531,IN
+crystal-mn,Crystal,45.03274,-93.36023,MN
+crystal-lake-il,Crystal Lake,42.24113,-88.3162,IL
+cudahy-ca,Cudahy,33.96057,-118.18535,CA
+cudahy-wi,Cudahy,42.95974,-87.86147,WI
+cullman-al,Cullman,34.17482,-86.84361,AL
+culpeper-va,Culpeper,38.47318,-77.99666,VA
+culver-city-ca,Culver City,34.02112,-118.39647,CA
+cumberland-md,Cumberland,39.65287,-78.76252,MD
+cumberland-ri,Cumberland,41.96677,-71.43284,RI
+cupertino-ca,Cupertino,37.323,-122.03218,CA
+cutler-fl,Cutler,25.6151,-80.31061,FL
+cutler-bay-fl,Cutler Bay,25.5783,-80.3377,FL
+cutler-ridge-fl,Cutler Ridge,25.58066,-80.34672,FL
+cuyahoga-falls-oh,Cuyahoga Falls,41.13394,-81.48456,OH
+cypress-ca,Cypress,33.81696,-118.03729,CA
+cypress-tx,Cypress,29.96911,-95.69717,TX
+cypress-hills-ny,Cypress Hills,40.67705,-73.89125,NY
+dakota-ridge-co,Dakota Ridge,39.61638,-105.13934,CO
+dale-city-va,Dale City,38.63706,-77.31109,VA
+dallas-or,Dallas,44.91928,-123.31705,OR
+dallas-tx,Dallas,32.78306,-96.80667,TX
+dalton-ga,Dalton,34.7698,-84.97022,GA
+daly-city-ca,Daly City,37.70577,-122.46192,CA
+damascus-md,Damascus,39.28844,-77.20387,MD
+dana-point-ca,Dana Point,33.46697,-117.69811,CA
+danbury-ct,Danbury,41.39482,-73.45401,CT
+dania-beach-fl,Dania Beach,26.05231,-80.14393,FL
+danvers-ma,Danvers,42.57509,-70.93005,MA
+danville-ca,Danville,37.82159,-121.99996,CA
+danville-il,Danville,40.12448,-87.63002,IL
+danville-ky,Danville,37.64563,-84.77217,KY
+danville-va,Danville,36.58597,-79.39502,VA
+daphne-al,Daphne,30.60353,-87.9036,AL
+darien-ct,Darien,41.07871,-73.46929,CT
+darien-il,Darien,41.75198,-87.97395,IL
+davenport-ia,Davenport,41.52364,-90.57764,IA
+davie-fl,Davie,26.06287,-80.2331,FL
+davis-ca,Davis,38.54491,-121.74052,CA
+dayton-oh,Dayton,39.75895,-84.19161,OH
+daytona-beach-fl,Daytona Beach,29.21081,-81.02283,FL
+de-pere-wi,De Pere,44.44888,-88.06038,WI
+debary-fl,DeBary,28.88305,-81.30868,FL
+dekalb-il,DeKalb,41.92947,-88.75036,IL
+deland-fl,DeLand,29.02832,-81.30312,FL
+desoto-tx,DeSoto,32.58986,-96.85695,TX
+dearborn-mi,Dearborn,42.32226,-83.17631,MI
+dearborn-heights-mi,Dearborn Heights,42.33698,-83.27326,MI
+decatur-al,Decatur,34.60593,-86.98334,AL
+decatur-ga,Decatur,33.77483,-84.29631,GA
+decatur-il,Decatur,39.84031,-88.9548,IL
+dedham-ma,Dedham,42.24177,-71.16616,MA
+deer-park-ny,Deer Park,40.76177,-73.32929,NY
+deer-park-tx,Deer Park,29.70523,-95.12382,TX
+deer-valley-az,Deer Valley,33.68393,-112.13488,AZ
+deerfield-il,Deerfield,42.17114,-87.84451,IL
+deerfield-beach-fl,Deerfield Beach,26.31841,-80.09977,FL
+defiance-oh,Defiance,41.28449,-84.35578,OH
+del-city-ok,Del City,35.44201,-97.44087,OK
+del-rio-tx,Del Rio,29.36273,-100.89676,TX
+delano-ca,Delano,35.76884,-119.24705,CA
+delaware-oh,Delaware,40.29867,-83.06797,OH
+delray-beach-fl,Delray Beach,26.46146,-80.07282,FL
+deltona-fl,Deltona,28.90054,-81.26367,FL
+denison-tx,Denison,33.75566,-96.53666,TX
+denton-tx,Denton,33.21484,-97.13307,TX
+denver-co,Denver,39.73915,-104.9847,CO
+denville-nj,Denville,40.89232,-74.47738,NJ
+depew-ny,Depew,42.90395,-78.69225,NY
+derby-ks,Derby,37.54557,-97.26893,KS
+derry-nh,Derry,42.88064,-71.32729,NH
+derry-village-nh,Derry Village,42.89175,-71.31201,NH
+des-moines-ia,Des Moines,41.60054,-93.60911,IA
+des-moines-wa,Des Moines,47.40177,-122.32429,WA
+des-plaines-il,Des Plaines,42.03336,-87.8834,IL
+desert-hot-springs-ca,Desert Hot Springs,33.96173,-116.50353,CA
+detroit-mi,Detroit,42.33143,-83.04575,MI
+detroit-shoreway-oh,Detroit-Shoreway,41.47772,-81.72991,OH
+diamond-bar-ca,Diamond Bar,34.02862,-117.81034,CA
+diamond-head-kapahulu-saint-louis-heights-hi,Diamond Head / Kapahulu / Saint Louis Heights,21.27697,-157.81127,HI
+dickinson-nd,Dickinson,46.87918,-102.78962,ND
+dickinson-tx,Dickinson,29.46079,-95.05132,TX
+dickson-tn,Dickson,36.077,-87.38779,TN
+dinuba-ca,Dinuba,36.54328,-119.38707,CA
+dix-hills-ny,Dix Hills,40.80482,-73.33623,NY
+dixiana-al,Dixiana,33.74021,-86.64938,AL
+dixon-ca,Dixon,38.44546,-121.8233,CA
+dixon-il,Dixon,41.83892,-89.47955,IL
+dodge-city-ks,Dodge City,37.7528,-100.01708,KS
+dolton-il,Dolton,41.63892,-87.60727,IL
+donna-tx,Donna,26.17035,-98.05195,TX
+doral-fl,Doral,25.81954,-80.35533,FL
+dorchester-ma,Dorchester,42.29732,-71.0745,MA
+dothan-al,Dothan,31.22323,-85.39049,AL
+douglas-az,Douglas,31.34455,-109.54534,AZ
+douglas-il,Douglas,41.83476,-87.61811,IL
+douglasville-ga,Douglasville,33.7515,-84.74771,GA
+dover-de,Dover,39.15817,-75.52437,DE
+dover-nh,Dover,43.19786,-70.87367,NH
+dover-nj,Dover,40.88399,-74.5621,NJ
+downers-grove-il,Downers Grove,41.80892,-88.01117,IL
+downey-ca,Downey,33.94001,-118.13257,CA
+downtown-dc-dc,Downtown DC,38.8935,-77.01991,DC
+dracut-ma,Dracut,42.67037,-71.30201,MA
+draper-ut,Draper,40.52467,-111.86382,UT
+drexel-heights-az,Drexel Heights,32.14119,-111.02843,AZ
+drexel-hill-pa,Drexel Hill,39.94706,-75.29213,PA
+duarte-ca,Duarte,34.13945,-117.97729,CA
+dublin-ca,Dublin,37.70215,-121.93579,CA
+dublin-ga,Dublin,32.54044,-82.90375,GA
+dublin-oh,Dublin,40.09923,-83.11408,OH
+dubuque-ia,Dubuque,42.50056,-90.66457,IA
+duluth-ga,Duluth,34.00288,-84.14464,GA
+duluth-mn,Duluth,46.78327,-92.10658,MN
+dumas-tx,Dumas,35.86559,-101.97324,TX
+dumont-nj,Dumont,40.94065,-73.99681,NJ
+duncan-ok,Duncan,34.5023,-97.95781,OK
+duncanville-tx,Duncanville,32.6518,-96.90834,TX
+dundalk-md,Dundalk,39.25066,-76.52052,MD
+dunedin-fl,Dunedin,28.0199,-82.77323,FL
+dunwoody-ga,Dunwoody,33.94621,-84.33465,GA
+dupont-circle-dc,Dupont Circle,38.90844,-77.04414,DC
+durango-co,Durango,37.27528,-107.88007,CO
+durant-ok,Durant,33.99399,-96.37082,OK
+durham-nc,Durham,35.99403,-78.89862,NC
+duxbury-ma,Duxbury,42.04177,-70.67226,MA
+dyer-in,Dyer,41.4942,-87.52171,IN
+dyersburg-tn,Dyersburg,36.03452,-89.38563,TN
+dyker-heights-ny,Dyker Heights,40.62149,-74.00958,NY
+eagan-mn,Eagan,44.80413,-93.16689,MN
+eagle-id,Eagle,43.69544,-116.35401,ID
+eagle-mountain-ut,Eagle Mountain,40.31412,-112.00688,UT
+eagle-pass-tx,Eagle Pass,28.70914,-100.49952,TX
+olney-pa,Olney,40.04122,-75.12379,PA
+eagle-river-ak,Eagle River,61.32139,-149.56778,AK
+easley-sc,Easley,34.82984,-82.60152,SC
+east-amherst-ny,East Amherst,43.01839,-78.6967,NY
+east-boston-ma,East Boston,42.3751,-71.03922,MA
+east-brainerd-tn,East Brainerd,34.99591,-85.15023,TN
+east-brunswick-nj,East Brunswick,40.42788,-74.41598,NJ
+east-chattanooga-tn,East Chattanooga,35.06535,-85.24912,TN
+east-chicago-in,East Chicago,41.6392,-87.45476,IN
+east-cleveland-oh,East Cleveland,41.53311,-81.57901,OH
+east-concord-nh,East Concord,43.24202,-71.53813,NH
+east-elmhurst-ny,East Elmhurst,40.76121,-73.86514,NY
+east-flatbush-ny,East Flatbush,40.65371,-73.93042,NY
+east-florence-al,East Florence,34.80953,-87.64947,AL
+east-garfield-park-il,East Garfield Park,41.88087,-87.70283,IL
+east-hampton-va,East Hampton,37.03737,-76.33161,VA
+east-harlem-ny,East Harlem,40.79472,-73.9425,NY
+east-hartford-ct,East Hartford,41.78232,-72.61203,CT
+east-haven-ct,East Haven,41.27621,-72.86843,CT
+east-hemet-ca,East Hemet,33.74002,-116.93891,CA
+east-hill-meridian-wa,East Hill-Meridian,47.41052,-122.17369,WA
+east-honolulu-hi,East Honolulu,21.28906,-157.71734,HI
+east-independence-mo,East Independence,39.09556,-94.35523,MO
+east-lake-fl,East Lake,28.11085,-82.69482,FL
+east-lake-orient-park-fl,East Lake-Orient Park,27.98269,-82.37878,FL
+east-lansing-mi,East Lansing,42.73698,-84.48387,MI
+east-longmeadow-ma,East Longmeadow,42.06454,-72.51259,MA
+east-los-angeles-ca,East Los Angeles,34.0239,-118.17202,CA
+east-massapequa-ny,East Massapequa,40.67343,-73.43651,NY
+east-meadow-ny,East Meadow,40.71399,-73.55902,NY
+east-millcreek-ut,East Millcreek,40.69995,-111.81049,UT
+east-moline-il,East Moline,41.50087,-90.4443,IL
+east-mount-airy-pa,East Mount Airy,40.0645,-75.1875,PA
+east-naples-fl,East Naples,26.13842,-81.76648,FL
+east-new-york-ny,East New York,40.66677,-73.88236,NY
+east-northport-ny,East Northport,40.87676,-73.32456,NY
+east-norwalk-ct,East Norwalk,41.10565,-73.39845,CT
+east-orange-nj,East Orange,40.76732,-74.20487,NJ
+east-palo-alto-ca,East Palo Alto,37.46883,-122.14108,CA
+east-patchogue-ny,East Patchogue,40.76704,-72.99622,NY
+east-pensacola-heights-fl,East Pensacola Heights,30.42881,-87.17997,FL
+east-peoria-il,East Peoria,40.66615,-89.5801,IL
+east-point-ga,East Point,33.67955,-84.43937,GA
+east-providence-ri,East Providence,41.81371,-71.37005,RI
+east-rancho-dominguez-ca,East Rancho Dominguez,33.89807,-118.19535,CA
+east-ridge-tn,East Ridge,35.01424,-85.2519,TN
+east-riverdale-md,East Riverdale,38.958,-76.911,MD
+east-saint-louis-il,East Saint Louis,38.6245,-90.15094,IL
+east-setauket-ny,East Setauket,40.94149,-73.10594,NY
+east-tremont-ny,East Tremont,40.84538,-73.89097,NY
+east-village-ny,East Village,40.72927,-73.98736,NY
+eastchester-ny,Eastchester,40.95833,-73.80861,NY
+easthampton-ma,Easthampton,42.26676,-72.66898,MA
+eastlake-oh,Eastlake,41.65394,-81.45039,OH
+eastmont-wa,Eastmont,47.8974,-122.18154,WA
+easton-ma,Easton,42.02454,-71.12866,MA
+easton-md,Easton,38.77428,-76.07633,MD
+easton-pa,Easton,40.68843,-75.22073,PA
+eastpointe-mi,Eastpointe,42.46837,-82.95547,MI
+eastvale-ca,Eastvale,33.96358,-117.56418,CA
+eau-claire-wi,Eau Claire,44.81135,-91.49849,WI
+echo-park-ca,Echo Park,34.07808,-118.26066,CA
+eden-nc,Eden,36.48847,-79.7667,NC
+eden-prairie-mn,Eden Prairie,44.85469,-93.47079,MN
+edgewater-fl,Edgewater,28.98888,-80.90228,FL
+edgewater-il,Edgewater,41.98337,-87.66395,IL
+edgewood-md,Edgewood,39.41872,-76.2944,MD
+edina-mn,Edina,44.88969,-93.34995,MN
+edinburg-tx,Edinburg,26.30174,-98.16334,TX
+edison-nj,Edison,40.51872,-74.4121,NJ
+edmond-ok,Edmond,35.65283,-97.4781,OK
+edmonds-wa,Edmonds,47.81065,-122.37736,WA
+edwardsville-il,Edwardsville,38.81144,-89.95316,IL
+eggertsville-ny,Eggertsville,42.96339,-78.80392,NY
+egypt-lake-leto-fl,Egypt Lake-Leto,28.01769,-82.50619,FL
+el-cajon-ca,El Cajon,32.79477,-116.96253,CA
+el-camino-real-ca,El Camino Real,33.69662,-117.77668,CA
+el-centro-ca,El Centro,32.792,-115.56305,CA
+el-cerrito-ca,El Cerrito,37.91576,-122.31164,CA
+el-dorado-ar,El Dorado,33.20763,-92.66627,AR
+el-dorado-hills-ca,El Dorado Hills,38.68574,-121.08217,CA
+el-mirage-az,El Mirage,33.61309,-112.3246,AZ
+el-monte-ca,El Monte,34.06862,-118.02757,CA
+el-paso-tx,El Paso,31.75872,-106.48693,TX
+el-reno-ok,El Reno,35.53227,-97.95505,OK
+el-segundo-ca,El Segundo,33.91918,-118.41647,CA
+eldersburg-md,Eldersburg,39.40371,-76.95026,MD
+elgin-il,Elgin,42.03725,-88.28119,IL
+elizabeth-nj,Elizabeth,40.66399,-74.2107,NJ
+elizabeth-city-nc,Elizabeth City,36.2946,-76.25105,NC
+elizabethtown-ky,Elizabethtown,37.69395,-85.85913,KY
+elk-grove-ca,Elk Grove,38.4088,-121.37162,CA
+elk-grove-village-il,Elk Grove Village,42.00392,-87.97035,IL
+elk-river-mn,Elk River,45.30385,-93.56718,MN
+elkhart-in,Elkhart,41.68199,-85.97667,IN
+elko-nv,Elko,40.83242,-115.76312,NV
+elkridge-md,Elkridge,39.21261,-76.71358,MD
+elkton-md,Elkton,39.60678,-75.83327,MD
+pasco-wa,Pasco,46.23958,-119.10057,WA
+ellendale-tn,Ellendale,35.23064,-89.82592,TN
+ellensburg-wa,Ellensburg,46.99651,-120.54785,WA
+ellicott-city-md,Ellicott City,39.26733,-76.79831,MD
+elmhurst-il,Elmhurst,41.89947,-87.94034,IL
+elmhurst-ny,Elmhurst,40.73649,-73.87791,NY
+elmira-ny,Elmira,42.0898,-76.80773,NY
+elmont-ny,Elmont,40.70094,-73.71291,NY
+elmwood-pa,Elmwood,39.91789,-75.22796,PA
+elmwood-park-il,Elmwood Park,41.92114,-87.80923,IL
+elmwood-park-nj,Elmwood Park,40.90399,-74.11848,NJ
+eloise-fl,Eloise,27.99474,-81.73813,FL
+eloy-az,Eloy,32.7559,-111.55484,AZ
+elyria-oh,Elyria,41.36838,-82.10765,OH
+emerson-hill-ny,Emerson Hill,40.60872,-74.09598,NY
+emporia-ks,Emporia,38.4039,-96.18166,KS
+encanto-az,Encanto,33.47937,-112.07823,AZ
+enchanted-hills-nm,Enchanted Hills,35.33676,-106.59296,NM
+encinitas-ca,Encinitas,33.03699,-117.29198,CA
+encino-ca,Encino,34.15917,-118.50119,CA
+enfield-ct,Enfield,41.97621,-72.59176,CT
+englewood-co,Englewood,39.64777,-104.98776,CO
+englewood-il,Englewood,41.77976,-87.64588,IL
+englewood-nj,Englewood,40.89288,-73.97264,NJ
+enid-ok,Enid,36.39559,-97.87839,OK
+ennis-tx,Ennis,32.32931,-96.62527,TX
+ensley-fl,Ensley,30.51881,-87.27275,FL
+enterprise-al,Enterprise,31.31517,-85.85522,AL
+enterprise-nv,Enterprise,36.02525,-115.24194,NV
+erie-co,Erie,40.05026,-105.04998,CO
+erie-pa,Erie,42.12922,-80.08506,PA
+erlanger-ky,Erlanger,39.01673,-84.60078,KY
+escondido-ca,Escondido,33.11921,-117.08642,CA
+essex-md,Essex,39.30927,-76.47496,MD
+estelle-la,Estelle,29.84576,-90.10674,LA
+estero-fl,Estero,26.43814,-81.80675,FL
+euclid-oh,Euclid,41.5931,-81.52679,OH
+eugene-or,Eugene,44.05207,-123.08675,OR
+euless-tx,Euless,32.83707,-97.08195,TX
+eureka-ca,Eureka,40.80207,-124.16367,CA
+eustis-fl,Eustis,28.85277,-81.68535,FL
+evans-co,Evans,40.37637,-104.69219,CO
+evans-ga,Evans,33.53375,-82.13067,GA
+evanston-il,Evanston,42.04114,-87.69006,IL
+evansville-in,Evansville,37.97476,-87.55585,IN
+everett-ma,Everett,42.40843,-71.05366,MA
+everett-wa,Everett,47.97898,-122.20208,WA
+evergreen-park-il,Evergreen Park,41.72059,-87.70172,IL
+ewing-nj,Ewing,40.26983,-74.79988,NJ
+fair-lawn-nj,Fair Lawn,40.94038,-74.13181,NJ
+fair-oaks-ca,Fair Oaks,38.64463,-121.27217,CA
+fairbanks-ak,Fairbanks,64.83778,-147.71639,AK
+fairborn-oh,Fairborn,39.82089,-84.01938,OH
+fairfax-va,Fairfax,38.84622,-77.30637,VA
+fairfield-ca,Fairfield,38.24936,-122.03997,CA
+fairfield-ct,Fairfield,41.14121,-73.26373,CT
+fairfield-oh,Fairfield,39.34589,-84.5605,OH
+fairfield-heights-in,Fairfield Heights,39.82861,-86.38224,IN
+fairhaven-ma,Fairhaven,41.6376,-70.90365,MA
+fairhope-al,Fairhope,30.52297,-87.90333,AL
+fairland-md,Fairland,39.07622,-76.95775,MD
+fairmont-wv,Fairmont,39.48508,-80.14258,WV
+fairview-heights-il,Fairview Heights,38.58894,-89.99038,IL
+fairview-park-oh,Fairview Park,41.44144,-81.8643,OH
+fairwood-wa,Fairwood,47.44843,-122.15734,WA
+fall-river-ma,Fall River,41.70149,-71.15505,MA
+fallbrook-ca,Fallbrook,33.37642,-117.25115,CA
+far-rockaway-ny,Far Rockaway,40.60538,-73.75513,NY
+fargo-nd,Fargo,46.87719,-96.7898,ND
+faribault-mn,Faribault,44.29496,-93.26883,MN
+farmers-branch-tx,Farmers Branch,32.92651,-96.89612,TX
+farmington-ct,Farmington,41.71982,-72.83204,CT
+farmington-mn,Farmington,44.64024,-93.14355,MN
+farmington-mo,Farmington,37.78088,-90.42179,MO
+farmington-nm,Farmington,36.72806,-108.21869,NM
+farmington-ut,Farmington,40.9805,-111.88744,UT
+farmington-hills-mi,Farmington Hills,42.48531,-83.37716,MI
+farmingville-ny,Farmingville,40.83121,-73.02955,NY
+farragut-tn,Farragut,35.88452,-84.15353,TN
+fayetteville-ar,Fayetteville,36.06258,-94.15743,AR
+fayetteville-ga,Fayetteville,33.44873,-84.45493,GA
+fayetteville-nc,Fayetteville,35.05266,-78.87836,NC
+federal-way-wa,Federal Way,47.32232,-122.31262,WA
+fenway-kenmore-ma,Fenway/Kenmore,42.34491,-71.10017,MA
+ferguson-mo,Ferguson,38.74422,-90.30539,MO
+fern-creek-ky,Fern Creek,38.15979,-85.58774,KY
+ferndale-md,Ferndale,39.18316,-76.64024,MD
+ferndale-mi,Ferndale,42.46059,-83.13465,MI
+fernley-nv,Fernley,39.60797,-119.25183,NV
+ferry-pass-fl,Ferry Pass,30.5102,-87.21247,FL
+fillmore-ca,Fillmore,34.39916,-118.91815,CA
+financial-district-ny,Financial District,40.70789,-74.00857,NY
+findlay-oh,Findlay,41.04422,-83.64993,OH
+fishers-in,Fishers,39.95559,-86.01387,IN
+fishtown-pa,Fishtown,39.96511,-75.13545,PA
+fitchburg-ma,Fitchburg,42.58342,-71.8023,MA
+fitchburg-wi,Fitchburg,42.96083,-89.46984,WI
+five-corners-wa,Five Corners,45.68456,-122.5751,WA
+flagami-fl,Flagami,25.76232,-80.31616,FL
+flagstaff-az,Flagstaff,35.19807,-111.65127,AZ
+flatbush-ny,Flatbush,40.65205,-73.95903,NY
+flatlands-ny,Flatlands,40.62122,-73.93486,NY
+fleming-island-fl,Fleming Island,30.0933,-81.71898,FL
+flint-mi,Flint,43.01253,-83.68746,MI
+floral-park-ny,Floral Park,40.72371,-73.70485,NY
+florence-al,Florence,34.79981,-87.67725,AL
+florence-az,Florence,33.03145,-111.38734,AZ
+florence-ky,Florence,38.99895,-84.62661,KY
+florence-sc,Florence,34.19543,-79.76256,SC
+florence-graham-ca,Florence-Graham,33.96772,-118.24438,CA
+florida-ridge-fl,Florida Ridge,27.58031,-80.38672,FL
+florin-ca,Florin,38.49602,-121.40884,CA
+florissant-mo,Florissant,38.78922,-90.32261,MO
+flower-mound-tx,Flower Mound,33.01457,-97.09696,TX
+flowing-wells-az,Flowing Wells,32.29396,-111.00982,AZ
+foggy-bottom-dc,Foggy Bottom,38.9015,-77.0622,DC
+foley-al,Foley,30.40659,-87.6836,AL
+folsom-ca,Folsom,38.67796,-121.17606,CA
+fond-du-lac-wi,Fond du Lac,43.775,-88.43883,WI
+fontana-ca,Fontana,34.09223,-117.43505,CA
+foothill-farms-ca,Foothill Farms,38.67877,-121.35114,CA
+fordham-ny,Fordham,40.85927,-73.89847,NY
+fords-nj,Fords,40.52927,-74.31598,NJ
+forest-grove-or,Forest Grove,45.51984,-123.11066,OR
+forest-hills-mi,Forest Hills,42.95947,-85.48975,MI
+forest-hills-ny,Forest Hills,40.71621,-73.85014,NY
+forest-lake-mn,Forest Lake,45.27886,-92.98522,MN
+forest-park-ga,Forest Park,33.62205,-84.36909,GA
+forest-park-oh,Forest Park,39.29034,-84.50411,OH
+forney-tx,Forney,32.74818,-96.47193,TX
+fort-bragg-nc,Fort Bragg,35.139,-79.00603,NC
+fort-cavazos-tx,Fort Cavazos,31.13489,-97.77561,TX
+fort-collins-co,Fort Collins,40.58526,-105.08442,CO
+fort-dodge-ia,Fort Dodge,42.49747,-94.16802,IA
+fort-hamilton-ny,Fort Hamilton,40.61872,-74.0332,NY
+fort-hunt-va,Fort Hunt,38.73289,-77.05803,VA
+fort-lauderdale-fl,Fort Lauderdale,26.12231,-80.14338,FL
+fort-lee-nj,Fort Lee,40.85093,-73.97014,NJ
+fort-leonard-wood-mo,Fort Leonard Wood,37.70573,-92.15717,MO
+fort-myers-fl,Fort Myers,26.62168,-81.84059,FL
+fort-pierce-fl,Fort Pierce,27.44671,-80.32561,FL
+fort-smith-ar,Fort Smith,35.38592,-94.39855,AR
+fort-thomas-ky,Fort Thomas,39.07506,-84.44716,KY
+fort-walton-beach-fl,Fort Walton Beach,30.42059,-86.61707,FL
+fort-washington-md,Fort Washington,38.70734,-77.02303,MD
+fort-wayne-in,Fort Wayne,41.1306,-85.12886,IN
+fort-worth-tx,Fort Worth,32.72541,-97.32085,TX
+fortuna-foothills-az,Fortuna Foothills,32.65783,-114.41189,AZ
+foster-city-ca,Foster City,37.55855,-122.27108,CA
+fountain-co,Fountain,38.68222,-104.70081,CO
+fountain-hills-az,Fountain Hills,33.61171,-111.71736,AZ
+fountain-valley-ca,Fountain Valley,33.70918,-117.95367,CA
+fountainebleau-fl,Fountainebleau,25.77288,-80.34783,FL
+four-corners-fl,Four Corners,28.33287,-81.64738,FL
+four-corners-or,Four Corners,44.9279,-122.98371,OR
+fox-chase-pa,Fox Chase,40.08122,-75.08017,PA
+framingham-ma,Framingham,42.27926,-71.41617,MA
+framingham-center-ma,Framingham Center,42.29732,-71.43701,MA
+franconia-va,Franconia,38.78206,-77.14637,VA
+frankford-md,Frankford,39.32928,-76.54463,MD
+frankford-pa,Frankford,40.01384,-75.07859,PA
+frankfort-il,Frankfort,41.49587,-87.84866,IL
+frankfort-in,Frankfort,40.27948,-86.51084,IN
+frankfort-ky,Frankfort,38.20091,-84.87328,KY
+franklin-in,Franklin,39.48061,-86.05499,IN
+franklin-ma,Franklin,42.08343,-71.39673,MA
+franklin-tn,Franklin,35.92506,-86.86889,TN
+franklin-wi,Franklin,42.88863,-88.03842,WI
+franklin-park-il,Franklin Park,41.93531,-87.86562,IL
+franklin-square-ny,Franklin Square,40.70732,-73.67596,NY
+frederick-md,Frederick,39.41427,-77.41054,MD
+fredericksburg-va,Fredericksburg,38.30318,-77.46054,VA
+frederickson-wa,Frederickson,47.09621,-122.35873,WA
+freeport-il,Freeport,42.29669,-89.62123,IL
+freeport-ny,Freeport,40.6576,-73.58318,NY
+fremont-ca,Fremont,37.54827,-121.98857,CA
+fremont-ne,Fremont,41.43333,-96.49808,NE
+fremont-oh,Fremont,41.35033,-83.12186,OH
+fresh-meadows-ny,Fresh Meadows,40.73482,-73.79347,NY
+fresno-ca,Fresno,36.74773,-119.77237,CA
+fresno-tx,Fresno,29.53885,-95.44744,TX
+fridley-mn,Fridley,45.08608,-93.26328,MN
+friendswood-tx,Friendswood,29.5294,-95.20104,TX
+frisco-tx,Frisco,33.15067,-96.82361,TX
+front-royal-va,Front Royal,38.91817,-78.19444,VA
+fruit-cove-fl,Fruit Cove,30.11107,-81.64176,FL
+fullerton-ca,Fullerton,33.87029,-117.92534,CA
+fuquay-varina-nc,Fuquay-Varina,35.58432,-78.80001,NC
+gadsden-al,Gadsden,34.01434,-86.00639,AL
+gage-park-il,Gage Park,41.79503,-87.69616,IL
+gahanna-oh,Gahanna,40.01923,-82.87934,OH
+gainesville-fl,Gainesville,29.65163,-82.32483,FL
+gainesville-ga,Gainesville,34.29788,-83.82407,GA
+gainesville-tx,Gainesville,33.62594,-97.13335,TX
+gaithersburg-md,Gaithersburg,39.14344,-77.20137,MD
+galesburg-il,Galesburg,40.94782,-90.37124,IL
+gallatin-tn,Gallatin,36.38838,-86.44666,TN
+gallup-nm,Gallup,35.52808,-108.74258,NM
+galt-ca,Galt,38.25464,-121.29995,CA
+galveston-tx,Galveston,29.30135,-94.7977,TX
+garden-city-ks,Garden City,37.97169,-100.87266,KS
+garden-city-mi,Garden City,42.32559,-83.33104,MI
+garden-city-ny,Garden City,40.72677,-73.6343,NY
+garden-grove-ca,Garden Grove,33.77391,-117.94145,CA
+gardena-ca,Gardena,33.88835,-118.30896,CA
+gardner-ks,Gardner,38.81084,-94.92719,KS
+gardner-ma,Gardner,42.57509,-71.99813,MA
+garfield-nj,Garfield,40.88149,-74.1132,NJ
+garfield-heights-oh,Garfield Heights,41.417,-81.60596,OH
+garland-tx,Garland,32.91262,-96.63888,TX
+garner-nc,Garner,35.71126,-78.61417,NC
+gary-in,Gary,41.59337,-87.34643,IN
+gastonia-nc,Gastonia,35.26208,-81.1873,NC
+gates-north-gates-ny,Gates-North Gates,43.16547,-77.70066,NY
+gatesville-tx,Gatesville,31.43516,-97.74391,TX
+gautier-ms,Gautier,30.38575,-88.61169,MS
+geneva-il,Geneva,41.88753,-88.30535,IL
+georgetown-ky,Georgetown,38.2098,-84.55883,KY
+georgetown-tx,Georgetown,30.63269,-97.67723,TX
+germantown-md,Germantown,39.17316,-77.27165,MD
+germantown-tn,Germantown,35.08676,-89.81009,TN
+germantown-wi,Germantown,43.22862,-88.11037,WI
+gilbert-az,Gilbert,33.35283,-111.78903,AZ
+gillette-wy,Gillette,44.29109,-105.50222,WY
+gilroy-ca,Gilroy,37.00578,-121.56828,CA
+gladstone-mo,Gladstone,39.20389,-94.55468,MO
+glassboro-nj,Glassboro,39.70289,-75.11184,NJ
+glassmanor-md,Glassmanor,38.819,-76.99859,MD
+glastonbury-ct,Glastonbury,41.71232,-72.60815,CT
+glen-avon-ca,Glen Avon,34.01168,-117.48477,CA
+glen-burnie-md,Glen Burnie,39.16261,-76.62469,MD
+glen-cove-ny,Glen Cove,40.86232,-73.63374,NY
+glen-ellyn-il,Glen Ellyn,41.87753,-88.06701,IL
+glendale-az,Glendale,33.53865,-112.18599,AZ
+glendale-ca,Glendale,34.14251,-118.25508,CA
+glendale-ny,Glendale,40.70149,-73.8868,NY
+glendale-heights-il,Glendale Heights,41.9146,-88.06486,IL
+glendora-ca,Glendora,34.13612,-117.86534,CA
+glenvar-heights-fl,Glenvar Heights,25.7076,-80.32561,FL
+glenview-il,Glenview,42.06975,-87.78784,IL
+glenville-ny,Glenville,42.92924,-74.05207,NY
+glenville-oh,Glenville,41.53338,-81.61735,OH
+gloucester-ma,Gloucester,42.61405,-70.66313,MA
+gloversville-ny,Gloversville,43.05285,-74.34375,NY
+godfrey-il,Godfrey,38.9556,-90.18678,IL
+golden-co,Golden,39.75554,-105.2211,CO
+golden-gate-fl,Golden Gate,26.18787,-81.69509,FL
+golden-glades-fl,Golden Glades,25.91176,-80.20033,FL
+golden-triangle-dc,Golden Triangle,38.90524,-77.04362,DC
+golden-valley-mn,Golden Valley,45.00969,-93.34912,MN
+goldsboro-nc,Goldsboro,35.38488,-77.99277,NC
+goleta-ca,Goleta,34.43583,-119.82764,CA
+goodings-grove-il,Goodings Grove,41.6292,-87.93089,IL
+goodlettsville-tn,Goodlettsville,36.32311,-86.71333,TN
+goodyear-az,Goodyear,33.43532,-112.35821,AZ
+goose-creek-sc,Goose Creek,32.98101,-80.03259,SC
+goshen-in,Goshen,41.58227,-85.83444,IN
+grafton-ma,Grafton,42.20704,-71.68562,MA
+graham-wa,Graham,47.05288,-122.29428,WA
+gramercy-park-ny,Gramercy Park,40.7375,-73.98611,NY
+grand-boulevard-il,Grand Boulevard,41.81392,-87.61727,IL
+grand-forks-nd,Grand Forks,47.92526,-97.03285,ND
+grand-island-ne,Grand Island,40.92501,-98.34201,NE
+grand-island-ny,Grand Island,43.03311,-78.96254,NY
+grand-junction-co,Grand Junction,39.06387,-108.55065,CO
+grand-prairie-tx,Grand Prairie,32.74596,-96.99778,TX
+grand-rapids-mi,Grand Rapids,42.96336,-85.66809,MI
+grandview-mo,Grandview,38.88584,-94.53301,MO
+grandville-mi,Grandville,42.90975,-85.76309,MI
+granger-in,Granger,41.75338,-86.11084,IN
+granite-bay-ca,Granite Bay,38.76323,-121.16384,CA
+granite-city-il,Granite City,38.70144,-90.14872,IL
+graniteville-ny,Graniteville,40.62483,-74.14848,NY
+grants-pass-or,Grants Pass,42.43933,-123.33067,OR
+grapevine-tx,Grapevine,32.93429,-97.07807,TX
+gravesend-ny,Gravesend,40.5976,-73.96514,NY
+grayslake-il,Grayslake,42.34447,-88.04175,IL
+great-bend-ks,Great Bend,38.36446,-98.76481,KS
+great-falls-mt,Great Falls,47.50024,-111.30081,MT
+great-falls-va,Great Falls,38.99817,-77.28832,VA
+great-kills-ny,Great Kills,40.55427,-74.15153,NY
+greater-grand-crossing-il,Greater Grand Crossing,41.76113,-87.61485,IL
+greater-northdale-fl,Greater Northdale,28.10545,-82.52594,FL
+greater-upper-marlboro-md,Greater Upper Marlboro,38.83142,-76.74827,MD
+greeley-co,Greeley,40.42331,-104.70913,CO
+green-oh,Green,40.94589,-81.48317,OH
+green-bay-wi,Green Bay,44.51916,-88.01983,WI
+green-haven-md,Green Haven,39.13955,-76.54774,MD
+green-valley-az,Green Valley,31.85425,-110.9937,AZ
+greenacres-city-fl,Greenacres City,26.62368,-80.12532,FL
+greenbelt-md,Greenbelt,39.00455,-76.87553,MD
+greenburgh-ny,Greenburgh,41.03287,-73.84291,NY
+greeneville-tn,Greeneville,36.16316,-82.83099,TN
+greenfield-ca,Greenfield,36.3208,-121.24381,CA
+greenfield-in,Greenfield,39.78504,-85.76942,IN
+greenfield-ma,Greenfield,42.58759,-72.59953,MA
+greenfield-wi,Greenfield,42.9614,-88.01259,WI
+greenpoint-ny,Greenpoint,40.72371,-73.95097,NY
+greensboro-nc,Greensboro,36.07264,-79.79198,NC
+greenville-ms,Greenville,33.40898,-91.05978,MS
+greenville-nc,Greenville,35.61266,-77.36635,NC
+greenville-sc,Greenville,34.85262,-82.39401,SC
+greenville-tx,Greenville,33.13845,-96.11081,TX
+greenwood-in,Greenwood,39.61366,-86.10665,IN
+greenwood-ms,Greenwood,33.51623,-90.17953,MS
+greenwood-sc,Greenwood,34.1954,-82.16179,SC
+greenwood-village-co,Greenwood Village,39.61721,-104.95081,CO
+greer-sc,Greer,34.93873,-82.22706,SC
+gresham-or,Gresham,45.49818,-122.43148,OR
+gretna-la,Gretna,29.91465,-90.05396,LA
+griffin-ga,Griffin,33.24678,-84.26409,GA
+griffith-in,Griffith,41.52837,-87.42365,IN
+grosse-pointe-woods-mi,Grosse Pointe Woods,42.44365,-82.90686,MI
+grove-city-oh,Grove City,39.88145,-83.09296,OH
+groves-tx,Groves,29.94827,-93.91712,TX
+guilford-ct,Guilford,41.28899,-72.68176,CT
+gulfport-ms,Gulfport,30.36742,-89.09282,MS
+gurnee-il,Gurnee,42.3703,-87.90202,IL
+gwynn-oak-md,Gwynn Oak,39.33261,-76.69275,MD
+h-street-ne-dc,H Street NE,38.90015,-76.99587,DC
+hacienda-heights-ca,Hacienda Heights,33.99307,-117.96868,CA
+hackensack-nj,Hackensack,40.88593,-74.04347,NJ
+haddington-pa,Haddington,39.96578,-75.23764,PA
+hagerstown-md,Hagerstown,39.64176,-77.71999,MD
+haines-city-fl,Haines City,28.1145,-81.62009,FL
+hallandale-beach-fl,Hallandale Beach,25.9812,-80.14838,FL
+haltom-city-tx,Haltom City,32.79957,-97.26918,TX
+ham-lake-mn,Ham Lake,45.25024,-93.24995,MN
+hamden-ct,Hamden,41.39593,-72.89677,CT
+hamilton-oh,Hamilton,39.3995,-84.56134,OH
+hammond-in,Hammond,41.58337,-87.50004,IN
+hammond-la,Hammond,30.50463,-90.46293,LA
+hampton-va,Hampton,37.02987,-76.34522,VA
+hamtramck-mi,Hamtramck,42.39282,-83.04964,MI
+hanahan-sc,Hanahan,32.91851,-80.02203,SC
+hanford-ca,Hanford,36.32745,-119.64568,CA
+hannibal-mo,Hannibal,39.70838,-91.35848,MO
+hanover-ma,Hanover,42.11316,-70.81199,MA
+hanover-md,Hanover,39.19289,-76.72414,MD
+hanover-pa,Hanover,39.80066,-76.98304,PA
+hanover-park-il,Hanover Park,41.99947,-88.14507,IL
+happy-valley-or,Happy Valley,45.44679,-122.53037,OR
+harker-heights-tx,Harker Heights,31.08351,-97.65974,TX
+harlem-ny,Harlem,40.80788,-73.94542,NY
+harlingen-tx,Harlingen,26.19063,-97.6961,TX
+harrisburg-pa,Harrisburg,40.2737,-76.88442,PA
+harrison-nj,Harrison,40.74649,-74.15626,NJ
+harrison-ny,Harrison,40.96899,-73.71263,NY
+harrisonburg-va,Harrisonburg,38.44957,-78.86892,VA
+hartford-ct,Hartford,41.76371,-72.68509,CT
+hartranft-pa,Hartranft,39.98483,-75.14712,PA
+harvey-il,Harvey,41.61003,-87.64671,IL
+harvey-la,Harvey,29.90354,-90.07729,LA
+haslett-mi,Haslett,42.74698,-84.40108,MI
+hastings-mn,Hastings,44.7433,-92.85243,MN
+hastings-ne,Hastings,40.58612,-98.38839,NE
+hattiesburg-ms,Hattiesburg,31.32712,-89.29034,MS
+hauppauge-ny,Hauppauge,40.82565,-73.20261,NY
+havelock-nc,Havelock,34.87905,-76.90133,NC
+haverhill-ma,Haverhill,42.7762,-71.07728,MA
+havertown-pa,Havertown,39.98095,-75.30852,PA
+hawai-i-kai-hi,Hawai‘i Kai,21.29637,-157.70175,HI
+hawthorne-ca,Hawthorne,33.9164,-118.35257,CA
+hawthorne-nj,Hawthorne,40.94926,-74.15375,NJ
+hayesville-or,Hayesville,44.98595,-122.98287,OR
+hays-ks,Hays,38.87918,-99.32677,KS
+hayward-ca,Hayward,37.66882,-122.0808,CA
+hazel-dell-wa,Hazel Dell,45.67151,-122.66288,WA
+hazel-park-mi,Hazel Park,42.46254,-83.10409,MI
+hazelwood-mo,Hazelwood,38.77144,-90.37095,MO
+hazleton-pa,Hazleton,40.95842,-75.97465,PA
+helena-al,Helena,33.29622,-86.8436,AL
+helena-mt,Helena,46.59271,-112.03611,MT
+hell-s-kitchen-ny,Hell's Kitchen,40.76496,-73.9909,NY
+hemet-ca,Hemet,33.74761,-116.97307,CA
+hempstead-ny,Hempstead,40.70621,-73.61874,NY
+henderson-ky,Henderson,37.83615,-87.59001,KY
+henderson-nc,Henderson,36.32959,-78.39916,NC
+henderson-nv,Henderson,36.0397,-114.98194,NV
+hendersonville-tn,Hendersonville,36.30477,-86.62,TN
+henrietta-ny,Henrietta,43.05923,-77.61222,NY
+hercules-ca,Hercules,38.01714,-122.28858,CA
+hereford-tx,Hereford,34.81521,-102.39932,TX
+hermiston-or,Hermiston,45.84041,-119.28946,OR
+hermitage-pa,Hermitage,41.23339,-80.44868,PA
+hermitage-tn,Hermitage,36.19617,-86.6225,TN
+hermosa-beach-ca,Hermosa Beach,33.86224,-118.39952,CA
+hernando-ms,Hernando,34.82399,-89.9937,MS
+herndon-va,Herndon,38.96955,-77.3861,VA
+herriman-ut,Herriman,40.51411,-112.03299,UT
+hesperia-ca,Hesperia,34.42639,-117.30088,CA
+hialeah-fl,Hialeah,25.8576,-80.27811,FL
+hialeah-gardens-fl,Hialeah Gardens,25.8651,-80.3245,FL
+hibbing-mn,Hibbing,47.42715,-92.93769,MN
+hickory-nc,Hickory,35.73319,-81.3412,NC
+hicksville-ny,Hicksville,40.76843,-73.52513,NY
+high-point-nc,High Point,35.95569,-80.00532,NC
+highland-ca,Highland,34.12834,-117.20865,CA
+highland-in,Highland,41.55365,-87.45198,IN
+highland-ut,Highland,40.42548,-111.79447,UT
+highland-park-il,Highland Park,42.18169,-87.80034,IL
+highland-springs-va,Highland Springs,37.54598,-77.32776,VA
+highland-village-tx,Highland Village,33.09179,-97.04668,TX
+highlands-ranch-co,Highlands Ranch,39.55388,-104.96943,CO
+highview-ky,Highview,38.14285,-85.62413,KY
+hillcrest-heights-md,Hillcrest Heights,38.83289,-76.95942,MD
+hilliard-oh,Hilliard,40.0334,-83.15825,OH
+hillsboro-or,Hillsboro,45.52289,-122.98983,OR
+hillsborough-nj,Hillsborough,40.4776,-74.62682,NJ
+hillside-nj,Hillside,40.70121,-74.23015,NJ
+hillside-ny,Hillside,40.70788,-73.7868,NY
+hilo-hi,Hilo,19.72991,-155.09073,HI
+hilton-head-sc,Hilton Head,32.21632,-80.75261,SC
+hilton-head-island-sc,Hilton Head Island,32.19382,-80.73816,SC
+hinesville-ga,Hinesville,31.84688,-81.59595,GA
+hinsdale-il,Hinsdale,41.80086,-87.93701,IL
+hobart-in,Hobart,41.53226,-87.25504,IN
+hobbs-nm,Hobbs,32.70261,-103.13604,NM
+hoboken-nj,Hoboken,40.74399,-74.03236,NJ
+hoffman-estates-il,Hoffman Estates,42.04281,-88.0798,IL
+holbrook-ny,Holbrook,40.81232,-73.07844,NY
+holden-ma,Holden,42.35176,-71.86341,MA
+holiday-fl,Holiday,28.18779,-82.73955,FL
+holladay-ut,Holladay,40.66884,-111.82466,UT
+holland-mi,Holland,42.78752,-86.10893,MI
+hollis-ny,Hollis,40.71344,-73.76708,NY
+hollister-ca,Hollister,36.85245,-121.4016,CA
+holly-springs-nc,Holly Springs,35.65127,-78.83362,NC
+hollywood-ca,Hollywood,34.09834,-118.32674,CA
+hollywood-fl,Hollywood,26.0112,-80.14949,FL
+holmesburg-pa,Holmesburg,40.0415,-75.02795,PA
+holt-mi,Holt,42.64059,-84.51525,MI
+holtsville-ny,Holtsville,40.81538,-73.04511,NY
+holyoke-ma,Holyoke,42.20426,-72.6162,MA
+homer-glen-il,Homer Glen,41.60003,-87.93811,IL
+homestead-fl,Homestead,25.46872,-80.47756,FL
+homewood-al,Homewood,33.47177,-86.80082,AL
+homewood-il,Homewood,41.55726,-87.6656,IL
+honolulu-hi,Honolulu,21.30694,-157.85833,HI
+hoover-al,Hoover,33.40539,-86.81138,AL
+hopatcong-hills-nj,Hopatcong Hills,40.94399,-74.67072,NJ
+hope-mills-nc,Hope Mills,34.97044,-78.94531,NC
+hopewell-va,Hopewell,37.30432,-77.2872,VA
+hopkins-mn,Hopkins,44.92496,-93.46273,MN
+hopkinsville-ky,Hopkinsville,36.86561,-87.49117,KY
+horizon-city-tx,Horizon City,31.69261,-106.20748,TX
+horn-lake-ms,Horn Lake,34.95537,-90.03481,MS
+hot-springs-ar,Hot Springs,34.5037,-93.05518,AR
+hough-oh,Hough,41.512,-81.63652,OH
+houma-la,Houma,29.59577,-90.71953,LA
+houston-tx,Houston,29.76328,-95.36327,TX
+howard-wi,Howard,44.5436,-88.08816,WI
+howard-beach-ny,Howard Beach,40.65788,-73.83625,NY
+huber-heights-oh,Huber Heights,39.84395,-84.12466,OH
+hudson-oh,Hudson,41.24006,-81.44067,OH
+hueytown-al,Hueytown,33.45122,-86.99666,AL
+humble-tx,Humble,29.99883,-95.26216,TX
+hunt-valley-md,Hunt Valley,39.49983,-76.64108,MD
+huntersville-nc,Huntersville,35.41069,-80.84285,NC
+hunting-park-pa,Hunting Park,40.0165,-75.14379,PA
+huntington-in,Huntington,40.8831,-85.49748,IN
+huntington-ny,Huntington,40.86815,-73.42568,NY
+huntington-wv,Huntington,38.41925,-82.44515,WV
+huntington-beach-ca,Huntington Beach,33.6603,-117.99923,CA
+huntington-park-ca,Huntington Park,33.98168,-118.22507,CA
+huntington-station-ny,Huntington Station,40.85343,-73.41151,NY
+huntley-il,Huntley,42.16808,-88.42814,IL
+hunts-point-ny,Hunts Point,40.8126,-73.88402,NY
+huntsville-al,Huntsville,34.7304,-86.58594,AL
+huntsville-tx,Huntsville,30.72353,-95.55078,TX
+hurricane-ut,Hurricane,37.17526,-113.28995,UT
+hurst-tx,Hurst,32.82346,-97.17057,TX
+hutchinson-ks,Hutchinson,38.06084,-97.92977,KS
+hutto-tx,Hutto,30.5427,-97.54667,TX
+hyattsville-md,Hyattsville,38.95594,-76.94553,MD
+hybla-valley-va,Hybla Valley,38.74761,-77.08303,VA
+hyde-park-il,Hyde Park,41.7942,-87.59394,IL
+hyde-park-ma,Hyde Park,42.25565,-71.1245,MA
+idaho-falls-id,Idaho Falls,43.46658,-112.03414,ID
+idylwood-va,Idylwood,38.89511,-77.21165,VA
+ilchester-md,Ilchester,39.25094,-76.76469,MD
+immokalee-fl,Immokalee,26.41869,-81.4173,FL
+imperial-ca,Imperial,32.84755,-115.56944,CA
+imperial-beach-ca,Imperial Beach,32.58394,-117.11308,CA
+independence-ky,Independence,38.94312,-84.54411,KY
+independence-mo,Independence,39.09112,-94.41551,MO
+indian-trail-nc,Indian Trail,35.07681,-80.66924,NC
+indianapolis-in,Indianapolis,39.76838,-86.15804,IN
+indianola-ia,Indianola,41.35805,-93.55744,IA
+indio-ca,Indio,33.7207,-116.21677,CA
+inglewood-ca,Inglewood,33.96168,-118.35313,CA
+inglewood-finn-hill-wa,Inglewood-Finn Hill,47.72049,-122.23167,WA
+inkster-mi,Inkster,42.2942,-83.30993,MI
+inver-grove-heights-mn,Inver Grove Heights,44.84802,-93.04272,MN
+iona-fl,Iona,26.52036,-81.96398,FL
+iowa-city-ia,Iowa City,41.66113,-91.53017,IA
+irondequoit-ny,Irondequoit,43.2134,-77.57972,NY
+irvine-ca,Irvine,33.66946,-117.82311,CA
+irving-tx,Irving,32.81402,-96.94889,TX
+irving-park-il,Irving Park,41.95336,-87.73645,IL
+irvington-nj,Irvington,40.73232,-74.23487,NJ
+iselin-nj,Iselin,40.57538,-74.32237,NJ
+isla-vista-ca,Isla Vista,34.41333,-119.86097,CA
+islip-ny,Islip,40.72982,-73.21039,NY
+issaquah-wa,Issaquah,47.5301,-122.03262,WA
+ithaca-ny,Ithaca,42.44063,-76.49661,NY
+ives-estates-fl,Ives Estates,25.96231,-80.17671,FL
+jackson-mi,Jackson,42.24587,-84.40135,MI
+jackson-ms,Jackson,32.29876,-90.18481,MS
+jackson-nj,Jackson,39.7765,-74.86238,NJ
+jackson-tn,Jackson,35.61452,-88.81395,TN
+jackson-heights-ny,Jackson Heights,40.75566,-73.88541,NY
+jacksonville-ar,Jacksonville,34.8662,-92.11015,AR
+jacksonville-fl,Jacksonville,30.33218,-81.65565,FL
+jacksonville-il,Jacksonville,39.73394,-90.22901,IL
+jacksonville-nc,Jacksonville,34.75405,-77.43024,NC
+jacksonville-beach-fl,Jacksonville Beach,30.29469,-81.39314,FL
+jamaica-ny,Jamaica,40.69149,-73.80569,NY
+jamaica-plain-ma,Jamaica Plain,42.30982,-71.12033,MA
+jamestown-nd,Jamestown,46.91054,-98.70844,ND
+jamestown-ny,Jamestown,42.097,-79.23533,NY
+janesville-wi,Janesville,42.68279,-89.01872,WI
+jasmine-estates-fl,Jasmine Estates,28.29306,-82.6901,FL
+jasper-in,Jasper,38.39144,-86.93111,IN
+jefferson-city-mo,Jefferson City,38.5767,-92.17352,MO
+jeffersontown-ky,Jeffersontown,38.19424,-85.5644,KY
+jeffersonville-in,Jeffersonville,38.27757,-85.73718,IN
+jenison-mi,Jenison,42.90725,-85.79198,MI
+jenks-ok,Jenks,36.02287,-95.96833,OK
+jersey-city-nj,Jersey City,40.72816,-74.07764,NJ
+johns-creek-ga,Johns Creek,34.02893,-84.19858,GA
+johnson-city-tn,Johnson City,36.31344,-82.35347,TN
+johnston-ia,Johnston,41.67304,-93.69772,IA
+johnston-ri,Johnston,41.82186,-71.50675,RI
+johnstown-pa,Johnstown,40.32674,-78.92197,PA
+joint-base-pearl-harbor-hickam-hi,Joint Base Pearl Harbor Hickam,21.34906,-157.94713,HI
+joliet-il,Joliet,41.52519,-88.0834,IL
+jollyville-tx,Jollyville,30.4427,-97.77501,TX
+jonesboro-ar,Jonesboro,35.8423,-90.70428,AR
+joplin-mo,Joplin,37.08423,-94.51328,MO
+junction-city-ks,Junction City,39.02861,-96.8314,KS
+juneau-ak,Juneau,58.30194,-134.41972,AK
+juniata-park-pa,Juniata Park,40.00845,-75.10879,PA
+jupiter-fl,Jupiter,26.93422,-80.09421,FL
+jurupa-valley-ca,Jurupa Valley,33.99251,-117.51644,CA
+kahului-hi,Kahului,20.88933,-156.47293,HI
+kailua-hi,Kailua,21.40241,-157.74054,HI
+kaimuk-hi,Kaimukī,21.27914,-157.80135,HI
+kalamazoo-mi,Kalamazoo,42.29171,-85.58723,MI
+kalihi-valley-hi,Kalihi Valley,21.36373,-157.84294,HI
+kalihi-palama-hi,Kalihi-Palama,21.32608,-157.87594,HI
+kalispell-mt,Kalispell,48.19579,-114.31291,MT
+kaneohe-hi,Kaneohe,21.39994,-157.79895,HI
+kankakee-il,Kankakee,41.12003,-87.86115,IL
+kannapolis-nc,Kannapolis,35.48736,-80.62173,NC
+kansas-city-ks,Kansas City,39.11417,-94.62746,KS
+kansas-city-mo,Kansas City,39.09973,-94.57857,MO
+kapolei-hi,Kapolei,21.33555,-158.0582,HI
+kapolei-villages-hi,Kapolei Villages,21.33596,-158.067,HI
+katy-tx,Katy,29.78579,-95.8244,TX
+kaukauna-wi,Kaukauna,44.27804,-88.27205,WI
+kaysville-ut,Kaysville,41.03522,-111.93855,UT
+kearney-ne,Kearney,40.69946,-99.08148,NE
+kearns-ut,Kearns,40.65995,-111.99633,UT
+kearny-nj,Kearny,40.76843,-74.14542,NJ
+keene-nh,Keene,42.93369,-72.27814,NH
+keizer-or,Keizer,44.99012,-123.02621,OR
+keller-tx,Keller,32.93457,-97.25168,TX
+ken-caryl-co,Ken Caryl,39.57582,-105.11221,CO
+kendale-lakes-fl,Kendale Lakes,25.70816,-80.407,FL
+kendall-fl,Kendall,25.67927,-80.31727,FL
+kendall-west-fl,Kendall West,25.7065,-80.4388,FL
+kenmore-ny,Kenmore,42.96589,-78.87004,NY
+kenmore-wa,Kenmore,47.75732,-122.24401,WA
+kennedy-street-dc,Kennedy Street,38.9563,-77.01799,DC
+kenner-la,Kenner,29.99409,-90.24174,LA
+kennesaw-ga,Kennesaw,34.02343,-84.61549,GA
+kennewick-wa,Kennewick,46.21125,-119.13723,WA
+kenosha-wi,Kenosha,42.58474,-87.82119,WI
+kensington-ny,Kensington,40.64621,-73.97069,NY
+kent-oh,Kent,41.15367,-81.35789,OH
+kent-wa,Kent,47.38093,-122.23484,WA
+kentwood-mi,Kentwood,42.86947,-85.64475,MI
+kenwood-il,Kenwood,41.8092,-87.59755,IL
+kernersville-nc,Kernersville,36.11986,-80.07365,NC
+kerrville-tx,Kerrville,30.04743,-99.14032,TX
+kettering-oh,Kettering,39.6895,-84.16883,OH
+kew-gardens-ny,Kew Gardens,40.71427,-73.83097,NY
+kew-gardens-hills-ny,Kew Gardens Hills,40.73002,-73.8234,NY
+key-west-fl,Key West,24.55524,-81.78163,FL
+keystone-fl,Keystone,28.15585,-82.62121,FL
+killeen-tx,Killeen,31.11712,-97.7278,TX
+killingly-center-ct,Killingly Center,41.83871,-71.86924,CT
+king-of-prussia-pa,King of Prussia,40.08927,-75.39602,PA
+kingman-az,Kingman,35.18944,-114.05301,AZ
+kings-bridge-ny,Kings Bridge,40.87871,-73.90514,NY
+kings-park-ny,Kings Park,40.88621,-73.25734,NY
+kingsessing-pa,Kingsessing,39.93678,-75.22963,PA
+kingsland-ga,Kingsland,30.79996,-81.68983,GA
+kingsport-tn,Kingsport,36.54843,-82.56182,TN
+kingston-ny,Kingston,41.92704,-73.99736,NY
+kingsville-tx,Kingsville,27.51587,-97.85611,TX
+kinston-nc,Kinston,35.26266,-77.58164,NC
+kirkland-wa,Kirkland,47.68149,-122.20874,WA
+kirksville-mo,Kirksville,40.19475,-92.58325,MO
+kirkwood-mo,Kirkwood,38.58339,-90.40678,MO
+kiryas-joel-ny,Kiryas Joel,41.34204,-74.16792,NY
+kissimmee-fl,Kissimmee,28.30468,-81.41667,FL
+klamath-falls-or,Klamath Falls,42.22487,-121.78167,OR
+knoxville-tn,Knoxville,35.96064,-83.92074,TN
+olney-md,Olney,39.15316,-77.06692,MD
+kokomo-in,Kokomo,40.48643,-86.1336,IN
+koolauloa-hi,Koolauloa,21.60579,-157.9265,HI
+koreatown-ca,Koreatown,34.05779,-118.30091,CA
+kuliouou-kalani-iki-hi,Kuliouou - Kalani Iki,21.29713,-157.745,HI
+kuna-id,Kuna,43.49183,-116.42012,ID
+kyle-tx,Kyle,29.98911,-97.87723,TX
+k-hei-hi,Kīhei,20.76462,-156.44578,HI
+la-ca-ada-flintridge-ca,La Cañada Flintridge,34.19917,-118.18785,CA
+la-crescenta-montrose-ca,La Crescenta-Montrose,34.23216,-118.23529,CA
+la-crosse-wi,La Crosse,43.80136,-91.23958,WI
+la-grange-il,La Grange,41.80503,-87.86923,IL
+la-habra-ca,La Habra,33.93196,-117.94617,CA
+la-jolla-ca,La Jolla,32.84727,-117.2742,CA
+la-marque-tx,La Marque,29.36857,-94.97131,TX
+la-mesa-ca,La Mesa,32.76783,-117.02308,CA
+la-mirada-ca,La Mirada,33.91724,-118.01201,CA
+la-palma-ca,La Palma,33.8464,-118.04673,CA
+la-porte-in,La Porte,41.60774,-86.71389,IN
+la-porte-tx,La Porte,29.66578,-95.01937,TX
+la-presa-ca,La Presa,32.70811,-116.99725,CA
+la-puente-ca,La Puente,34.02001,-117.94951,CA
+la-quinta-ca,La Quinta,33.66336,-116.31001,CA
+la-vergne-tn,La Vergne,36.01562,-86.58194,TN
+la-verne-ca,La Verne,34.10084,-117.76784,CA
+la-vista-ne,La Vista,41.18389,-96.03113,NE
+lagrange-ga,LaGrange,33.03929,-85.03133,GA
+lacey-wa,Lacey,47.03426,-122.82319,WA
+lackawanna-ny,Lackawanna,42.82561,-78.82337,NY
+laconia-nh,Laconia,43.52785,-71.47035,NH
+ladera-ranch-ca,Ladera Ranch,33.57086,-117.63561,CA
+lafayette-ca,Lafayette,37.88576,-122.11802,CA
+lafayette-co,Lafayette,39.9936,-105.08971,CO
+lafayette-in,Lafayette,40.4167,-86.87529,IN
+lafayette-la,Lafayette,30.22409,-92.01984,LA
+laguna-ca,Laguna,38.42102,-121.42384,CA
+laguna-beach-ca,Laguna Beach,33.54225,-117.78311,CA
+laguna-hills-ca,Laguna Hills,33.61252,-117.71283,CA
+laguna-niguel-ca,Laguna Niguel,33.52253,-117.70755,CA
+laguna-woods-ca,Laguna Woods,33.6103,-117.72533,CA
+lake-butler-fl,Lake Butler,28.50167,-81.54091,FL
+lake-charles-la,Lake Charles,30.21309,-93.2044,LA
+lake-elsinore-ca,Lake Elsinore,33.66808,-117.32726,CA
+lake-forest-ca,Lake Forest,33.64697,-117.68922,CA
+lake-forest-il,Lake Forest,42.25863,-87.84063,IL
+lake-havasu-city-az,Lake Havasu City,34.4839,-114.32245,AZ
+lake-jackson-tx,Lake Jackson,29.03386,-95.43439,TX
+lake-magdalene-fl,Lake Magdalene,28.07418,-82.47176,FL
+lake-mary-fl,Lake Mary,28.75888,-81.31784,FL
+lake-oswego-or,Lake Oswego,45.42067,-122.67065,OR
+lake-ridge-va,Lake Ridge,38.68789,-77.29776,VA
+lake-ronkonkoma-ny,Lake Ronkonkoma,40.8351,-73.13122,NY
+lake-shore-md,Lake Shore,39.10705,-76.48496,MD
+lake-stevens-wa,Lake Stevens,48.0151,-122.06374,WA
+lake-wales-fl,Lake Wales,27.90141,-81.58591,FL
+lake-worth-beach-fl,Lake Worth Beach,26.61708,-80.07231,FL
+lake-worth-corridor-fl,Lake Worth Corridor,26.61649,-80.10102,FL
+lake-zurich-il,Lake Zurich,42.19697,-88.09341,IL
+lake-in-the-hills-il,Lake in the Hills,42.18169,-88.33036,IL
+lakeland-fl,Lakeland,28.03947,-81.9498,FL
+lakeside-ca,Lakeside,32.85727,-116.92225,CA
+lakeside-fl,Lakeside,30.12996,-81.76815,FL
+lakeville-mn,Lakeville,44.64969,-93.24272,MN
+lakewood-ca,Lakewood,33.85363,-118.13396,CA
+lakewood-co,Lakewood,39.70471,-105.08137,CO
+lakewood-nj,Lakewood,40.09789,-74.21764,NJ
+lakewood-oh,Lakewood,41.48199,-81.79819,OH
+lakewood-wa,Lakewood,47.17176,-122.51846,WA
+lamont-ca,Lamont,35.25968,-118.91427,CA
+lancaster-ca,Lancaster,34.69804,-118.13674,CA
+lancaster-oh,Lancaster,39.71368,-82.59933,OH
+lancaster-pa,Lancaster,40.03788,-76.30551,PA
+lancaster-tx,Lancaster,32.59208,-96.75611,TX
+land-o-lakes-fl,Land O' Lakes,28.2189,-82.45759,FL
+landover-md,Landover,38.934,-76.89664,MD
+langley-park-md,Langley Park,38.98872,-76.98136,MD
+lanham-seabrook-md,Lanham-Seabrook,38.96835,-76.85108,MD
+lansdale-pa,Lansdale,40.2415,-75.28379,PA
+lansing-il,Lansing,41.56476,-87.53893,IL
+lansing-mi,Lansing,42.73253,-84.55553,MI
+laplace-la,Laplace,30.06698,-90.48147,LA
+laramie-wy,Laramie,41.31137,-105.5911,WY
+laredo-tx,Laredo,27.50641,-99.50754,TX
+largo-fl,Largo,27.90979,-82.78842,FL
+las-cruces-nm,Las Cruces,32.31232,-106.77834,NM
+las-vegas-nv,Las Vegas,36.17497,-115.13722,NV
+latham-ny,Latham,42.74702,-73.75901,NY
+lathrop-ca,Lathrop,37.8227,-121.27661,CA
+lauderdale-lakes-fl,Lauderdale Lakes,26.16647,-80.20838,FL
+lauderhill-fl,Lauderhill,26.14036,-80.21338,FL
+laurel-md,Laurel,39.09928,-76.84831,MD
+laurel-ms,Laurel,31.69405,-89.13061,MS
+laurel-va,Laurel,37.64292,-77.50887,VA
+laurelton-ny,Laurelton,40.67019,-73.74659,NY
+laurinburg-nc,Laurinburg,34.77405,-79.46282,NC
+lawndale-ca,Lawndale,33.88724,-118.35257,CA
+lawndale-pa,Lawndale,40.05039,-75.09156,PA
+lawrence-in,Lawrence,39.83865,-86.02526,IN
+lawrence-ks,Lawrence,38.97167,-95.23525,KS
+lawrence-ma,Lawrence,42.70704,-71.16311,MA
+lawrenceville-ga,Lawrenceville,33.95621,-83.98796,GA
+lawton-ok,Lawton,34.60869,-98.39033,OK
+layton-ut,Layton,41.06022,-111.97105,UT
+league-city-tx,League City,29.50745,-95.09493,TX
+lealman-fl,Lealman,27.82114,-82.67927,FL
+leander-tx,Leander,30.57881,-97.85307,TX
+leavenworth-ks,Leavenworth,39.31111,-94.92246,KS
+leawood-ks,Leawood,38.96667,-94.6169,KS
+lebanon-in,Lebanon,40.04837,-86.46917,IN
+lebanon-oh,Lebanon,39.43534,-84.20299,OH
+lebanon-or,Lebanon,44.53651,-122.90703,OR
+lebanon-pa,Lebanon,40.34093,-76.41135,PA
+lebanon-tn,Lebanon,36.20811,-86.2911,TN
+ledyard-ct,Ledyard,41.43982,-72.01424,CT
+lee-s-summit-mo,Lee's Summit,38.91084,-94.38217,MO
+leesburg-fl,Leesburg,28.81082,-81.87786,FL
+leesburg-va,Leesburg,39.11566,-77.5636,VA
+lehi-ut,Lehi,40.39162,-111.85077,UT
+lehigh-acres-fl,Lehigh Acres,26.62535,-81.6248,FL
+leisure-city-fl,Leisure City,25.49539,-80.42922,FL
+leland-nc,Leland,34.25628,-78.04471,NC
+lemay-mo,Lemay,38.53339,-90.27928,MO
+lemon-grove-ca,Lemon Grove,32.74255,-117.03142,CA
+lemont-il,Lemont,41.67364,-88.00173,IL
+lemoore-ca,Lemoore,36.30078,-119.78291,CA
+lenexa-ks,Lenexa,38.95362,-94.73357,KS
+lennox-ca,Lennox,33.93807,-118.35258,CA
+lenoir-nc,Lenoir,35.91402,-81.53898,NC
+lents-or,Lents,45.47984,-122.56731,OR
+leominster-ma,Leominster,42.52509,-71.75979,MA
+levittown-ny,Levittown,40.72593,-73.51429,NY
+levittown-pa,Levittown,40.15511,-74.82877,PA
+lewiston-id,Lewiston,46.41655,-117.01766,ID
+lewiston-me,Lewiston,44.10035,-70.21478,ME
+lewiston-orchards-id,Lewiston Orchards,46.38044,-116.97543,ID
+lewisville-tx,Lewisville,33.04623,-96.99417,TX
+lexington-ky,Lexington,37.98869,-84.47772,KY
+lexington-ma,Lexington,42.44732,-71.2245,MA
+lexington-nc,Lexington,35.82403,-80.25338,NC
+lexington-sc,Lexington,33.98154,-81.23621,SC
+lexington-fayette-ky,Lexington-Fayette,38.0498,-84.45855,KY
+liberal-ks,Liberal,37.04308,-100.921,KS
+liberty-mo,Liberty,39.24611,-94.41912,MO
+libertyville-il,Libertyville,42.28308,-87.95313,IL
+liliha-kapalama-hi,Liliha - Kapalama,21.33735,-157.85418,HI
+lima-oh,Lima,40.74255,-84.10523,OH
+limerick-pa,Limerick,40.23093,-75.52212,PA
+lincoln-ca,Lincoln,38.89156,-121.29301,CA
+lincoln-ne,Lincoln,40.8,-96.66696,NE
+lincoln-ri,Lincoln,41.92111,-71.435,RI
+lincoln-park-il,Lincoln Park,41.9217,-87.64783,IL
+lincoln-park-mi,Lincoln Park,42.25059,-83.17854,MI
+lincoln-square-il,Lincoln Square,41.97587,-87.68922,IL
+lincolnia-va,Lincolnia,38.81845,-77.14331,VA
+linda-ca,Linda,39.12767,-121.5508,CA
+linden-nj,Linden,40.62205,-74.24459,NJ
+lindenhurst-ny,Lindenhurst,40.68677,-73.37345,NY
+lindenwold-nj,Lindenwold,39.82428,-74.99767,NJ
+lino-lakes-mn,Lino Lakes,45.16024,-93.08883,MN
+linton-hall-va,Linton Hall,38.75984,-77.57499,VA
+lisle-il,Lisle,41.80114,-88.07479,IL
+lithia-springs-ga,Lithia Springs,33.794,-84.66049,GA
+little-elm-tx,Little Elm,33.16262,-96.93751,TX
+little-havana-fl,Little Havana,25.76806,-80.23306,FL
+little-rock-ar,Little Rock,34.74648,-92.28959,AR
+littleton-co,Littleton,39.61332,-105.01665,CO
+live-oak-ca,Live Oak,36.98356,-121.98052,CA
+live-oak-tx,Live Oak,29.56523,-98.3364,TX
+livermore-ca,Livermore,37.68187,-121.76801,CA
+livingston-nj,Livingston,40.79593,-74.31487,NJ
+livonia-mi,Livonia,42.36837,-83.35271,MI
+lochearn-md,Lochearn,39.34066,-76.72219,MD
+lockport-il,Lockport,41.58948,-88.05784,IL
+lockport-ny,Lockport,43.17061,-78.69031,NY
+lodi-ca,Lodi,38.1302,-121.27245,CA
+lodi-nj,Lodi,40.88232,-74.0832,NJ
+logan-pa,Logan,40.02845,-75.15157,PA
+logan-ut,Logan,41.73549,-111.83439,UT
+logan-square-il,Logan Square,41.92337,-87.69922,IL
+logansport-in,Logansport,40.75448,-86.35667,IN
+loma-linda-ca,Loma Linda,34.04835,-117.26115,CA
+lombard-il,Lombard,41.88003,-88.00784,IL
+lomita-ca,Lomita,33.79224,-118.31507,CA
+lompoc-ca,Lompoc,34.63915,-120.45794,CA
+long-beach-ca,Long Beach,33.76696,-118.18923,CA
+long-beach-ms,Long Beach,30.35048,-89.15282,MS
+long-beach-ny,Long Beach,40.58844,-73.65791,NY
+long-branch-nj,Long Branch,40.30428,-73.99236,NJ
+long-island-city-ny,Long Island City,40.74482,-73.94875,NY
+longfellow-community-mn,Longfellow Community,44.94256,-93.22557,MN
+longmeadow-ma,Longmeadow,42.0501,-72.58287,MA
+longmont-co,Longmont,40.16721,-105.10193,CO
+longview-tx,Longview,32.5007,-94.74049,TX
+longview-wa,Longview,46.13817,-122.93817,WA
+lorain-oh,Lorain,41.45282,-82.18237,OH
+lorton-va,Lorton,38.70428,-77.22776,VA
+los-altos-ca,Los Altos,37.38522,-122.11413,CA
+los-angeles-ca,Los Angeles,34.05223,-118.24368,CA
+los-banos-ca,Los Banos,37.05828,-120.84992,CA
+los-gatos-ca,Los Gatos,37.22661,-121.97468,CA
+los-lunas-nm,Los Lunas,34.80617,-106.73336,NM
+louisville-co,Louisville,39.97776,-105.13193,CO
+louisville-ky,Louisville,38.25424,-85.75941,KY
+loveland-co,Loveland,40.39776,-105.07498,CO
+loves-park-il,Loves Park,42.32002,-89.05816,IL
+lowell-ma,Lowell,42.63342,-71.31617,MA
+lower-moyamensing-pa,Lower Moyamensing,39.91956,-75.16475,PA
+lower-west-side-il,Lower West Side,41.8542,-87.66561,IL
+lubbock-tx,Lubbock,33.57786,-101.85517,TX
+ludlow-ma,Ludlow,42.16009,-72.47592,MA
+lufkin-tx,Lufkin,31.33824,-94.7291,TX
+lumberton-nc,Lumberton,34.61834,-79.01045,NC
+lutherville-timonium-md,Lutherville-Timonium,39.43997,-76.61099,MD
+lutz-fl,Lutz,28.15112,-82.46148,FL
+lynbrook-ny,Lynbrook,40.65483,-73.6718,NY
+lynchburg-va,Lynchburg,37.41375,-79.14225,VA
+lyndhurst-nj,Lyndhurst,40.81204,-74.12431,NJ
+lynn-ma,Lynn,42.46676,-70.94949,MA
+lynn-haven-fl,Lynn Haven,30.24548,-85.64826,FL
+lynnwood-wa,Lynnwood,47.82093,-122.31513,WA
+lynwood-ca,Lynwood,33.93029,-118.21146,CA
+mableton-ga,Mableton,33.81872,-84.58243,GA
+machesney-park-il,Machesney Park,42.34724,-89.039,IL
+macomb-il,Macomb,40.45921,-90.6718,IL
+macon-ga,Macon,32.84069,-83.6324,GA
+madera-ca,Madera,36.96134,-120.06072,CA
+madison-al,Madison,34.69926,-86.74833,AL
+madison-ct,Madison,41.27954,-72.59843,CT
+madison-ms,Madison,32.46181,-90.11536,MS
+madison-nj,Madison,40.75982,-74.4171,NJ
+madison-wi,Madison,43.07305,-89.40123,WI
+madison-heights-mi,Madison Heights,42.48587,-83.1052,MI
+madisonville-ky,Madisonville,37.3281,-87.49889,KY
+magna-ut,Magna,40.70911,-112.10161,UT
+mahwah-nj,Mahwah,41.08871,-74.14376,NJ
+maitland-fl,Maitland,28.62778,-81.36312,FL
+makakilo-hi,Makakilo,21.35237,-158.08655,HI
+makakilo-kapolei-honokai-hale-hi,Makakilo / Kapolei / Honokai Hale,21.3374,-158.09676,HI
+makakilo-city-hi,Makakilo City,21.34694,-158.08583,HI
+makakilo-maka-wa-hills-kunia-hi,Makakilo-Makaīwa Hills-Kunia,21.36676,-158.07326,HI
+makiki-lower-punchbowl-tantalus-hi,Makiki / Lower Punchbowl / Tantalus,21.31756,-157.83122,HI
+malden-ma,Malden,42.4251,-71.06616,MA
+mamaroneck-ny,Mamaroneck,40.94871,-73.73263,NY
+manassas-va,Manassas,38.75095,-77.47527,VA
+manassas-park-va,Manassas Park,38.784,-77.46971,VA
+manchester-ct,Manchester,41.77593,-72.52148,CT
+manchester-mo,Manchester,38.597,-90.50929,MO
+manchester-nh,Manchester,42.99564,-71.45479,NH
+mandan-nd,Mandan,46.82666,-100.88958,ND
+manhattan-ks,Manhattan,39.18361,-96.57167,KS
+manhattan-ny,Manhattan,40.78343,-73.96625,NY
+manhattan-beach-ca,Manhattan Beach,33.88474,-118.41091,CA
+manhattan-valley-ny,Manhattan Valley,40.79389,-73.965,NY
+manitowoc-wi,Manitowoc,44.08861,-87.65758,WI
+mankato-mn,Mankato,44.15906,-94.00915,MN
+manoa-hi,Manoa,21.31608,-157.80423,HI
+mansfield-ma,Mansfield,42.03343,-71.21894,MA
+mansfield-oh,Mansfield,40.75839,-82.51545,OH
+mansfield-tx,Mansfield,32.56319,-97.14168,TX
+mansfield-city-ct,Mansfield City,41.76593,-72.23369,CT
+manteca-ca,Manteca,37.79743,-121.21605,CA
+maple-grove-mn,Maple Grove,45.07246,-93.45579,MN
+maple-heights-oh,Maple Heights,41.41533,-81.56596,OH
+maple-shade-nj,Maple Shade,39.95261,-74.99239,NJ
+maple-valley-wa,Maple Valley,47.39272,-122.04641,WA
+maplewood-mn,Maplewood,44.95302,-92.99522,MN
+maplewood-nj,Maplewood,40.73121,-74.27348,NJ
+marana-az,Marana,32.43674,-111.22538,AZ
+marblehead-ma,Marblehead,42.5001,-70.85783,MA
+marco-island-fl,Marco Island,25.94121,-81.71842,FL
+margate-fl,Margate,26.24453,-80.20644,FL
+maricopa-az,Maricopa,33.05811,-112.04764,AZ
+marietta-ga,Marietta,33.9526,-84.54993,GA
+marina-ca,Marina,36.6844,-121.80217,CA
+mariners-harbor-ny,Mariners Harbor,40.63677,-74.15875,NY
+marion-ia,Marion,42.03417,-91.59768,IA
+marion-il,Marion,37.73061,-88.93313,IL
+marion-in,Marion,40.55837,-85.65914,IN
+marion-oh,Marion,40.58867,-83.12852,OH
+marion-oaks-fl,Marion Oaks,29.00859,-82.18315,FL
+marlboro-nj,Marlboro,40.31539,-74.24626,NJ
+marlborough-ma,Marlborough,42.34593,-71.55229,MA
+marquette-mi,Marquette,46.54354,-87.39542,MI
+marrero-la,Marrero,29.89937,-90.10035,LA
+marshall-tx,Marshall,32.54487,-94.36742,TX
+marshalltown-ia,Marshalltown,42.04943,-92.90798,IA
+marshfield-wi,Marshfield,44.66885,-90.1718,WI
+martha-lake-wa,Martha Lake,47.85093,-122.2393,WA
+martinez-ca,Martinez,38.01937,-122.13413,CA
+martinez-ga,Martinez,33.51736,-82.07567,GA
+martinsburg-wv,Martinsburg,39.45621,-77.96389,WV
+maryland-city-md,Maryland City,39.09205,-76.81775,MD
+maryland-heights-mo,Maryland Heights,38.71311,-90.42984,MO
+marysville-oh,Marysville,40.23645,-83.36714,OH
+marysville-wa,Marysville,48.05176,-122.17708,WA
+maryvale-az,Maryvale,33.50199,-112.17765,AZ
+maryville-tn,Maryville,35.75647,-83.97046,TN
+mason-oh,Mason,39.36006,-84.30994,OH
+mason-city-ia,Mason City,43.15357,-93.20104,IA
+maspeth-ny,Maspeth,40.72316,-73.91264,NY
+massapequa-ny,Massapequa,40.68066,-73.47429,NY
+massapequa-park-ny,Massapequa Park,40.68038,-73.45512,NY
+massillon-oh,Massillon,40.79672,-81.52151,OH
+mastic-ny,Mastic,40.80204,-72.84094,NY
+mattapan-ma,Mattapan,42.27232,-71.087,MA
+matteson-il,Matteson,41.50392,-87.7131,IL
+matthews-nc,Matthews,35.11681,-80.72368,NC
+mattoon-il,Mattoon,39.48309,-88.37283,IL
+mauldin-sc,Mauldin,34.77873,-82.31012,SC
+maumelle-ar,Maumelle,34.86676,-92.40432,AR
+mayfield-heights-oh,Mayfield Heights,41.51922,-81.4579,OH
+maywood-ca,Maywood,33.98668,-118.18535,CA
+maywood-il,Maywood,41.8792,-87.84312,IL
+mcalester-ok,McAlester,34.93343,-95.76971,OK
+mcallen-tx,McAllen,26.20341,-98.23001,TX
+mccully-moiliili-hi,McCully - Moiliili,21.29461,-157.83118,HI
+mcdonough-ga,McDonough,33.44734,-84.14686,GA
+mchenry-il,McHenry,42.33335,-88.26675,IL
+mckeesport-pa,McKeesport,40.34785,-79.86422,PA
+mckinley-park-il,McKinley Park,41.8317,-87.67366,IL
+mckinleyville-ca,McKinleyville,40.94652,-124.10062,CA
+mckinney-tx,McKinney,33.19762,-96.61527,TX
+mclean-va,McLean,38.93428,-77.17748,VA
+mcminnville-or,McMinnville,45.21012,-123.19872,OR
+mead-valley-ca,Mead Valley,33.83335,-117.29615,CA
+meadow-woods-fl,Meadow Woods,28.38556,-81.36646,FL
+meadowbrook-va,Meadowbrook,37.44882,-77.47353,VA
+meads-ky,Meads,38.41258,-82.70905,KY
+mechanicsville-va,Mechanicsville,37.60876,-77.37331,VA
+medford-ma,Medford,42.41843,-71.10616,MA
+medford-ny,Medford,40.8176,-73.00011,NY
+medford-or,Medford,42.32652,-122.87559,OR
+medina-oh,Medina,41.13839,-81.86375,OH
+mehlville-mo,Mehlville,38.50839,-90.32289,MO
+melbourne-fl,Melbourne,28.08363,-80.60811,FL
+melrose-ma,Melrose,42.45843,-71.06616,MA
+melrose-ny,Melrose,40.82455,-73.91041,NY
+melrose-park-il,Melrose Park,41.90059,-87.85673,IL
+melville-ny,Melville,40.79343,-73.41512,NY
+memphis-tn,Memphis,35.14953,-90.04898,TN
+menasha-wi,Menasha,44.20221,-88.4465,WI
+menifee-ca,Menifee,33.72835,-117.14642,CA
+menlo-park-ca,Menlo Park,37.45383,-122.18219,CA
+menomonee-falls-wi,Menomonee Falls,43.1789,-88.11731,WI
+menomonie-wi,Menomonie,44.87552,-91.91934,WI
+mentor-oh,Mentor,41.66616,-81.33955,OH
+mequon-wi,Mequon,43.21555,-88.03001,WI
+merced-ca,Merced,37.30216,-120.48297,CA
+mercedes-tx,Mercedes,26.1498,-97.91361,TX
+mercer-island-wa,Mercer Island,47.57065,-122.22207,WA
+mercerville-hamilton-square-nj,Mercerville-Hamilton Square,40.23126,-74.67223,NJ
+meriden-ct,Meriden,41.53815,-72.80704,CT
+meridian-id,Meridian,43.61211,-116.39151,ID
+meridian-ms,Meridian,32.36431,-88.70366,MS
+merrick-ny,Merrick,40.66288,-73.55152,NY
+merrifield-va,Merrifield,38.87428,-77.22693,VA
+merrillville-in,Merrillville,41.48281,-87.33281,IN
+merrimack-nh,Merrimack,42.86509,-71.4934,NH
+merritt-island-fl,Merritt Island,28.359,-80.69,FL
+mesa-az,Mesa,33.42227,-111.82264,AZ
+mesquite-nv,Mesquite,36.80553,-114.06719,NV
+mesquite-tx,Mesquite,32.7668,-96.59916,TX
+metairie-la,Metairie,29.98409,-90.15285,LA
+metairie-terrace-la,Metairie Terrace,29.97854,-90.16396,LA
+methuen-ma,Methuen,42.7262,-71.19089,MA
+miami-fl,Miami,25.77427,-80.19366,FL
+miami-beach-fl,Miami Beach,25.79065,-80.13005,FL
+miami-gardens-fl,Miami Gardens,25.94204,-80.2456,FL
+miami-lakes-fl,Miami Lakes,25.90871,-80.30866,FL
+miamisburg-oh,Miamisburg,39.64284,-84.28661,OH
+michigan-city-in,Michigan City,41.70754,-86.89503,IN
+mid-city-ca,Mid-City,34.04126,-118.36058,CA
+middle-river-md,Middle River,39.33427,-76.43941,MD
+middle-village-ny,Middle Village,40.71649,-73.88125,NY
+middleborough-ma,Middleborough,41.89316,-70.91115,MA
+middleburg-heights-oh,Middleburg Heights,41.36144,-81.81291,OH
+middleton-wi,Middleton,43.09722,-89.50429,WI
+middletown-ct,Middletown,41.56232,-72.65065,CT
+middletown-de,Middletown,39.44956,-75.71632,DE
+middletown-nj,Middletown,40.39428,-74.11709,NJ
+middletown-ny,Middletown,41.44593,-74.42293,NY
+middletown-oh,Middletown,39.51506,-84.39828,OH
+middletown-ri,Middletown,41.54566,-71.29144,RI
+midland-mi,Midland,43.61558,-84.24721,MI
+midland-tx,Midland,31.99735,-102.07791,TX
+midlothian-tx,Midlothian,32.48236,-96.99445,TX
+midlothian-va,Midlothian,37.50598,-77.64916,VA
+midvale-ut,Midvale,40.61106,-111.89994,UT
+midway-fl,Midway,30.40648,-87.00553,FL
+midwest-city-ok,Midwest City,35.44951,-97.3967,OK
+milford-ct,Milford,41.22232,-73.0565,CT
+milford-ma,Milford,42.13982,-71.51617,MA
+milford-mill-md,Milford Mill,39.34788,-76.76997,MD
+mililani-mauka-hi,Mililani Mauka,21.47793,-157.99452,HI
+mililani-mauka-launani-valley-hi,Mililani Mauka / Launani Valley,21.47885,-157.98799,HI
+mililani-town-hi,Mililani Town,21.4504,-158.01503,HI
+mill-creek-wa,Mill Creek,47.8601,-122.2043,WA
+mill-creek-east-wa,Mill Creek East,47.83602,-122.18766,WA
+millbrae-ca,Millbrae,37.59855,-122.38719,CA
+millbrook-al,Millbrook,32.47986,-86.36192,AL
+millburn-nj,Millburn,40.72482,-74.30404,NJ
+millcreek-ut,Millcreek,40.68689,-111.87549,UT
+milledgeville-ga,Milledgeville,33.08014,-83.2321,GA
+millville-nj,Millville,39.40206,-75.03934,NJ
+milpitas-ca,Milpitas,37.42827,-121.90662,CA
+milton-ga,Milton,34.13216,-84.30067,GA
+milton-ma,Milton,42.24954,-71.06616,MA
+milwaukee-wi,Milwaukee,43.0389,-87.90647,WI
+milwaukie-or,Milwaukie,45.44623,-122.63926,OR
+mineola-ny,Mineola,40.74927,-73.64068,NY
+minneapolis-mn,Minneapolis,44.97997,-93.26384,MN
+minnetonka-mn,Minnetonka,44.9133,-93.50329,MN
+minnetonka-mills-mn,Minnetonka Mills,44.94107,-93.4419,MN
+minot-nd,Minot,48.23251,-101.29627,ND
+mint-hill-nc,Mint Hill,35.17959,-80.64729,NC
+mira-mesa-ca,Mira Mesa,32.9156,-117.14392,CA
+miramar-fl,Miramar,25.98731,-80.23227,FL
+mishawaka-in,Mishawaka,41.66199,-86.15862,IN
+mission-tx,Mission,26.21591,-98.32529,TX
+mission-bend-tx,Mission Bend,29.69384,-95.66495,TX
+mission-district-ca,Mission District,37.75993,-122.41914,CA
+mission-hill-ma,Mission Hill,42.33437,-71.10845,MA
+mission-viejo-ca,Mission Viejo,33.60002,-117.672,CA
+missoula-mt,Missoula,46.87215,-113.994,MT
+missouri-city-tx,Missouri City,29.61857,-95.53772,TX
+mitchell-sd,Mitchell,43.70943,-98.0298,SD
+mobile-al,Mobile,30.69436,-88.04305,AL
+modesto-ca,Modesto,37.6391,-120.99688,CA
+mokena-il,Mokena,41.52614,-87.88922,IL
+moline-il,Moline,41.5067,-90.51513,IL
+monroe-la,Monroe,32.50931,-92.1193,LA
+monroe-mi,Monroe,41.91643,-83.39771,MI
+monroe-nc,Monroe,34.98543,-80.54951,NC
+monroe-wa,Monroe,47.85538,-121.97096,WA
+monroeville-pa,Monroeville,40.42118,-79.7881,PA
+monrovia-ca,Monrovia,34.14806,-117.99895,CA
+monsey-ny,Monsey,41.11121,-74.06848,NY
+montclair-ca,Montclair,34.07751,-117.68978,CA
+montclair-nj,Montclair,40.82593,-74.20903,NJ
+montclair-va,Montclair,38.61095,-77.33971,VA
+montebello-ca,Montebello,34.00946,-118.10535,CA
+monterey-ca,Monterey,36.60024,-121.89468,CA
+monterey-park-ca,Monterey Park,34.06251,-118.12285,CA
+montgomery-al,Montgomery,32.36681,-86.29997,AL
+montgomery-il,Montgomery,41.73058,-88.3459,IL
+montgomery-village-md,Montgomery Village,39.17677,-77.19526,MD
+montrose-co,Montrose,38.47832,-107.87617,CO
+montville-center-ct,Montville Center,41.47899,-72.15119,CT
+moore-ok,Moore,35.33951,-97.4867,OK
+mooresville-nc,Mooresville,35.58486,-80.81007,NC
+moorhead-mn,Moorhead,46.87386,-96.76951,MN
+moorpark-ca,Moorpark,34.28556,-118.88204,CA
+moraga-ca,Moraga,37.83493,-122.12969,CA
+moreno-valley-ca,Moreno Valley,33.93752,-117.23059,CA
+morgan-hill-ca,Morgan Hill,37.1305,-121.65439,CA
+morgan-park-il,Morgan Park,41.69031,-87.66672,IL
+morganton-nc,Morganton,35.74541,-81.68482,NC
+morgantown-wv,Morgantown,39.62953,-79.9559,WV
+morningside-heights-ny,Morningside Heights,40.81,-73.9625,NY
+morris-heights-ny,Morris Heights,40.84982,-73.91986,NY
+morrisania-ny,Morrisania,40.82927,-73.90653,NY
+morristown-nj,Morristown,40.79677,-74.48154,NJ
+morristown-tn,Morristown,36.21398,-83.29489,TN
+morrisville-nc,Morrisville,35.82348,-78.82556,NC
+morton-il,Morton,40.61282,-89.45926,IL
+morton-grove-il,Morton Grove,42.04059,-87.78256,IL
+moscow-id,Moscow,46.73239,-117.00017,ID
+moses-lake-wa,Moses Lake,47.13014,-119.27808,WA
+mott-haven-ny,Mott Haven,40.80899,-73.92291,NY
+mount-clemens-mi,Mount Clemens,42.59726,-82.87798,MI
+mount-greenwood-il,Mount Greenwood,41.69809,-87.70866,IL
+mount-juliet-tn,Mount Juliet,36.20005,-86.51861,TN
+mount-laurel-nj,Mount Laurel,39.934,-74.891,NJ
+mount-lebanon-pa,Mount Lebanon,40.35535,-80.0495,PA
+mount-pleasant-dc,Mount Pleasant,38.93067,-77.04081,DC
+mount-pleasant-mi,Mount Pleasant,43.59781,-84.76751,MI
+mount-pleasant-sc,Mount Pleasant,32.79407,-79.86259,SC
+mount-pleasant-tx,Mount Pleasant,33.15679,-94.96827,TX
+mount-pleasant-wi,Mount Pleasant,42.69743,-87.85577,WI
+mount-prospect-il,Mount Prospect,42.06642,-87.93729,IL
+mount-vernon-il,Mount Vernon,38.31727,-88.90312,IL
+mount-vernon-ny,Mount Vernon,40.9126,-73.83708,NY
+mount-vernon-oh,Mount Vernon,40.3934,-82.48572,OH
+mount-vernon-wa,Mount Vernon,48.42122,-122.33405,WA
+mount-vernon-triangle-dc,Mount Vernon Triangle,38.90232,-77.01685,DC
+mountain-brook-al,Mountain Brook,33.50094,-86.75221,AL
+mountain-view-ca,Mountain View,37.38605,-122.08385,CA
+mountlake-terrace-wa,Mountlake Terrace,47.78815,-122.30874,WA
+mukilteo-wa,Mukilteo,47.94454,-122.30458,WA
+muncie-in,Muncie,40.19338,-85.38636,IN
+mundelein-il,Mundelein,42.26308,-88.00397,IL
+munster-in,Munster,41.56448,-87.51254,IN
+murfreesboro-tn,Murfreesboro,35.84562,-86.39027,TN
+murphy-tx,Murphy,33.01512,-96.61305,TX
+murray-ky,Murray,36.61033,-88.31476,KY
+murray-ut,Murray,40.66689,-111.88799,UT
+murrieta-ca,Murrieta,33.55391,-117.21392,CA
+murrysville-pa,Murrysville,40.4284,-79.69755,PA
+muscatine-ia,Muscatine,41.42447,-91.04321,IA
+muskego-wi,Muskego,42.90585,-88.13898,WI
+muskegon-mi,Muskegon,43.23418,-86.24839,MI
+muskogee-ok,Muskogee,35.74788,-95.36969,OK
+mustang-ok,Mustang,35.38423,-97.72449,OK
+myrtle-beach-sc,Myrtle Beach,33.68906,-78.88669,SC
+myrtle-grove-fl,Myrtle Grove,30.42103,-87.30747,FL
+m-ili-ili-hi,Mō‘ili‘ili,21.29467,-157.83002,HI
+nacogdoches-tx,Nacogdoches,31.60351,-94.65549,TX
+nampa-id,Nampa,43.54072,-116.56346,ID
+nanuet-ny,Nanuet,41.08871,-74.01347,NY
+napa-ca,Napa,38.29714,-122.28553,CA
+naperville-il,Naperville,41.78586,-88.14729,IL
+naples-fl,Naples,26.14234,-81.79596,FL
+narragansett-ri,Narragansett,41.4501,-71.4495,RI
+nashua-nh,Nashua,42.76537,-71.46757,NH
+nashville-tn,Nashville,36.16589,-86.78444,TN
+natchez-ms,Natchez,31.56017,-91.40329,MS
+natchitoches-la,Natchitoches,31.76072,-93.08627,LA
+natick-ma,Natick,42.28343,-71.3495,MA
+national-city-ca,National City,32.67811,-117.0992,CA
+naugatuck-ct,Naugatuck,41.48593,-73.05066,CT
+navarre-fl,Navarre,30.40159,-86.86357,FL
+near-north-side-il,Near North Side,41.90003,-87.6345,IL
+near-south-side-il,Near South Side,41.8567,-87.62477,IL
+nederland-tx,Nederland,29.97438,-93.9924,TX
+needham-ma,Needham,42.28343,-71.23283,MA
+neenah-wi,Neenah,44.18582,-88.46261,WI
+new-albany-in,New Albany,38.28562,-85.82413,IN
+new-bedford-ma,New Bedford,41.63526,-70.92701,MA
+new-berlin-wi,New Berlin,42.9764,-88.10842,WI
+new-bern-nc,New Bern,35.10849,-77.04411,NC
+new-braunfels-tx,New Braunfels,29.703,-98.12445,TX
+new-brighton-mn,New Brighton,45.06552,-93.20189,MN
+new-britain-ct,New Britain,41.66121,-72.77954,CT
+new-brunswick-nj,New Brunswick,40.48622,-74.45182,NJ
+new-canaan-ct,New Canaan,41.14676,-73.49484,CT
+new-caney-tx,New Caney,30.15522,-95.21132,TX
+new-castle-in,New Castle,39.92894,-85.37025,IN
+new-castle-pa,New Castle,41.00367,-80.34701,PA
+new-city-il,New City,41.80753,-87.65644,IL
+new-city-ny,New City,41.1476,-73.98931,NY
+new-haven-ct,New Haven,41.30815,-72.92816,CT
+new-haven-in,New Haven,41.0706,-85.01441,IN
+new-hope-mn,New Hope,45.03802,-93.38662,MN
+new-iberia-la,New Iberia,30.00354,-91.81873,LA
+new-lenox-il,New Lenox,41.51198,-87.96561,IL
+new-london-ct,New London,41.35565,-72.09952,CT
+new-milford-nj,New Milford,40.9351,-74.01903,NJ
+new-orleans-la,New Orleans,29.95465,-90.07507,LA
+new-philadelphia-oh,New Philadelphia,40.48979,-81.44567,OH
+new-port-richey-fl,New Port Richey,28.24418,-82.71927,FL
+new-rochelle-ny,New Rochelle,40.91149,-73.78235,NY
+new-smyrna-beach-fl,New Smyrna Beach,29.02582,-80.927,FL
+new-south-memphis-tn,New South Memphis,35.08676,-90.05676,TN
+new-springville-ny,New Springville,40.59344,-74.1632,NY
+new-territory-tx,New Territory,29.59412,-95.68078,TX
+new-york-city-ny,New York City,40.71427,-74.00597,NY
+newark-ca,Newark,37.52966,-122.04024,CA
+newark-de,Newark,39.68372,-75.74966,DE
+newark-nj,Newark,40.73566,-74.17237,NJ
+newark-oh,Newark,40.05812,-82.40126,OH
+newberg-or,Newberg,45.30012,-122.97316,OR
+newburg-ky,Newburg,38.16007,-85.65968,KY
+newburgh-ny,Newburgh,41.50343,-74.01042,NY
+newburyport-ma,Newburyport,42.81259,-70.87728,MA
+newington-ct,Newington,41.69788,-72.72371,CT
+newnan-ga,Newnan,33.38067,-84.79966,GA
+newport-ky,Newport,39.09145,-84.49578,KY
+newport-ri,Newport,41.4901,-71.31283,RI
+newport-beach-ca,Newport Beach,33.61891,-117.92895,CA
+newport-news-va,Newport News,36.98038,-76.42975,VA
+newton-ia,Newton,41.69971,-93.04798,IA
+newton-ks,Newton,38.04668,-97.34504,KS
+newton-ma,Newton,42.33704,-71.20922,MA
+niagara-falls-ny,Niagara Falls,43.0945,-79.05671,NY
+nicetown-tioga-pa,Nicetown-Tioga,40.00989,-75.16387,PA
+nicholasville-ky,Nicholasville,37.88063,-84.573,KY
+niles-il,Niles,42.01892,-87.80284,IL
+niles-oh,Niles,41.18284,-80.76536,OH
+nipomo-ca,Nipomo,35.04275,-120.476,CA
+niu-valley-hi,Niu Valley,21.2843,-157.73706,HI
+nixa-mo,Nixa,37.04339,-93.29435,MO
+noma-dc,NoMa,38.90372,-77.00598,DC
+noblesville-in,Noblesville,40.04559,-86.0086,IN
+noe-valley-ca,Noe Valley,37.75018,-122.43369,CA
+nogales-az,Nogales,31.34038,-110.93425,AZ
+norco-ca,Norco,33.93113,-117.54866,CA
+norcross-ga,Norcross,33.94121,-84.21353,GA
+norfolk-ne,Norfolk,42.02834,-97.417,NE
+norfolk-va,Norfolk,36.84681,-76.28522,VA
+norland-fl,Norland,25.94898,-80.21227,FL
+normal-il,Normal,40.5142,-88.99063,IL
+norman-ok,Norman,35.22257,-97.43948,OK
+norristown-pa,Norristown,40.1215,-75.3399,PA
+north-amityville-ny,North Amityville,40.6976,-73.42512,NY
+north-andover-ma,North Andover,42.6987,-71.13506,MA
+north-arlington-nj,North Arlington,40.78843,-74.1332,NJ
+north-attleborough-center-ma,North Attleborough Center,41.97263,-71.32474,MA
+north-augusta-sc,North Augusta,33.5018,-81.96512,SC
+north-aurora-il,North Aurora,41.80614,-88.3273,IL
+north-babylon-ny,North Babylon,40.71649,-73.32179,NY
+north-bay-shore-ny,North Bay Shore,40.753,-73.2602,NY
+north-bel-air-md,North Bel Air,39.53983,-76.35496,MD
+north-bellmore-ny,North Bellmore,40.69149,-73.53346,NY
+north-bergen-nj,North Bergen,40.80427,-74.01208,NJ
+north-bethesda-md,North Bethesda,39.04455,-77.11887,MD
+north-brunswick-nj,North Brunswick,40.454,-74.482,NJ
+north-canton-oh,North Canton,40.87589,-81.40234,OH
+north-center-il,North Center,41.95392,-87.67895,IL
+north-charleston-sc,North Charleston,32.85462,-79.97481,SC
+north-chicago-il,North Chicago,42.32558,-87.84118,IL
+north-chicopee-ma,North Chicopee,42.18343,-72.59953,MA
+north-creek-wa,North Creek,47.81954,-122.17624,WA
+north-decatur-ga,North Decatur,33.79038,-84.30603,GA
+north-druid-hills-ga,North Druid Hills,33.81677,-84.31326,GA
+north-fort-myers-fl,North Fort Myers,26.66729,-81.88009,FL
+north-haven-ct,North Haven,41.39093,-72.85954,CT
+north-highlands-ca,North Highlands,38.68574,-121.37217,CA
+north-hills-ca,North Hills,34.23639,-118.48472,CA
+north-hollywood-ca,North Hollywood,34.17223,-118.37897,CA
+north-kingstown-ri,North Kingstown,41.5501,-71.46617,RI
+north-la-crosse-wi,North La Crosse,43.84635,-91.24819,WI
+north-las-vegas-nv,North Las Vegas,36.19886,-115.1175,NV
+north-lauderdale-fl,North Lauderdale,26.2173,-80.22588,FL
+north-lawndale-il,North Lawndale,41.86003,-87.71839,IL
+north-liberty-ia,North Liberty,41.74918,-91.59795,IA
+north-little-rock-ar,North Little Rock,34.76954,-92.26709,AR
+north-massapequa-ny,North Massapequa,40.70093,-73.46207,NY
+north-miami-fl,North Miami,25.89009,-80.18671,FL
+north-miami-beach-fl,North Miami Beach,25.93315,-80.16255,FL
+north-myrtle-beach-sc,North Myrtle Beach,33.81601,-78.68002,SC
+north-ogden-ut,North Ogden,41.30716,-111.96022,UT
+north-olmsted-oh,North Olmsted,41.4156,-81.92347,OH
+north-peoria-il,North Peoria,40.71754,-89.58426,IL
+north-plainfield-nj,North Plainfield,40.6301,-74.42737,NJ
+north-platte-ne,North Platte,41.12389,-100.76542,NE
+north-port-fl,North Port,27.04422,-82.23593,FL
+north-potomac-md,North Potomac,39.08289,-77.26498,MD
+north-providence-ri,North Providence,41.8501,-71.46617,RI
+north-richland-hills-tx,North Richland Hills,32.8343,-97.2289,TX
+north-ridgeville-oh,North Ridgeville,41.38949,-82.01903,OH
+north-royalton-oh,North Royalton,41.31366,-81.72457,OH
+north-salt-lake-ut,North Salt Lake,40.84856,-111.90688,UT
+north-stamford-ct,North Stamford,41.13815,-73.54346,CT
+north-tonawanda-ny,North Tonawanda,43.03867,-78.8642,NY
+north-tustin-ca,North Tustin,33.76446,-117.79394,CA
+north-valley-stream-ny,North Valley Stream,40.6851,-73.7018,NY
+northampton-ma,Northampton,42.32509,-72.6412,MA
+northbrook-il,Northbrook,42.12753,-87.82895,IL
+northdale-fl,Northdale,28.0939,-82.50561,FL
+northfield-mn,Northfield,44.4583,-93.1616,MN
+northglenn-co,Northglenn,39.88554,-104.9872,CO
+northport-al,Northport,33.22901,-87.57723,AL
+northridge-ca,Northridge,34.22834,-118.53675,CA
+northwest-one-dc,Northwest One,38.90428,-77.01196,DC
+northwood-ca,Northwood,33.71372,-117.76091,CA
+norton-ma,Norton,41.96677,-71.18699,MA
+norton-shores-mi,Norton Shores,43.1689,-86.26395,MI
+norwalk-ca,Norwalk,33.90224,-118.08173,CA
+norwalk-ct,Norwalk,41.1176,-73.4079,CT
+norwalk-oh,Norwalk,41.24255,-82.61573,OH
+norwich-ct,Norwich,41.52426,-72.07591,CT
+norwood-ma,Norwood,42.19454,-71.1995,MA
+norwood-oh,Norwood,39.15561,-84.45966,OH
+novato-ca,Novato,38.10742,-122.5697,CA
+novi-mi,Novi,42.48059,-83.47549,MI
+nutley-nj,Nutley,40.82232,-74.15987,NJ
+nuuanu-punchbowl-hi,Nuuanu - Punchbowl,21.34215,-157.82852,HI
+o-fallon-il,O'Fallon,38.59227,-89.91121,IL
+o-fallon-mo,O'Fallon,38.81061,-90.69985,MO
+oak-creek-wi,Oak Creek,42.88585,-87.86314,WI
+oak-forest-il,Oak Forest,41.60281,-87.74394,IL
+oak-grove-or,Oak Grove,45.41679,-122.64009,OR
+oak-harbor-wa,Oak Harbor,48.29316,-122.64322,WA
+oak-hill-va,Oak Hill,38.9258,-77.40156,VA
+oak-lawn-il,Oak Lawn,41.71087,-87.75811,IL
+oak-park-il,Oak Park,41.88503,-87.7845,IL
+oak-park-mi,Oak Park,42.45948,-83.18271,MI
+oak-ridge-fl,Oak Ridge,28.47112,-81.42452,FL
+oak-ridge-tn,Oak Ridge,36.01036,-84.26964,TN
+oakdale-ca,Oakdale,37.76659,-120.84715,CA
+oakdale-mn,Oakdale,44.96302,-92.96494,MN
+oakland-ca,Oakland,37.80437,-122.2708,CA
+oakland-park-fl,Oakland Park,26.17231,-80.13199,FL
+oakleaf-plantation-fl,Oakleaf Plantation,30.17083,-81.83549,FL
+oakley-ca,Oakley,37.99742,-121.71245,CA
+oakton-va,Oakton,38.88095,-77.30082,VA
+oakville-mo,Oakville,38.47005,-90.30456,MO
+ocala-fl,Ocala,29.1872,-82.14009,FL
+ocean-acres-nj,Ocean Acres,39.74345,-74.28098,NJ
+ocean-springs-ms,Ocean Springs,30.41131,-88.82781,MS
+oceanside-ca,Oceanside,33.19587,-117.37948,CA
+oceanside-ny,Oceanside,40.63871,-73.64013,NY
+ocoee-fl,Ocoee,28.56917,-81.54396,FL
+oconomowoc-wi,Oconomowoc,43.11167,-88.49927,WI
+odenton-md,Odenton,39.084,-76.70025,MD
+odessa-tx,Odessa,31.84568,-102.36764,TX
+ogden-ut,Ogden,41.223,-111.97383,UT
+oildale-ca,Oildale,35.41968,-119.01955,CA
+ojus-fl,Ojus,25.94843,-80.1506,FL
+okemos-mi,Okemos,42.72226,-84.42747,MI
+oklahoma-city-ok,Oklahoma City,35.46756,-97.51643,OK
+okolona-ky,Okolona,38.14118,-85.68774,KY
+olathe-ks,Olathe,38.8814,-94.81913,KS
+old-bridge-nj,Old Bridge,40.41483,-74.36543,NJ
+old-jamestown-mo,Old Jamestown,38.83494,-90.28511,MO
+olive-branch-ms,Olive Branch,34.96176,-89.82953,MS
+olympia-wa,Olympia,47.04491,-122.90169,WA
+omaha-ne,Omaha,41.25626,-95.94043,NE
+onalaska-wi,Onalaska,43.88441,-91.23514,WI
+ontario-ca,Ontario,34.06334,-117.65089,CA
+opa-locka-fl,Opa-locka,25.90232,-80.25033,FL
+opelika-al,Opelika,32.64541,-85.37828,AL
+opelousas-la,Opelousas,30.53353,-92.08151,LA
+opportunity-wa,Opportunity,47.64995,-117.23991,WA
+orange-ca,Orange,33.78779,-117.85311,CA
+orange-nj,Orange,40.77066,-74.23265,NJ
+orange-tx,Orange,30.09299,-93.73655,TX
+orangevale-ca,Orangevale,38.67851,-121.22578,CA
+orchards-wa,Orchards,45.66651,-122.56093,WA
+orcutt-ca,Orcutt,34.86526,-120.436,CA
+oregon-oh,Oregon,41.64366,-83.48688,OH
+oregon-city-or,Oregon City,45.35734,-122.60676,OR
+orem-ut,Orem,40.2969,-111.69465,UT
+orient-heights-ma,Orient Heights,42.3876,-71.00366,MA
+orinda-ca,Orinda,37.87715,-122.17969,CA
+orland-park-il,Orland Park,41.63031,-87.85394,IL
+orlando-fl,Orlando,28.53834,-81.37924,FL
+ormond-beach-fl,Ormond Beach,29.28581,-81.05589,FL
+oro-valley-az,Oro Valley,32.39091,-110.96649,AZ
+oroville-ca,Oroville,39.51394,-121.55776,CA
+oshkosh-wi,Oshkosh,44.02471,-88.54261,WI
+ossining-ny,Ossining,41.16287,-73.86152,NY
+oswego-il,Oswego,41.68281,-88.35146,IL
+oswego-ny,Oswego,43.45535,-76.5105,NY
+otsego-mn,Otsego,45.27413,-93.59135,MN
+ottawa-il,Ottawa,41.34559,-88.84258,IL
+ottumwa-ia,Ottumwa,41.02001,-92.4113,IA
+overbrook-pa,Overbrook,39.98928,-75.24324,PA
+overland-mo,Overland,38.70116,-90.36234,MO
+overland-park-ks,Overland Park,38.98223,-94.67079,KS
+oviedo-fl,Oviedo,28.67,-81.20812,FL
+owasso-ok,Owasso,36.26954,-95.85471,OK
+owatonna-mn,Owatonna,44.08385,-93.22604,MN
+owensboro-ky,Owensboro,37.77422,-87.11333,KY
+owings-mills-md,Owings Mills,39.41955,-76.78025,MD
+oxford-al,Oxford,33.61427,-85.83496,AL
+oxford-ms,Oxford,34.3665,-89.51925,MS
+oxford-oh,Oxford,39.507,-84.74523,OH
+oxford-circle-pa,Oxford Circle,40.05011,-75.07184,PA
+oxnard-ca,Oxnard,34.1975,-119.17705,CA
+oxon-hill-md,Oxon Hill,38.80345,-76.9897,MD
+oxon-hill-glassmanor-md,Oxon Hill-Glassmanor,38.79615,-76.97499,MD
+ozark-mo,Ozark,37.02089,-93.20602,MO
+ozone-park-ny,Ozone Park,40.67677,-73.84375,NY
+pace-fl,Pace,30.59936,-87.16108,FL
+pacific-grove-ca,Pacific Grove,36.61774,-121.91662,CA
+pacific-palisades-ca,Pacific Palisades,34.04806,-118.52647,CA
+pacifica-ca,Pacifica,37.61383,-122.48692,CA
+paducah-ky,Paducah,37.08339,-88.60005,KY
+pahrump-nv,Pahrump,36.20829,-115.98391,NV
+painesville-oh,Painesville,41.72449,-81.24566,OH
+palatine-il,Palatine,42.1103,-88.03424,IL
+palestine-tx,Palestine,31.76212,-95.63079,TX
+palisades-park-nj,Palisades Park,40.84816,-73.99764,NJ
+palm-bay-fl,Palm Bay,28.03446,-80.58866,FL
+palm-beach-gardens-fl,Palm Beach Gardens,26.82339,-80.13865,FL
+palm-city-fl,Palm City,27.16783,-80.26616,FL
+palm-coast-fl,Palm Coast,29.58497,-81.20784,FL
+palm-desert-ca,Palm Desert,33.72255,-116.37697,CA
+palm-harbor-fl,Palm Harbor,28.07807,-82.76371,FL
+palm-river-clair-mel-fl,Palm River-Clair Mel,27.92386,-82.37939,FL
+palm-springs-ca,Palm Springs,33.8303,-116.54529,CA
+palm-springs-fl,Palm Springs,26.6359,-80.09615,FL
+palm-valley-fl,Palm Valley,30.17746,-81.38758,FL
+palmdale-ca,Palmdale,34.57943,-118.11646,CA
+palmer-ma,Palmer,42.15843,-72.32869,MA
+palmetto-bay-fl,Palmetto Bay,25.62177,-80.32477,FL
+palo-alto-ca,Palo Alto,37.44188,-122.14302,CA
+palos-hills-il,Palos Hills,41.6967,-87.817,IL
+pampa-tx,Pampa,35.53616,-100.95987,TX
+panama-city-fl,Panama City,30.15946,-85.65983,FL
+papillion-ne,Papillion,41.15444,-96.04224,NE
+paradise-ca,Paradise,39.75961,-121.62192,CA
+paradise-nv,Paradise,36.09719,-115.14666,NV
+paragould-ar,Paragould,36.0584,-90.49733,AR
+paramount-ca,Paramount,33.88946,-118.15979,CA
+paramus-nj,Paramus,40.94454,-74.07542,NJ
+paris-tx,Paris,33.66094,-95.55551,TX
+park-forest-il,Park Forest,41.49142,-87.67449,IL
+park-ridge-il,Park Ridge,42.01114,-87.84062,IL
+park-slope-ny,Park Slope,40.6701,-73.98597,NY
+park-view-dc,Park View,38.93206,-77.02359,DC
+parkchester-ny,Parkchester,40.83899,-73.86041,NY
+parker-co,Parker,39.5186,-104.76136,CO
+parkersburg-wv,Parkersburg,39.26674,-81.56151,WV
+parkland-fl,Parkland,26.31008,-80.23727,FL
+parkland-wa,Parkland,47.15538,-122.43401,WA
+parkside-ca,Parkside,37.74197,-122.4863,CA
+parkville-md,Parkville,39.37733,-76.53969,MD
+parkwood-manor-pa,Parkwood Manor,40.09344,-74.96795,PA
+parlier-ca,Parlier,36.61162,-119.52707,CA
+parma-oh,Parma,41.40477,-81.72291,OH
+parma-heights-oh,Parma Heights,41.39005,-81.75958,OH
+parole-md,Parole,38.981,-76.545,MD
+parsippany-nj,Parsippany,40.85788,-74.42599,NJ
+pasadena-ca,Pasadena,34.14778,-118.14452,CA
+pasadena-md,Pasadena,39.119,-76.57108,MD
+pasadena-tx,Pasadena,29.69106,-95.2091,TX
+pascagoula-ms,Pascagoula,30.36576,-88.55613,MS
+paso-robles-ca,Paso Robles,35.62664,-120.691,CA
+passaic-nj,Passaic,40.85677,-74.12848,NJ
+pataskala-oh,Pataskala,39.99562,-82.67433,OH
+paterson-nj,Paterson,40.91677,-74.17181,NJ
+patterson-ca,Patterson,37.4716,-121.12966,CA
+pawtucket-ri,Pawtucket,41.87871,-71.38256,RI
+payson-az,Payson,34.23087,-111.32514,AZ
+payson-ut,Payson,40.0444,-111.73215,UT
+peabody-ma,Peabody,42.52787,-70.92866,MA
+peachtree-city-ga,Peachtree City,33.39678,-84.59576,GA
+peachtree-corners-ga,Peachtree Corners,33.9701,-84.22159,GA
+pearl-ms,Pearl,32.27459,-90.13203,MS
+pearl-city-hi,Pearl City,21.39734,-157.97516,HI
+pearl-river-ny,Pearl River,41.05899,-74.02181,NY
+pearland-tx,Pearland,29.56357,-95.28605,TX
+pecan-grove-tx,Pecan Grove,29.62607,-95.73162,TX
+peekskill-ny,Peekskill,41.29009,-73.92042,NY
+pekin-il,Pekin,40.56754,-89.64066,IL
+pelham-al,Pelham,33.28567,-86.80999,AL
+pembroke-pines-fl,Pembroke Pines,26.00315,-80.22394,FL
+pendleton-or,Pendleton,45.67207,-118.7886,OR
+penn-hills-pa,Penn Hills,40.50118,-79.83922,PA
+pennsauken-nj,Pennsauken,39.95622,-75.05795,NJ
+pennsport-pa,Pennsport,39.92761,-75.15045,PA
+pensacola-fl,Pensacola,30.42131,-87.21691,FL
+peoria-az,Peoria,33.5806,-112.23738,AZ
+peoria-il,Peoria,40.69365,-89.58899,IL
+perris-ca,Perris,33.78252,-117.22865,CA
+perry-ga,Perry,32.45821,-83.73157,GA
+perry-hall-md,Perry Hall,39.41261,-76.46357,MD
+perrysburg-oh,Perrysburg,41.557,-83.62716,OH
+perth-amboy-nj,Perth Amboy,40.50677,-74.26542,NJ
+petaluma-ca,Petaluma,38.23242,-122.63665,CA
+petersburg-va,Petersburg,37.22793,-77.40193,VA
+petworth-dc,Petworth,38.94594,-77.02498,DC
+pflugerville-tx,Pflugerville,30.43937,-97.62,TX
+pharr-tx,Pharr,26.1948,-98.18362,TX
+phenix-city-al,Phenix City,32.47098,-85.00077,AL
+philadelphia-pa,Philadelphia,39.95238,-75.16362,PA
+phoenix-az,Phoenix,33.44838,-112.07404,AZ
+phoenixville-pa,Phoenixville,40.13038,-75.51491,PA
+pickerington-oh,Pickerington,39.88423,-82.7535,OH
+picnic-point-north-lynnwood-wa,Picnic Point-North Lynnwood,47.86278,-122.29497,WA
+pico-rivera-ca,Pico Rivera,33.98307,-118.09673,CA
+pikesville-md,Pikesville,39.37427,-76.72247,MD
+pine-bluff-ar,Pine Bluff,34.22843,-92.0032,AR
+pine-hills-fl,Pine Hills,28.55778,-81.4534,FL
+pinecrest-fl,Pinecrest,25.66705,-80.30811,FL
+pinehurst-nc,Pinehurst,35.19543,-79.46948,NC
+pinellas-park-fl,Pinellas Park,27.8428,-82.69954,FL
+pinewood-fl,Pinewood,25.86898,-80.21699,FL
+pinole-ca,Pinole,38.00437,-122.29886,CA
+piqua-oh,Piqua,40.14477,-84.24244,OH
+piscataway-nj,Piscataway,40.49927,-74.39904,NJ
+pittsburg-ca,Pittsburg,38.02798,-121.88468,CA
+pittsburg-ks,Pittsburg,37.41088,-94.70496,KS
+pittsburgh-pa,Pittsburgh,40.44062,-79.99589,PA
+pittsfield-ma,Pittsfield,42.45008,-73.24538,MA
+placentia-ca,Placentia,33.87224,-117.87034,CA
+plainfield-ct,Plainfield,41.67649,-71.91507,CT
+plainfield-il,Plainfield,41.62697,-88.20395,IL
+plainfield-in,Plainfield,39.70421,-86.39944,IN
+plainfield-nj,Plainfield,40.63371,-74.40737,NJ
+plainview-ny,Plainview,40.77649,-73.46735,NY
+plainview-tx,Plainview,34.18479,-101.70684,TX
+plainville-ct,Plainville,41.67454,-72.85816,CT
+plano-tx,Plano,33.01984,-96.69889,TX
+plant-city-fl,Plant City,28.01888,-82.11469,FL
+plantation-fl,Plantation,26.13421,-80.23184,FL
+plattsburgh-ny,Plattsburgh,44.69949,-73.45291,NY
+pleasant-grove-ut,Pleasant Grove,40.36412,-111.73854,UT
+pleasant-hill-ca,Pleasant Hill,37.94798,-122.0608,CA
+pleasant-plains-dc,Pleasant Plains,38.93067,-77.03025,DC
+pleasant-prairie-wi,Pleasant Prairie,42.55308,-87.93341,WI
+pleasanton-ca,Pleasanton,37.66243,-121.87468,CA
+pleasantville-nj,Pleasantville,39.38984,-74.52404,NJ
+pleasure-ridge-park-ky,Pleasure Ridge Park,38.14535,-85.8583,KY
+plum-pa,Plum,40.50035,-79.74949,PA
+plymouth-mn,Plymouth,45.01052,-93.45551,MN
+pocatello-id,Pocatello,42.8713,-112.44553,ID
+poinciana-fl,Poinciana,28.14029,-81.45841,FL
+point-breeze-pa,Point Breeze,39.93345,-75.17796,PA
+point-pleasant-nj,Point Pleasant,40.08317,-74.06819,NJ
+pomona-ca,Pomona,34.05529,-117.75228,CA
+pompano-beach-fl,Pompano Beach,26.23786,-80.12477,FL
+ponca-city-ok,Ponca City,36.70698,-97.08559,OK
+ponte-vedra-beach-fl,Ponte Vedra Beach,30.23969,-81.38564,FL
+pontiac-mi,Pontiac,42.63892,-83.29105,MI
+pooler-ga,Pooler,32.11548,-81.24706,GA
+poplar-bluff-mo,Poplar Bluff,36.757,-90.39289,MO
+port-angeles-wa,Port Angeles,48.11815,-123.43074,WA
+port-arthur-tx,Port Arthur,29.88519,-93.94233,TX
+port-charlotte-fl,Port Charlotte,26.97617,-82.09064,FL
+port-chester-ny,Port Chester,41.00176,-73.66568,NY
+port-hueneme-ca,Port Hueneme,34.14778,-119.19511,CA
+port-huron-mi,Port Huron,42.97086,-82.42491,MI
+port-orange-fl,Port Orange,29.13832,-80.99561,FL
+port-richmond-ny,Port Richmond,40.63316,-74.13653,NY
+port-richmond-pa,Port Richmond,39.99345,-75.10017,PA
+port-saint-lucie-fl,Port Saint Lucie,27.29393,-80.35033,FL
+port-washington-ny,Port Washington,40.82566,-73.69819,NY
+portage-in,Portage,41.57587,-87.17615,IN
+portage-mi,Portage,42.20115,-85.58,MI
+portage-park-il,Portage Park,41.95781,-87.76506,IL
+porterville-ca,Porterville,36.06523,-119.01677,CA
+portland-me,Portland,43.65737,-70.2589,ME
+portland-or,Portland,45.52345,-122.67621,OR
+portland-tx,Portland,27.87725,-97.32388,TX
+portsmouth-nh,Portsmouth,43.07704,-70.75766,NH
+portsmouth-oh,Portsmouth,38.73174,-82.99767,OH
+portsmouth-ri,Portsmouth,41.60232,-71.25033,RI
+portsmouth-va,Portsmouth,36.83543,-76.29827,VA
+portsmouth-heights-va,Portsmouth Heights,36.82098,-76.36883,VA
+post-falls-id,Post Falls,47.71796,-116.95159,ID
+potomac-md,Potomac,39.01817,-77.20859,MD
+pottstown-pa,Pottstown,40.24537,-75.64963,PA
+poughkeepsie-ny,Poughkeepsie,41.70037,-73.92097,NY
+poway-ca,Poway,32.96282,-117.03586,CA
+prairie-village-ks,Prairie Village,38.99167,-94.63357,KS
+prairieville-la,Prairieville,30.30297,-90.97205,LA
+prattville-al,Prattville,32.46402,-86.4597,AL
+prescott-az,Prescott,34.54002,-112.4685,AZ
+prescott-valley-az,Prescott Valley,34.61002,-112.31572,AZ
+prichard-al,Prichard,30.7388,-88.07889,AL
+princeton-fl,Princeton,25.53844,-80.40894,FL
+princeton-nj,Princeton,40.34872,-74.65905,NJ
+prior-lake-mn,Prior Lake,44.7133,-93.42273,MN
+prospect-heights-il,Prospect Heights,42.0953,-87.93757,IL
+prosper-tx,Prosper,33.23623,-96.80111,TX
+providence-ri,Providence,41.82399,-71.41283,RI
+provo-ut,Provo,40.23384,-111.65853,UT
+prunedale-ca,Prunedale,36.77579,-121.66967,CA
+pueblo-co,Pueblo,38.25445,-104.60914,CO
+pueblo-west-co,Pueblo West,38.35,-104.72275,CO
+pullman-wa,Pullman,46.73127,-117.17962,WA
+punta-gorda-fl,Punta Gorda,26.92978,-82.04537,FL
+punta-gorda-isles-fl,Punta Gorda Isles,26.91756,-82.07842,FL
+puyallup-wa,Puyallup,47.18538,-122.2929,WA
+queen-creek-az,Queen Creek,33.24866,-111.6343,AZ
+queens-ny,Queens,40.68149,-73.83652,NY
+queens-village-ny,Queens Village,40.72677,-73.74152,NY
+queensbury-ny,Queensbury,43.37729,-73.61317,NY
+quincy-il,Quincy,39.9356,-91.40987,IL
+quincy-ma,Quincy,42.25288,-71.00227,MA
+racine-wi,Racine,42.72613,-87.78285,WI
+radcliff-ky,Radcliff,37.84035,-85.94913,KY
+radford-va,Radford,37.13179,-80.57645,VA
+radnor-pa,Radnor,40.04622,-75.35991,PA
+rahway-nj,Rahway,40.60816,-74.27765,NJ
+raleigh-nc,Raleigh,35.7721,-78.63861,NC
+ramona-ca,Ramona,33.04171,-116.86808,CA
+ramsey-mn,Ramsey,45.2611,-93.45,MN
+ramsey-nj,Ramsey,41.05732,-74.14098,NJ
+rancho-cordova-ca,Rancho Cordova,38.58907,-121.30273,CA
+rancho-cucamonga-ca,Rancho Cucamonga,34.1064,-117.59311,CA
+rancho-mirage-ca,Rancho Mirage,33.73974,-116.41279,CA
+rancho-palos-verdes-ca,Rancho Palos Verdes,33.74446,-118.38702,CA
+rancho-penasquitos-ca,Rancho Penasquitos,32.95949,-117.11531,CA
+rancho-san-diego-ca,Rancho San Diego,32.74727,-116.9353,CA
+rancho-santa-margarita-ca,Rancho Santa Margarita,33.64086,-117.6031,CA
+randallstown-md,Randallstown,39.36733,-76.79525,MD
+randolph-ma,Randolph,42.1626,-71.04116,MA
+randolph-nj,Randolph,40.84829,-74.58148,NJ
+rapid-city-sd,Rapid City,44.08054,-103.23101,SD
+raymore-mo,Raymore,38.80195,-94.45273,MO
+raytown-mo,Raytown,39.00862,-94.46356,MO
+reading-ma,Reading,42.52565,-71.09533,MA
+reading-pa,Reading,40.33565,-75.92687,PA
+red-wing-mn,Red Wing,44.56247,-92.5338,MN
+redan-ga,Redan,33.74538,-84.13158,GA
+redding-ca,Redding,40.58654,-122.39168,CA
+redford-mi,Redford,42.38337,-83.2966,MI
+redland-md,Redland,39.14539,-77.14415,MD
+redlands-ca,Redlands,34.05557,-117.18254,CA
+redmond-or,Redmond,44.27262,-121.17392,OR
+redmond-wa,Redmond,47.67399,-122.12151,WA
+redondo-beach-ca,Redondo Beach,33.84918,-118.38841,CA
+redwood-city-ca,Redwood City,37.48522,-122.23635,CA
+reedley-ca,Reedley,36.59634,-119.4504,CA
+rego-park-ny,Rego Park,40.72649,-73.85264,NY
+reisterstown-md,Reisterstown,39.46976,-76.8319,MD
+reno-nv,Reno,39.52963,-119.8138,NV
+renton-wa,Renton,47.48288,-122.21707,WA
+republic-mo,Republic,37.12005,-93.48019,MO
+reseda-ca,Reseda,34.20112,-118.53647,CA
+reston-va,Reston,38.96872,-77.3411,VA
+revere-ma,Revere,42.40843,-71.01199,MA
+rexburg-id,Rexburg,43.82602,-111.78969,ID
+reynoldsburg-oh,Reynoldsburg,39.95479,-82.81212,OH
+rhawnhurst-pa,Rhawnhurst,40.06178,-75.05573,PA
+rialto-ca,Rialto,34.1064,-117.37032,CA
+richardson-tx,Richardson,32.94818,-96.72972,TX
+richfield-mn,Richfield,44.8833,-93.283,MN
+richland-wa,Richland,46.28569,-119.28446,WA
+richmond-ca,Richmond,37.93576,-122.34775,CA
+richmond-in,Richmond,39.82894,-84.89024,IN
+richmond-ky,Richmond,37.74786,-84.29465,KY
+richmond-va,Richmond,37.55376,-77.46026,VA
+richmond-hill-ny,Richmond Hill,40.69983,-73.83125,NY
+richmond-west-fl,Richmond West,25.6105,-80.42971,FL
+ridgecrest-ca,Ridgecrest,35.62246,-117.6709,CA
+ridgeland-ms,Ridgeland,32.42848,-90.13231,MS
+ridgewood-nj,Ridgewood,40.97926,-74.11653,NJ
+ridgewood-ny,Ridgewood,40.7001,-73.90569,NY
+rio-linda-ca,Rio Linda,38.69101,-121.44857,CA
+rio-rancho-nm,Rio Rancho,35.23338,-106.66447,NM
+rio-rico-az,Rio Rico,31.47148,-110.97648,AZ
+ripon-ca,Ripon,37.74159,-121.12438,CA
+rittenhouse-pa,Rittenhouse,39.94845,-75.17212,PA
+river-falls-wi,River Falls,44.86136,-92.62381,WI
+riverbank-ca,Riverbank,37.73604,-120.93549,CA
+riverdale-ga,Riverdale,33.57261,-84.41326,GA
+riverside-ca,Riverside,33.95335,-117.39616,CA
+riverside-oh,Riverside,39.77978,-84.1241,OH
+riverton-ut,Riverton,40.52189,-111.9391,UT
+riverview-fl,Riverview,27.86614,-82.32648,FL
+riviera-beach-fl,Riviera Beach,26.77534,-80.0581,FL
+roanoke-va,Roanoke,37.27097,-79.94143,VA
+roanoke-rapids-nc,Roanoke Rapids,36.46154,-77.65415,NC
+rochester-mn,Rochester,44.02163,-92.4699,MN
+rochester-nh,Rochester,43.30453,-70.97562,NH
+rochester-ny,Rochester,43.15478,-77.61556,NY
+rochester-hills-mi,Rochester Hills,42.65837,-83.14993,MI
+rock-hill-sc,Rock Hill,34.92487,-81.02508,SC
+rock-island-il,Rock Island,41.50948,-90.57875,IL
+rock-springs-wy,Rock Springs,41.58746,-109.2029,WY
+rockford-il,Rockford,42.27113,-89.094,IL
+rockland-ma,Rockland,42.13066,-70.91616,MA
+rockledge-fl,Rockledge,28.35084,-80.72533,FL
+rocklin-ca,Rocklin,38.79073,-121.23578,CA
+rockville-md,Rockville,39.084,-77.15276,MD
+rockville-centre-ny,Rockville Centre,40.65871,-73.64124,NY
+rockwall-tx,Rockwall,32.93123,-96.45971,TX
+rocky-mount-nc,Rocky Mount,35.93821,-77.79053,NC
+rocky-river-oh,Rocky River,41.4756,-81.8393,OH
+rogers-ar,Rogers,36.33202,-94.11854,AR
+rogers-park-il,Rogers Park,42.00864,-87.66672,IL
+rohnert-park-ca,Rohnert Park,38.33964,-122.7011,CA
+rolla-mo,Rolla,37.95143,-91.77127,MO
+rolling-meadows-il,Rolling Meadows,42.08419,-88.01313,IL
+rome-ga,Rome,34.25704,-85.16467,GA
+rome-ny,Rome,43.21285,-75.45573,NY
+romeoville-il,Romeoville,41.64753,-88.08951,IL
+romulus-mi,Romulus,42.22226,-83.3966,MI
+ronkonkoma-ny,Ronkonkoma,40.821,-73.143,NY
+roosevelt-ny,Roosevelt,40.67871,-73.58902,NY
+rosamond-ca,Rosamond,34.86414,-118.16341,CA
+rose-hill-va,Rose Hill,38.78872,-77.11276,VA
+roseburg-or,Roseburg,43.2165,-123.34174,OR
+rosedale-md,Rosedale,39.32011,-76.51552,MD
+rosedale-ny,Rosedale,40.66205,-73.73541,NY
+roselle-il,Roselle,41.98475,-88.07979,IL
+roselle-nj,Roselle,40.65223,-74.25882,NJ
+rosemead-ca,Rosemead,34.08057,-118.07285,CA
+rosemont-ca,Rosemont,38.55185,-121.36467,CA
+rosemount-mn,Rosemount,44.73941,-93.12577,MN
+rosenberg-tx,Rosenberg,29.55718,-95.80856,TX
+roseville-ca,Roseville,38.75212,-121.28801,CA
+roseville-mi,Roseville,42.49726,-82.93714,MI
+roseville-mn,Roseville,45.00608,-93.15661,MN
+roslindale-ma,Roslindale,42.29121,-71.1245,MA
+rossville-md,Rossville,39.33844,-76.47968,MD
+rossville-ny,Rossville,40.54929,-74.21019,NY
+roswell-ga,Roswell,34.02316,-84.36159,GA
+roswell-nm,Roswell,33.39437,-104.52491,NM
+rotterdam-ny,Rotterdam,42.78702,-73.97096,NY
+round-lake-il,Round Lake,42.35336,-88.09341,IL
+round-lake-beach-il,Round Lake Beach,42.37169,-88.09008,IL
+round-rock-tx,Round Rock,30.50826,-97.6789,TX
+rowland-heights-ca,Rowland Heights,33.97612,-117.90534,CA
+rowlett-tx,Rowlett,32.9029,-96.56388,TX
+roxbury-crossing-ma,Roxbury Crossing,42.33065,-71.09116,MA
+roy-ut,Roy,41.16161,-112.02633,UT
+royal-oak-mi,Royal Oak,42.48948,-83.14465,MI
+royal-palm-beach-fl,Royal Palm Beach,26.7084,-80.2306,FL
+rubidoux-ca,Rubidoux,33.99613,-117.4056,CA
+ruskin-fl,Ruskin,27.72086,-82.43315,FL
+russellville-ar,Russellville,35.27842,-93.13379,AR
+ruston-la,Ruston,32.52321,-92.63793,LA
+rutherford-nj,Rutherford,40.82649,-74.10681,NJ
+rutland-vt,Rutland,43.61062,-72.97261,VT
+rye-ny,Rye,40.98065,-73.68374,NY
+sachse-tx,Sachse,32.97623,-96.59527,TX
+saco-me,Saco,43.50092,-70.44283,ME
+sacramento-ca,Sacramento,38.58157,-121.4944,CA
+safety-harbor-fl,Safety Harbor,27.99085,-82.69316,FL
+saginaw-mi,Saginaw,43.41947,-83.95081,MI
+saginaw-tx,Saginaw,32.86013,-97.36391,TX
+saginaw-township-north-mi,Saginaw Township North,43.46004,-84.00674,MI
+sahuarita-az,Sahuarita,31.95758,-110.95565,AZ
+saint-andrews-sc,Saint Andrews,34.043,-81.101,SC
+saint-charles-md,Saint Charles,38.60317,-76.93858,MD
+saint-charles-mo,Saint Charles,38.78394,-90.48123,MO
+saint-clair-shores-mi,Saint Clair Shores,42.49698,-82.88881,MI
+saint-cloud-fl,Saint Cloud,28.2489,-81.28118,FL
+saint-cloud-mn,Saint Cloud,45.5608,-94.16249,MN
+saint-george-ut,Saint George,37.10415,-113.58412,UT
+saint-joseph-mo,Saint Joseph,39.76861,-94.84663,MO
+saint-louis-park-mn,Saint Louis Park,44.9483,-93.34801,MN
+saint-matthews-ky,Saint Matthews,38.25285,-85.65579,KY
+saint-michael-mn,Saint Michael,45.20996,-93.66496,MN
+saint-paul-mn,Saint Paul,44.94441,-93.09327,MN
+saint-peters-mo,Saint Peters,38.80033,-90.62651,MO
+salem-ma,Salem,42.51977,-70.89552,MA
+salem-nh,Salem,42.78842,-71.20089,NH
+salem-or,Salem,44.9429,-123.0351,OR
+salem-va,Salem,37.29347,-80.05476,VA
+salina-ks,Salina,38.84028,-97.61142,KS
+salinas-ca,Salinas,36.67774,-121.6555,CA
+salisbury-md,Salisbury,38.36067,-75.59937,MD
+salisbury-nc,Salisbury,35.67097,-80.47423,NC
+salmon-creek-wa,Salmon Creek,45.71067,-122.64899,WA
+salt-lake-city-ut,Salt Lake City,40.76078,-111.89105,UT
+sammamish-wa,Sammamish,47.64177,-122.0804,WA
+san-angelo-tx,San Angelo,31.46377,-100.43704,TX
+san-antonio-tx,San Antonio,29.42412,-98.49363,TX
+san-benito-tx,San Benito,26.13258,-97.6311,TX
+san-bernardino-ca,San Bernardino,34.10834,-117.28977,CA
+san-bruno-ca,San Bruno,37.63049,-122.41108,CA
+san-carlos-ca,San Carlos,37.50716,-122.26052,CA
+san-carlos-park-fl,San Carlos Park,26.4673,-81.80147,FL
+san-clemente-ca,San Clemente,33.42697,-117.61199,CA
+san-diego-ca,San Diego,32.71571,-117.16472,CA
+san-dimas-ca,San Dimas,34.10668,-117.80673,CA
+san-fernando-ca,San Fernando,34.28195,-118.43897,CA
+san-francisco-ca,San Francisco,37.77493,-122.41942,CA
+san-gabriel-ca,San Gabriel,34.09611,-118.10583,CA
+san-jacinto-ca,San Jacinto,33.78391,-116.95864,CA
+san-jose-ca,San Jose,37.33939,-121.89496,CA
+san-juan-tx,San Juan,26.18924,-98.15529,TX
+san-juan-capistrano-ca,San Juan Capistrano,33.50169,-117.66255,CA
+san-leandro-ca,San Leandro,37.72493,-122.15608,CA
+san-lorenzo-ca,San Lorenzo,37.67412,-122.13321,CA
+san-luis-az,San Luis,32.487,-114.78218,AZ
+san-luis-obispo-ca,San Luis Obispo,35.28275,-120.65962,CA
+san-marcos-ca,San Marcos,33.14337,-117.16614,CA
+san-marcos-tx,San Marcos,29.88327,-97.94139,TX
+san-mateo-ca,San Mateo,37.56299,-122.32553,CA
+san-pablo-ca,San Pablo,37.96215,-122.34553,CA
+san-pedro-ca,San Pedro,33.73585,-118.29229,CA
+san-rafael-ca,San Rafael,37.97353,-122.53109,CA
+san-ramon-ca,San Ramon,37.77993,-121.97802,CA
+san-tan-valley-az,San Tan Valley,33.1911,-111.528,AZ
+sand-springs-ok,Sand Springs,36.13981,-96.10889,OK
+sandalfoot-cove-fl,Sandalfoot Cove,26.33863,-80.1869,FL
+sandusky-oh,Sandusky,41.44894,-82.70796,OH
+sandy-ut,Sandy,40.59161,-111.8841,UT
+sandy-hills-ut,Sandy Hills,40.58106,-111.85077,UT
+sandy-springs-ga,Sandy Springs,33.92427,-84.37854,GA
+sanford-fl,Sanford,28.80055,-81.27312,FL
+sanford-me,Sanford,43.43925,-70.77422,ME
+sanford-nc,Sanford,35.47988,-79.1803,NC
+sanger-ca,Sanger,36.70801,-119.55597,CA
+santa-ana-ca,Santa Ana,33.74557,-117.86783,CA
+santa-barbara-ca,Santa Barbara,34.42083,-119.69819,CA
+santa-clara-ca,Santa Clara,37.35411,-121.95524,CA
+santa-clarita-ca,Santa Clarita,34.39166,-118.54259,CA
+santa-cruz-ca,Santa Cruz,36.97412,-122.0308,CA
+santa-fe-nm,Santa Fe,35.68698,-105.9378,NM
+santa-fe-springs-ca,Santa Fe Springs,33.94724,-118.08535,CA
+santa-maria-ca,Santa Maria,34.95303,-120.43572,CA
+santa-monica-ca,Santa Monica,34.01949,-118.49138,CA
+santa-paula-ca,Santa Paula,34.35417,-119.05927,CA
+santa-rosa-ca,Santa Rosa,38.44047,-122.71443,CA
+santa-rosa-beach-fl,Santa Rosa Beach,30.39603,-86.22883,FL
+santee-ca,Santee,32.83838,-116.97392,CA
+sapulpa-ok,Sapulpa,35.9987,-96.11417,OK
+sarasota-fl,Sarasota,27.33643,-82.53065,FL
+saratoga-ca,Saratoga,37.26383,-122.02301,CA
+saratoga-springs-ny,Saratoga Springs,43.08313,-73.78457,NY
+saratoga-springs-ut,Saratoga Springs,40.34912,-111.90466,UT
+sartell-mn,Sartell,45.62163,-94.20694,MN
+saugus-ma,Saugus,42.46482,-71.01005,MA
+savage-mn,Savage,44.77913,-93.33634,MN
+savannah-ga,Savannah,32.08354,-81.09983,GA
+sawtelle-ca,Sawtelle,34.0363,-118.44949,CA
+sayreville-nj,Sayreville,40.45927,-74.36098,NJ
+sayreville-junction-nj,Sayreville Junction,40.46538,-74.33043,NJ
+sayville-ny,Sayville,40.73593,-73.08206,NY
+scaggsville-md,Scaggsville,39.14511,-76.90025,MD
+scarsdale-ny,Scarsdale,41.0051,-73.78458,NY
+schaumburg-il,Schaumburg,42.03336,-88.08341,IL
+schenectady-ny,Schenectady,42.81424,-73.93957,NY
+schererville-in,Schererville,41.47892,-87.45476,IN
+schertz-tx,Schertz,29.55217,-98.26973,TX
+schofield-barracks-hi,Schofield Barracks,21.49837,-158.06515,HI
+schofield-wheeler-hi,Schofield-Wheeler,21.48394,-158.04681,HI
+scotch-plains-nj,Scotch Plains,40.65538,-74.38987,NJ
+scottsdale-az,Scottsdale,33.50921,-111.89903,AZ
+scranton-pa,Scranton,41.40916,-75.6649,PA
+seatac-wa,SeaTac,47.44846,-122.29217,WA
+seabrook-md,Seabrook,38.974,-76.849,MD
+seaford-ny,Seaford,40.66593,-73.48818,NY
+seagoville-tx,Seagoville,32.63958,-96.53832,TX
+seal-beach-ca,Seal Beach,33.74141,-118.10479,CA
+searcy-ar,Searcy,35.25064,-91.73625,AR
+seaside-ca,Seaside,36.61107,-121.85162,CA
+seattle-wa,Seattle,47.60621,-122.33207,WA
+sebastian-fl,Sebastian,27.81641,-80.47061,FL
+secaucus-nj,Secaucus,40.78955,-74.05653,NJ
+security-widefield-co,Security-Widefield,38.74728,-104.71439,CO
+sedalia-mo,Sedalia,38.70446,-93.22826,MO
+seguin-tx,Seguin,29.56884,-97.96473,TX
+selden-ny,Selden,40.86649,-73.03566,NY
+selma-al,Selma,32.40736,-87.0211,AL
+selma-ca,Selma,36.57078,-119.61208,CA
+seminole-fl,Seminole,27.83975,-82.79121,FL
+setauket-east-setauket-ny,Setauket-East Setauket,40.93064,-73.10179,NY
+seven-oaks-sc,Seven Oaks,34.04876,-81.14648,SC
+severn-md,Severn,39.13705,-76.6983,MD
+severna-park-md,Severna Park,39.07039,-76.54524,MD
+sevierville-tn,Sevierville,35.86815,-83.56184,TN
+sewell-nj,Sewell,39.7665,-75.14434,NJ
+seymour-ct,Seymour,41.39676,-73.07594,CT
+seymour-in,Seymour,38.95922,-85.89025,IN
+shafter-ca,Shafter,35.50051,-119.27178,CA
+shaker-heights-oh,Shaker Heights,41.47394,-81.53707,OH
+shakopee-mn,Shakopee,44.79802,-93.5269,MN
+shaw-dc,Shaw,38.91206,-77.02137,DC
+shawnee-ks,Shawnee,39.04167,-94.72024,KS
+shawnee-ok,Shawnee,35.32729,-96.9253,OK
+sheboygan-wi,Sheboygan,43.75083,-87.71453,WI
+sheepshead-bay-ny,Sheepshead Bay,40.59122,-73.94458,NY
+shelby-mi,Shelby,42.67087,-83.03298,MI
+shelby-nc,Shelby,35.29235,-81.53565,NC
+shelbyville-in,Shelbyville,39.52144,-85.77692,IN
+shelbyville-ky,Shelbyville,38.21201,-85.22357,KY
+shelbyville-tn,Shelbyville,35.48341,-86.46027,TN
+shelton-ct,Shelton,41.31649,-73.09316,CT
+shenandoah-la,Shenandoah,30.4013,-91.00094,LA
+sheridan-wy,Sheridan,44.79719,-106.95618,WY
+sherman-tx,Sherman,33.63566,-96.60888,TX
+sherman-oaks-ca,Sherman Oaks,34.15112,-118.44925,CA
+sherrelwood-co,Sherrelwood,39.83776,-105.00137,CO
+sherwood-ar,Sherwood,34.81509,-92.22432,AR
+sherwood-or,Sherwood,45.35651,-122.8401,OR
+shirley-ny,Shirley,40.80149,-72.8676,NY
+shively-ky,Shively,38.20007,-85.82274,KY
+shoreline-wa,Shoreline,47.75565,-122.34152,WA
+shoreview-mn,Shoreview,45.07913,-93.14717,MN
+shorewood-il,Shorewood,41.52003,-88.20173,IL
+short-pump-va,Short Pump,37.65042,-77.61249,VA
+shreveport-la,Shreveport,32.52515,-93.75018,LA
+shrewsbury-ma,Shrewsbury,42.29593,-71.71285,MA
+sicklerville-nj,Sicklerville,39.71734,-74.96933,NJ
+sidney-oh,Sidney,40.28422,-84.1555,OH
+sierra-vista-az,Sierra Vista,31.55454,-110.30369,AZ
+sikeston-mo,Sikeston,36.87672,-89.58786,MO
+siloam-springs-ar,Siloam Springs,36.18814,-94.5405,AR
+silver-firs-wa,Silver Firs,47.86602,-122.1551,WA
+silver-lake-ca,Silver Lake,34.08668,-118.27023,CA
+silver-spring-md,Silver Spring,38.99067,-77.02609,MD
+silverdale-wa,Silverdale,47.64454,-122.69487,WA
+simi-valley-ca,Simi Valley,34.26945,-118.78148,CA
+simpsonville-sc,Simpsonville,34.73706,-82.25428,SC
+sioux-city-ia,Sioux City,42.49999,-96.40031,IA
+sioux-falls-sd,Sioux Falls,43.54369,-96.72796,SD
+skokie-il,Skokie,42.03336,-87.73339,IL
+slidell-la,Slidell,30.27519,-89.78117,LA
+smithfield-ri,Smithfield,41.92204,-71.54951,RI
+smithtown-ny,Smithtown,40.85593,-73.20067,NY
+smyrna-ga,Smyrna,33.88399,-84.51438,GA
+smyrna-tn,Smyrna,35.98284,-86.5186,TN
+snellville-ga,Snellville,33.85733,-84.01991,GA
+socastee-sc,Socastee,33.6835,-78.99837,SC
+socorro-tx,Socorro,31.65456,-106.30331,TX
+socorro-mission-number-1-colonia-tx,Socorro Mission Number 1 Colonia,31.63622,-106.29054,TX
+soledad-ca,Soledad,36.42469,-121.32632,CA
+solon-oh,Solon,41.38978,-81.44123,OH
+somerset-ma,Somerset,41.76955,-71.12866,MA
+somerset-nj,Somerset,40.4976,-74.48849,NJ
+somerton-az,Somerton,32.59644,-114.70968,AZ
+somerton-pa,Somerton,40.12344,-75.01489,PA
+somerville-ma,Somerville,42.3876,-71.0995,MA
+south-bel-air-md,South Bel Air,39.53316,-76.33746,MD
+south-bend-in,South Bend,41.68338,-86.25001,IN
+south-boston-ma,South Boston,42.33343,-71.04949,MA
+south-bradenton-fl,South Bradenton,27.4631,-82.58176,FL
+south-burlington-vt,South Burlington,44.46699,-73.17096,VT
+south-chicago-il,South Chicago,41.73977,-87.55425,IL
+south-el-monte-ca,South El Monte,34.05195,-118.04673,CA
+south-elgin-il,South Elgin,41.99419,-88.2923,IL
+south-euclid-oh,South Euclid,41.52311,-81.51846,OH
+south-fulton-ga,South Fulton,33.59259,-84.67294,GA
+south-gate-ca,South Gate,33.95474,-118.21202,CA
+south-gate-md,South Gate,39.129,-76.6258,MD
+south-hadley-ma,South Hadley,42.25842,-72.57453,MA
+south-hill-wa,South Hill,47.14121,-122.27012,WA
+south-holland-il,South Holland,41.60087,-87.60699,IL
+south-houston-tx,South Houston,29.66301,-95.23549,TX
+south-jordan-ut,South Jordan,40.56217,-111.92966,UT
+south-jordan-heights-ut,South Jordan Heights,40.56384,-111.94938,UT
+south-kingstown-ri,South Kingstown,41.44718,-71.52494,RI
+south-lake-tahoe-ca,South Lake Tahoe,38.93324,-119.98435,CA
+south-laurel-md,South Laurel,39.06983,-76.85025,MD
+south-lawndale-il,South Lawndale,41.84364,-87.71255,IL
+south-miami-heights-fl,South Miami Heights,25.59761,-80.38061,FL
+south-milwaukee-wi,South Milwaukee,42.91057,-87.86064,WI
+south-ogden-ut,South Ogden,41.19189,-111.97133,UT
+south-old-bridge-nj,South Old Bridge,40.40816,-74.35432,NJ
+south-orange-nj,South Orange,40.74899,-74.26126,NJ
+south-ozone-park-ny,South Ozone Park,40.6701,-73.81902,NY
+south-pasadena-ca,South Pasadena,34.11612,-118.15035,CA
+south-peabody-ma,South Peabody,42.50982,-70.94949,MA
+south-plainfield-nj,South Plainfield,40.57927,-74.41154,NJ
+south-portland-me,South Portland,43.64147,-70.24088,ME
+south-portland-gardens-me,South Portland Gardens,43.63897,-70.31533,ME
+south-riding-va,South Riding,38.92094,-77.50388,VA
+south-river-nj,South River,40.44649,-74.38598,NJ
+south-saint-paul-mn,South Saint Paul,44.89274,-93.03494,MN
+south-salt-lake-ut,South Salt Lake,40.71884,-111.88827,UT
+south-san-francisco-ca,South San Francisco,37.65466,-122.40775,CA
+south-san-jose-hills-ca,South San Jose Hills,34.01279,-117.90478,CA
+south-shore-il,South Shore,41.76198,-87.57783,IL
+south-suffolk-va,South Suffolk,36.71709,-76.59023,VA
+south-valley-nm,South Valley,35.01005,-106.67808,NM
+south-vineland-nj,South Vineland,39.44595,-75.02879,NJ
+south-whittier-ca,South Whittier,33.95015,-118.03917,CA
+south-windsor-ct,South Windsor,41.82371,-72.6212,CT
+south-yuba-city-ca,South Yuba City,39.11656,-121.63913,CA
+southaven-ms,Southaven,34.98898,-90.01259,MS
+southbridge-ma,Southbridge,42.0751,-72.03341,MA
+southbury-ct,Southbury,41.48148,-73.21317,CT
+southchase-fl,Southchase,28.39306,-81.3834,FL
+southfield-mi,Southfield,42.47337,-83.22187,MI
+southgate-mi,Southgate,42.21393,-83.19381,MI
+southglenn-co,Southglenn,39.58721,-104.95276,CO
+southington-ct,Southington,41.59649,-72.8776,CT
+southlake-tx,Southlake,32.94124,-97.13418,TX
+southwest-waterfront-dc,Southwest Waterfront,38.87934,-77.01758,DC
+spanaway-wa,Spanaway,47.10399,-122.43457,WA
+spanish-fork-ut,Spanish Fork,40.11496,-111.65492,UT
+spanish-lake-mo,Spanish Lake,38.78783,-90.21594,MO
+spanish-springs-nv,Spanish Springs,39.64908,-119.70741,NV
+sparks-nv,Sparks,39.53491,-119.75269,NV
+sparta-nj,Sparta,41.03343,-74.63849,NJ
+spartanburg-sc,Spartanburg,34.94957,-81.93205,SC
+spokane-wa,Spokane,47.65966,-117.42908,WA
+spokane-valley-wa,Spokane Valley,47.67323,-117.23937,WA
+spring-tx,Spring,30.07994,-95.41716,TX
+spring-hill-fl,Spring Hill,28.47688,-82.52546,FL
+spring-hill-tn,Spring Hill,35.75118,-86.93,TN
+spring-valley-ca,Spring Valley,32.74477,-116.99892,CA
+spring-valley-nv,Spring Valley,36.10803,-115.245,NV
+spring-valley-ny,Spring Valley,41.11315,-74.04375,NY
+springboro-oh,Springboro,39.55228,-84.23327,OH
+springdale-ar,Springdale,36.18674,-94.12881,AR
+springfield-il,Springfield,39.80172,-89.64371,IL
+springfield-ma,Springfield,42.10148,-72.58981,MA
+springfield-mo,Springfield,37.21533,-93.29824,MO
+springfield-oh,Springfield,39.92423,-83.80882,OH
+springfield-or,Springfield,44.04624,-123.02203,OR
+springfield-pa,Springfield,39.93067,-75.32019,PA
+springfield-tn,Springfield,36.50921,-86.885,TN
+springfield-va,Springfield,38.78928,-77.1872,VA
+springfield-gardens-ny,Springfield Gardens,40.66312,-73.76221,NY
+springville-ut,Springville,40.16523,-111.61075,UT
+st-charles-il,St. Charles,41.91419,-88.30869,IL
+st-charles-md,St. Charles,38.60728,-76.92478,MD
+st-johns-fl,St. Johns,30.0815,-81.54774,FL
+st-louis-mo,St. Louis,38.62727,-90.19789,MO
+st-marys-ga,St. Marys,30.73051,-81.54649,GA
+st-petersburg-fl,St. Petersburg,27.77086,-82.67927,FL
+stafford-tx,Stafford,29.61607,-95.55772,TX
+stallings-nc,Stallings,35.0907,-80.68618,NC
+stamford-ct,Stamford,41.05343,-73.53873,CT
+stanton-ca,Stanton,33.80252,-117.99312,CA
+starkville-ms,Starkville,33.45049,-88.81961,MS
+state-college-pa,State College,40.79339,-77.86,PA
+staten-island-ny,Staten Island,40.56233,-74.13986,NY
+statesboro-ga,Statesboro,32.44879,-81.78317,GA
+statesville-nc,Statesville,35.78264,-80.8873,NC
+staunton-va,Staunton,38.14991,-79.0732,VA
+stephenville-tx,Stephenville,32.2207,-98.20226,TX
+sterling-il,Sterling,41.78864,-89.69622,IL
+sterling-va,Sterling,39.00622,-77.4286,VA
+sterling-heights-mi,Sterling Heights,42.58031,-83.0302,MI
+steubenville-oh,Steubenville,40.36979,-80.63396,OH
+stevens-point-wi,Stevens Point,44.52358,-89.57456,WI
+stevenson-ranch-ca,Stevenson Ranch,34.39048,-118.57372,CA
+stillwater-mn,Stillwater,45.05636,-92.80604,MN
+stillwater-ok,Stillwater,36.11561,-97.05837,OK
+stockbridge-ga,Stockbridge,33.54428,-84.23381,GA
+stockton-ca,Stockton,37.9577,-121.29078,CA
+stonecrest-ga,Stonecrest,33.70849,-84.13485,GA
+stonegate-ca,Stonegate,33.70534,-117.74009,CA
+stoneham-ma,Stoneham,42.4801,-71.0995,MA
+storrs-ct,Storrs,41.80843,-72.24952,CT
+stoughton-ma,Stoughton,42.1251,-71.10227,MA
+stow-oh,Stow,41.1595,-81.44039,OH
+stratford-ct,Stratford,41.18454,-73.13317,CT
+strawberry-mansion-pa,Strawberry Mansion,39.98345,-75.18268,PA
+streamwood-il,Streamwood,42.02558,-88.17841,IL
+streetsboro-oh,Streetsboro,41.23922,-81.34594,OH
+strongsville-oh,Strongsville,41.3145,-81.83569,OH
+stuart-fl,Stuart,27.19755,-80.25283,FL
+studio-city-ca,Studio City,34.14862,-118.39647,CA
+sudbury-ma,Sudbury,42.38343,-71.41617,MA
+sudley-va,Sudley,38.79289,-77.49749,VA
+suffolk-va,Suffolk,36.72836,-76.58496,VA
+sugar-hill-ga,Sugar Hill,34.10649,-84.03352,GA
+sugar-land-tx,Sugar Land,29.61968,-95.63495,TX
+suisun-ca,Suisun,38.23825,-122.04024,CA
+suitland-md,Suitland,38.84872,-76.92386,MD
+suitland-silver-hill-md,Suitland-Silver Hill,38.84685,-76.92591,MD
+sulphur-la,Sulphur,30.23659,-93.37738,LA
+sulphur-springs-tx,Sulphur Springs,33.13845,-95.60107,TX
+summerlin-south-nv,Summerlin South,36.11708,-115.33001,NV
+summerville-sc,Summerville,33.0185,-80.17565,SC
+summit-nj,Summit,40.71562,-74.36468,NJ
+sumter-sc,Sumter,33.92044,-80.34147,SC
+sun-city-az,Sun City,33.59754,-112.27182,AZ
+sun-city-ca,Sun City,33.70919,-117.19726,CA
+sun-city-center-fl,Sun City Center,27.71809,-82.35176,FL
+sun-city-west-az,Sun City West,33.66198,-112.34127,AZ
+sun-prairie-wi,Sun Prairie,43.1836,-89.21373,WI
+sun-valley-nv,Sun Valley,39.5963,-119.77602,NV
+sunland-ca,Sunland,34.26695,-118.3023,CA
+sunland-park-nm,Sunland Park,31.7965,-106.57999,NM
+sunny-isles-beach-fl,Sunny Isles Beach,25.95065,-80.12282,FL
+sunnyside-ny,Sunnyside,40.73982,-73.93542,NY
+sunnyside-wa,Sunnyside,46.32374,-120.00865,WA
+sunnyvale-ca,Sunnyvale,37.36883,-122.03635,CA
+sunrise-fl,Sunrise,26.13397,-80.1131,FL
+sunrise-manor-nv,Sunrise Manor,36.21108,-115.07306,NV
+sunset-fl,Sunset,25.70594,-80.35228,FL
+sunset-park-ny,Sunset Park,40.64548,-74.01241,NY
+superior-wi,Superior,46.72077,-92.10408,WI
+surprise-az,Surprise,33.63059,-112.33322,AZ
+susanville-ca,Susanville,40.41628,-120.65301,CA
+suwanee-ga,Suwanee,34.05149,-84.0713,GA
+swansea-ma,Swansea,41.74816,-71.18977,MA
+sweetwater-fl,Sweetwater,25.76343,-80.37311,FL
+sycamore-il,Sycamore,41.98892,-88.68675,IL
+sylmar-ca,Sylmar,34.30778,-118.44925,CA
+sylvania-oh,Sylvania,41.71894,-83.71299,OH
+syosset-ny,Syosset,40.82621,-73.50207,NY
+syracuse-ny,Syracuse,43.04812,-76.14742,NY
+syracuse-ut,Syracuse,41.08939,-112.06467,UT
+tacoma-wa,Tacoma,47.25288,-122.44429,WA
+tacony-pa,Tacony,40.03122,-75.04434,PA
+tahlequah-ok,Tahlequah,35.91537,-94.96996,OK
+takoma-park-md,Takoma Park,38.97789,-77.00748,MD
+talladega-al,Talladega,33.43594,-86.1058,AL
+tallahassee-fl,Tallahassee,30.43826,-84.28073,FL
+tallmadge-oh,Tallmadge,41.10145,-81.44178,OH
+tamarac-fl,Tamarac,26.21286,-80.24977,FL
+tamiami-fl,Tamiami,25.75871,-80.39839,FL
+tampa-fl,Tampa,27.94752,-82.45843,FL
+tanque-verde-az,Tanque Verde,32.25174,-110.73731,AZ
+tarpon-springs-fl,Tarpon Springs,28.14612,-82.75677,FL
+taunton-ma,Taunton,41.9001,-71.08977,MA
+tavares-fl,Tavares,28.80416,-81.72563,FL
+taylor-mi,Taylor,42.24087,-83.26965,MI
+taylor-tx,Taylor,30.57076,-97.40944,TX
+taylors-sc,Taylors,34.92039,-82.29623,SC
+taylorsville-ut,Taylorsville,40.66772,-111.93883,UT
+teaneck-nj,Teaneck,40.8976,-74.01597,NJ
+temecula-ca,Temecula,33.49364,-117.14836,CA
+tempe-az,Tempe,33.41477,-111.90931,AZ
+tempe-junction-az,Tempe Junction,33.41421,-111.94348,AZ
+temple-tx,Temple,31.09823,-97.34278,TX
+temple-city-ca,Temple City,34.10723,-118.05785,CA
+temple-terrace-fl,Temple Terrace,28.0353,-82.38926,FL
+terrace-heights-ny,Terrace Heights,40.72149,-73.7693,NY
+terre-haute-in,Terre Haute,39.4667,-87.41391,IN
+terrell-tx,Terrell,32.73596,-96.27526,TX
+terrytown-la,Terrytown,29.91021,-90.03257,LA
+tewksbury-ma,Tewksbury,42.61065,-71.23422,MA
+texarkana-ar,Texarkana,33.44179,-94.03769,AR
+texarkana-tx,Texarkana,33.42513,-94.04769,TX
+texas-city-tx,Texas City,29.38385,-94.9027,TX
+the-acreage-fl,The Acreage,26.79404,-80.26749,FL
+the-bronx-ny,The Bronx,40.84985,-73.86641,NY
+the-colony-tx,The Colony,33.08901,-96.88639,TX
+the-crossings-fl,The Crossings,25.67066,-80.40117,FL
+the-dalles-or,The Dalles,45.59456,-121.17868,OR
+the-hammocks-fl,The Hammocks,25.67149,-80.4445,FL
+the-trails-of-frisco-tx,The Trails of Frisco,33.16087,-96.87182,TX
+the-villages-fl,The Villages,28.93408,-81.95994,FL
+the-woodlands-tx,The Woodlands,30.15799,-95.48938,TX
+thomasville-ga,Thomasville,30.83658,-83.97878,GA
+thomasville-nc,Thomasville,35.88264,-80.08199,NC
+thornton-co,Thornton,39.86804,-104.97192,CO
+thousand-oaks-ca,Thousand Oaks,34.17056,-118.83759,CA
+three-lakes-fl,Three Lakes,25.64205,-80.39839,FL
+throgs-neck-ny,Throgs Neck,40.8226,-73.81958,NY
+tiffin-oh,Tiffin,41.1145,-83.17797,OH
+tifton-ga,Tifton,31.45046,-83.5085,GA
+tigard-or,Tigard,45.43123,-122.77149,OR
+tillmans-corner-al,Tillmans Corner,30.59019,-88.17084,AL
+times-square-ny,Times Square,40.75636,-73.98644,NY
+tinley-park-il,Tinley Park,41.57337,-87.78449,IL
+tinton-falls-nj,Tinton Falls,40.30428,-74.10042,NJ
+titusville-fl,Titusville,28.61222,-80.80755,FL
+toledo-oh,Toledo,41.66394,-83.55521,OH
+toms-river-nj,Toms River,39.95373,-74.19792,NJ
+tooele-ut,Tooele,40.53078,-112.29828,UT
+topeka-ks,Topeka,39.04833,-95.67804,KS
+torrance-ca,Torrance,33.83585,-118.34063,CA
+torrington-ct,Torrington,41.80065,-73.12122,CT
+town-n-country-fl,Town 'n' Country,28.01057,-82.57732,FL
+towson-md,Towson,39.4015,-76.60191,MD
+tracy-ca,Tracy,37.73987,-121.42618,CA
+traverse-city-mi,Traverse City,44.76306,-85.62063,MI
+tremont-ny,Tremont,40.84954,-73.90569,NY
+trenton-mi,Trenton,42.13949,-83.17826,MI
+trenton-nj,Trenton,40.21705,-74.74294,NJ
+tri-cities-wa,Tri-Cities,46.2454,-119.19617,WA
+trotwood-oh,Trotwood,39.79728,-84.31133,OH
+troutdale-or,Troutdale,45.53929,-122.38731,OR
+troy-al,Troy,31.80877,-85.96995,AL
+troy-mi,Troy,42.60559,-83.14993,MI
+troy-ny,Troy,42.72841,-73.69179,NY
+troy-oh,Troy,40.0395,-84.20328,OH
+truckee-ca,Truckee,39.32796,-120.18325,CA
+trumbull-ct,Trumbull,41.24287,-73.20067,CT
+trussville-al,Trussville,33.61983,-86.60888,AL
+tualatin-or,Tualatin,45.38401,-122.76399,OR
+tuckahoe-va,Tuckahoe,37.59015,-77.55638,VA
+tucker-ga,Tucker,33.85455,-84.21714,GA
+tucson-az,Tucson,32.22174,-110.92648,AZ
+tujunga-ca,Tujunga,34.25223,-118.28841,CA
+tukwila-wa,Tukwila,47.47399,-122.26096,WA
+tulare-ca,Tulare,36.20773,-119.34734,CA
+tullahoma-tn,Tullahoma,35.36202,-86.20943,TN
+tulsa-ok,Tulsa,36.15398,-95.99277,OK
+tumwater-wa,Tumwater,47.00732,-122.90931,WA
+tupelo-ms,Tupelo,34.25807,-88.70464,MS
+turlock-ca,Turlock,37.49466,-120.84659,CA
+tuscaloosa-al,Tuscaloosa,33.20984,-87.56917,AL
+tustin-ca,Tustin,33.74585,-117.82617,CA
+tustin-legacy-ca,Tustin Legacy,33.70006,-117.82588,CA
+twentynine-palms-ca,Twentynine Palms,34.13556,-116.05417,CA
+twin-falls-id,Twin Falls,42.56297,-114.46087,ID
+twinsburg-oh,Twinsburg,41.31256,-81.44011,OH
+tyler-tx,Tyler,32.35126,-95.30106,TX
+tysons-va,Tysons,38.91872,-77.23109,VA
+uc-irvine-ca,UC Irvine,33.63967,-117.84164,CA
+ukiah-ca,Ukiah,39.15017,-123.20778,CA
+union-nj,Union,40.6976,-74.2632,NJ
+union-city-ca,Union City,37.59577,-122.01913,CA
+union-city-ga,Union City,33.58706,-84.54243,GA
+union-city-nj,Union City,40.77955,-74.02375,NJ
+union-hill-novelty-hill-wa,Union Hill-Novelty Hill,47.67887,-122.02833,WA
+uniondale-ny,Uniondale,40.70038,-73.59291,NY
+unionport-ny,Unionport,40.82732,-73.85013,NY
+universal-city-ca,Universal City,34.1389,-118.35341,CA
+universal-city-tx,Universal City,29.54801,-98.29112,TX
+university-fl,University,28.07389,-82.43902,FL
+university-city-mo,University City,38.65588,-90.30928,MO
+university-city-pa,University City,39.95071,-75.19476,PA
+university-heights-ny,University Heights,40.8601,-73.9093,NY
+university-park-fl,University Park,25.74649,-80.36755,FL
+university-park-tx,University Park,32.85013,-96.80028,TX
+university-place-wa,University Place,47.23565,-122.5504,WA
+university-of-texas-tx,University of Texas,30.28604,-97.73889,TX
+upland-ca,Upland,34.09751,-117.64839,CA
+upper-alton-il,Upper Alton,38.91144,-90.15066,IL
+upper-arlington-oh,Upper Arlington,39.99451,-83.06241,OH
+upper-saint-clair-pa,Upper Saint Clair,40.3359,-80.08339,PA
+upper-west-side-ny,Upper West Side,40.78705,-73.97542,NY
+uptown-il,Uptown,41.9659,-87.65262,IL
+urbana-il,Urbana,40.11059,-88.20727,IL
+urbandale-ia,Urbandale,41.62666,-93.71217,IA
+utica-ny,Utica,43.1009,-75.23266,NY
+uvalde-tx,Uvalde,29.20968,-99.78617,TX
+vacaville-ca,Vacaville,38.35658,-121.98774,CA
+valdosta-ga,Valdosta,30.83334,-83.28032,GA
+valencia-ca,Valencia,34.44361,-118.60953,CA
+valinda-ca,Valinda,34.04529,-117.94367,CA
+vallejo-ca,Vallejo,38.10409,-122.25664,CA
+valley-glen-ca,Valley Glen,34.18568,-118.42032,CA
+valley-station-ky,Valley Station,38.11118,-85.87024,KY
+valley-stream-ny,Valley Stream,40.66427,-73.70846,NY
+valparaiso-in,Valparaiso,41.47309,-87.06114,IN
+valrico-fl,Valrico,27.93789,-82.23644,FL
+van-buren-ar,Van Buren,35.43676,-94.34827,AR
+van-nest-ny,Van Nest,40.84843,-73.86375,NY
+van-nuys-ca,Van Nuys,34.18667,-118.44897,CA
+vancouver-wa,Vancouver,45.63873,-122.66149,WA
+vandalia-oh,Vandalia,39.89061,-84.19883,OH
+venice-ca,Venice,33.99084,-118.46008,CA
+venice-fl,Venice,27.09978,-82.45426,FL
+ventura-ca,Ventura,34.27834,-119.29317,CA
+vermont-square-ca,Vermont Square,34.00204,-118.29896,CA
+vernon-hills-il,Vernon Hills,42.21947,-87.97952,IL
+vero-beach-fl,Vero Beach,27.63864,-80.39727,FL
+vero-beach-south-fl,Vero Beach South,27.61638,-80.41308,FL
+vestal-ny,Vestal,42.08507,-76.05381,NY
+vestavia-hills-al,Vestavia Hills,33.44872,-86.78777,AL
+vicksburg-ms,Vicksburg,32.35265,-90.87788,MS
+victoria-tx,Victoria,28.80527,-97.0036,TX
+victorville-ca,Victorville,34.53611,-117.29116,CA
+vienna-va,Vienna,38.90122,-77.26526,VA
+villa-park-il,Villa Park,41.88975,-87.98895,IL
+vincennes-in,Vincennes,38.67727,-87.52863,IN
+vincent-ca,Vincent,34.50055,-118.11646,CA
+vincent-ca-2,Vincent,34.09836,-117.92383,CA
+vincentown-nj,Vincentown,39.934,-74.74849,NJ
+vineland-nj,Vineland,39.48623,-75.02573,NJ
+vineyard-ca,Vineyard,38.46449,-121.34692,CA
+virginia-beach-va,Virginia Beach,36.85293,-75.97799,VA
+visalia-ca,Visalia,36.33023,-119.29206,CA
+visitacion-valley-ca,Visitacion Valley,37.71715,-122.40433,CA
+vista-ca,Vista,33.20004,-117.24254,CA
+waco-tx,Waco,31.54933,-97.14667,TX
+wade-hampton-sc,Wade Hampton,34.90373,-82.33317,SC
+wadsworth-oh,Wadsworth,41.02561,-81.72985,OH
+wahiaw-hi,Wahiawā,21.50279,-158.02464,HI
+wahiaw-whitmore-hi,Wahiawā-Whitmore,21.50565,-158.03353,HI
+waiau-pacific-palisades-hi,Waiau-Pacific Palisades,21.40022,-157.95445,HI
+waik-k-hi,Waikīkī,21.2855,-157.83594,HI
+wailuku-hi,Wailuku,20.89133,-156.50604,HI
+waipahu-hi,Waipahu,21.38667,-158.00917,HI
+wake-forest-nc,Wake Forest,35.97987,-78.50972,NC
+wakefield-ma,Wakefield,42.50648,-71.07283,MA
+wakefield-ny,Wakefield,40.89788,-73.85236,NY
+waldorf-md,Waldorf,38.62456,-76.93914,MD
+walker-mi,Walker,43.00141,-85.76809,MI
+walla-walla-wa,Walla Walla,46.06458,-118.34302,WA
+wallingford-ct,Wallingford,41.45704,-72.82316,CT
+wallingford-center-ct,Wallingford Center,41.44987,-72.81892,CT
+walnut-ca,Walnut,34.02029,-117.86534,CA
+walnut-creek-ca,Walnut Creek,37.90631,-122.06496,CA
+walnut-park-ca,Walnut Park,33.96807,-118.22507,CA
+waltham-ma,Waltham,42.37649,-71.23561,MA
+wantagh-ny,Wantagh,40.68371,-73.51013,NY
+warner-robins-ga,Warner Robins,32.61574,-83.62664,GA
+warren-mi,Warren,42.49044,-83.01304,MI
+warren-oh,Warren,41.23756,-80.81842,OH
+warren-township-nj,Warren Township,40.60822,-74.51803,NJ
+warrensburg-mo,Warrensburg,38.76279,-93.73605,MO
+warwick-ri,Warwick,41.7001,-71.41617,RI
+wasco-ca,Wasco,35.59412,-119.34095,CA
+wasco-il,Wasco,41.93808,-88.40452,IL
+washington-dc,Washington,38.89511,-77.03637,DC
+washington-il,Washington,40.70365,-89.40731,IL
+washington-ut,Washington,37.13054,-113.50829,UT
+washington-heights-ny,Washington Heights,40.8501,-73.93541,NY
+washougal-wa,Washougal,45.58262,-122.35342,WA
+watauga-tx,Watauga,32.85791,-97.25474,TX
+waterbury-ct,Waterbury,41.55815,-73.0515,CT
+waterford-ct,Waterford,41.3417,-72.13597,CT
+waterford-mi,Waterford,42.69303,-83.41181,MI
+waterloo-ia,Waterloo,42.49276,-92.34296,IA
+watertown-ma,Watertown,42.37093,-71.18283,MA
+watertown-ny,Watertown,43.97478,-75.91076,NY
+watertown-sd,Watertown,44.89941,-97.11507,SD
+watertown-wi,Watertown,43.19472,-88.72899,WI
+waterville-me,Waterville,44.55201,-69.63171,ME
+watsonville-ca,Watsonville,36.91023,-121.75689,CA
+waukee-ia,Waukee,41.61166,-93.88523,IA
+waukegan-il,Waukegan,42.36363,-87.84479,IL
+waukesha-wi,Waukesha,43.01168,-88.23148,WI
+wausau-wi,Wausau,44.95914,-89.63012,WI
+wauwatosa-wi,Wauwatosa,43.04946,-88.00759,WI
+waverly-mi,Waverly,42.7392,-84.62081,MI
+waxahachie-tx,Waxahachie,32.38653,-96.84833,TX
+wayne-mi,Wayne,42.28143,-83.38632,MI
+wayne-nj,Wayne,40.92538,-74.27654,NJ
+wayne-pa,Wayne,40.044,-75.38769,PA
+waynesboro-va,Waynesboro,38.06847,-78.88947,VA
+weatherford-tx,Weatherford,32.7593,-97.79725,TX
+webster-groves-mo,Webster Groves,38.59255,-90.35734,MO
+weirton-wv,Weirton,40.41896,-80.58952,WV
+weirton-heights-wv,Weirton Heights,40.4084,-80.53924,WV
+wekiwa-springs-fl,Wekiwa Springs,28.69861,-81.42563,FL
+wellesley-ma,Wellesley,42.29649,-71.29256,MA
+wellington-fl,Wellington,26.65868,-80.24144,FL
+wenatchee-wa,Wenatchee,47.42346,-120.31035,WA
+wentzville-mo,Wentzville,38.81144,-90.85291,MO
+weslaco-tx,Weslaco,26.15952,-97.99084,TX
+wesley-chapel-fl,Wesley Chapel,28.23973,-82.32787,FL
+west-albany-ny,West Albany,42.68313,-73.77845,NY
+west-allis-wi,West Allis,43.01668,-88.00703,WI
+west-babylon-ny,West Babylon,40.71816,-73.35429,NY
+west-bend-wi,West Bend,43.42528,-88.18343,WI
+west-bloomfield-township-mi,West Bloomfield Township,42.56891,-83.38356,MI
+west-carson-ca,West Carson,33.82168,-118.29257,CA
+west-chester-pa,West Chester,39.96097,-75.60804,PA
+west-chicago-il,West Chicago,41.88475,-88.20396,IL
+west-columbia-sc,West Columbia,33.99349,-81.07398,SC
+west-coon-rapids-mn,West Coon Rapids,45.15969,-93.34967,MN
+west-covina-ca,West Covina,34.06862,-117.93895,CA
+west-des-moines-ia,West Des Moines,41.57721,-93.71133,IA
+west-elkridge-md,West Elkridge,39.20705,-76.72692,MD
+west-elsdon-il,West Elsdon,41.79392,-87.7245,IL
+west-englewood-il,West Englewood,41.77809,-87.66672,IL
+west-falls-church-va,West Falls Church,38.86484,-77.18787,VA
+west-fargo-nd,West Fargo,46.87497,-96.90036,ND
+west-garfield-park-il,West Garfield Park,41.88059,-87.72922,IL
+west-gulfport-ms,West Gulfport,30.40409,-89.0942,MS
+west-hartford-ct,West Hartford,41.76204,-72.74204,CT
+west-haven-ct,West Haven,41.27065,-72.94705,CT
+west-hempstead-ny,West Hempstead,40.70482,-73.65013,NY
+west-hills-ca,West Hills,34.19731,-118.64398,CA
+west-hollywood-ca,West Hollywood,34.09001,-118.36174,CA
+west-hollywood-fl,West Hollywood,26.02065,-80.18394,FL
+west-islip-ny,West Islip,40.70621,-73.30623,NY
+west-jordan-ut,West Jordan,40.60967,-111.9391,UT
+west-lafayette-in,West Lafayette,40.42587,-86.90807,IN
+west-lake-sammamish-wa,West Lake Sammamish,47.5776,-122.10123,WA
+west-lake-stevens-wa,West Lake Stevens,47.99343,-122.1018,WA
+west-lawn-il,West Lawn,41.77281,-87.72227,IL
+west-linn-or,West Linn,45.36568,-122.61231,OR
+west-little-river-fl,West Little River,25.85704,-80.23699,FL
+west-lynchburg-va,West Lynchburg,37.4032,-79.17808,VA
+west-melbourne-fl,West Melbourne,28.07168,-80.65339,FL
+west-memphis-ar,West Memphis,35.14648,-90.18454,AR
+west-mifflin-pa,West Mifflin,40.3634,-79.86644,PA
+west-milford-nj,West Milford,41.13121,-74.36737,NJ
+west-new-york-nj,West New York,40.78788,-74.01431,NJ
+west-oak-lane-pa,West Oak Lane,40.06928,-75.16629,PA
+west-odessa-tx,West Odessa,31.84235,-102.49876,TX
+west-orange-nj,West Orange,40.79871,-74.23904,NJ
+west-palm-beach-fl,West Palm Beach,26.71534,-80.05337,FL
+west-park-fl,West Park,25.98454,-80.19894,FL
+west-pensacola-fl,West Pensacola,30.42659,-87.27969,FL
+west-puente-valley-ca,West Puente Valley,34.05168,-117.9684,CA
+west-raleigh-nc,West Raleigh,35.78682,-78.66389,NC
+west-ridge-il,West Ridge,41.99975,-87.69284,IL
+west-roxbury-ma,West Roxbury,42.27926,-71.1495,MA
+west-sacramento-ca,West Sacramento,38.58046,-121.53023,CA
+west-saint-paul-mn,West Saint Paul,44.91608,-93.10161,MN
+west-scarborough-me,West Scarborough,43.57036,-70.38783,ME
+west-seneca-ny,West Seneca,42.85006,-78.79975,NY
+west-springfield-ma,West Springfield,42.10704,-72.62037,MA
+west-springfield-va,West Springfield,38.77261,-77.22109,VA
+west-torrington-ct,West Torrington,41.81843,-73.14372,CT
+west-town-il,West Town,41.89381,-87.67493,IL
+west-university-place-tx,West University Place,29.71801,-95.43383,TX
+west-valley-city-ut,West Valley City,40.69161,-112.00105,UT
+west-village-ny,West Village,40.73361,-74.00917,NY
+west-warwick-ri,West Warwick,41.69689,-71.52194,RI
+west-whittier-los-nietos-ca,West Whittier-Los Nietos,33.976,-118.06909,CA
+west-and-east-lealman-fl,West and East Lealman,27.81993,-82.68944,FL
+westbrook-me,Westbrook,43.67703,-70.37116,ME
+westbury-ny,Westbury,40.75566,-73.58763,NY
+westchase-fl,Westchase,28.05502,-82.60982,FL
+westchester-fl,Westchester,25.75482,-80.32727,FL
+westchester-il,Westchester,41.85059,-87.882,IL
+westerly-ri,Westerly,41.3776,-71.82729,RI
+westerville-oh,Westerville,40.12617,-82.92907,OH
+westfield-in,Westfield,40.04282,-86.12749,IN
+westfield-ma,Westfield,42.12509,-72.74954,MA
+westfield-nj,Westfield,40.65899,-74.34737,NJ
+westford-ma,Westford,42.57926,-71.43784,MA
+westlake-oh,Westlake,41.45532,-81.91792,OH
+westland-mi,Westland,42.3242,-83.40021,MI
+westminster-ca,Westminster,33.75918,-118.00673,CA
+westminster-co,Westminster,39.83665,-105.0372,CO
+westminster-md,Westminster,39.57538,-76.99581,MD
+westmont-ca,Westmont,33.9414,-118.3023,CA
+westmont-il,Westmont,41.79586,-87.97562,IL
+weston-fl,Weston,26.10037,-80.39977,FL
+weston-wi,Weston,44.8908,-89.54762,WI
+westpark-ca,Westpark,33.68527,-117.81371,CA
+westport-ct,Westport,41.14149,-73.3579,CT
+wethersfield-ct,Wethersfield,41.71427,-72.65259,CT
+weymouth-ma,Weymouth,42.22093,-70.93977,MA
+wharton-pa,Wharton,39.92678,-75.15712,PA
+wheat-ridge-co,Wheat Ridge,39.7661,-105.07721,CO
+wheaton-il,Wheaton,41.86614,-88.10701,IL
+wheaton-md,Wheaton,39.03983,-77.05526,MD
+wheeling-il,Wheeling,42.13919,-87.92896,IL
+wheeling-wv,Wheeling,40.06396,-80.72091,WV
+white-bear-lake-mn,White Bear Lake,45.08469,-93.00994,MN
+white-oak-md,White Oak,39.03983,-76.99303,MD
+white-oak-oh,White Oak,39.21311,-84.59939,OH
+white-plains-ny,White Plains,41.03399,-73.76291,NY
+white-settlement-tx,White Settlement,32.75957,-97.45835,TX
+whitehall-oh,Whitehall,39.96673,-82.88546,OH
+whitehall-township-pa,Whitehall Township,40.66676,-75.49991,PA
+whitestone-ny,Whitestone,40.79455,-73.81847,NY
+whitman-pa,Whitman,39.91678,-75.15546,PA
+whitney-nv,Whitney,36.09831,-115.0363,NV
+whittier-ca,Whittier,33.97918,-118.03284,CA
+wichita-ks,Wichita,37.69224,-97.33754,KS
+wichita-falls-tx,Wichita Falls,33.91371,-98.49339,TX
+wildomar-ca,Wildomar,33.59891,-117.28004,CA
+wildwood-mo,Wildwood,38.58283,-90.6629,MO
+wilkes-barre-pa,Wilkes-Barre,41.24591,-75.88131,PA
+wilkinsburg-pa,Wilkinsburg,40.44174,-79.88199,PA
+williamsburg-ny,Williamsburg,40.71427,-73.95347,NY
+williamsburg-va,Williamsburg,37.2707,-76.70746,VA
+williamsport-pa,Williamsport,41.24119,-77.00108,PA
+williamstown-nj,Williamstown,39.68623,-74.99517,NJ
+willimantic-ct,Willimantic,41.71065,-72.20813,CT
+willingboro-nj,Willingboro,40.02789,-74.86905,NJ
+williston-nd,Williston,48.14697,-103.61797,ND
+willmar-mn,Willmar,45.12191,-95.04334,MN
+willoughby-oh,Willoughby,41.63977,-81.4065,OH
+willow-grove-pa,Willow Grove,40.144,-75.11573,PA
+willowbrook-ca,Willowbrook,33.91696,-118.25507,CA
+wilmette-il,Wilmette,42.07225,-87.72284,IL
+wilmington-ca,Wilmington,33.78002,-118.26257,CA
+wilmington-de,Wilmington,39.74595,-75.54659,DE
+wilmington-ma,Wilmington,42.54648,-71.17367,MA
+wilmington-nc,Wilmington,34.23556,-77.94604,NC
+wilmington-island-ga,Wilmington Island,32.00355,-80.97372,GA
+wilson-nc,Wilson,35.72127,-77.91554,NC
+wilsonville-or,Wilsonville,45.29984,-122.77371,OR
+wilton-ct,Wilton,41.19537,-73.4379,CT
+wilton-ny,Wilton,43.18007,-73.74429,NY
+winchester-ky,Winchester,37.99008,-84.17965,KY
+winchester-ma,Winchester,42.45232,-71.137,MA
+winchester-nv,Winchester,36.12997,-115.11889,NV
+winchester-va,Winchester,39.18566,-78.16333,VA
+winder-ga,Winder,33.99261,-83.72017,GA
+windham-ct,Windham,41.69982,-72.15702,CT
+windsor-ca,Windsor,38.54713,-122.81638,CA
+windsor-co,Windsor,40.47748,-104.90136,CO
+windsor-ct,Windsor,41.8526,-72.6437,CT
+winnetka-ca,Winnetka,34.21334,-118.57203,CA
+winona-mn,Winona,44.04996,-91.63932,MN
+winston-salem-nc,Winston-Salem,36.09986,-80.24422,NC
+winter-garden-fl,Winter Garden,28.56528,-81.58618,FL
+winter-gardens-ca,Winter Gardens,32.83116,-116.93336,CA
+winter-haven-fl,Winter Haven,28.02224,-81.73286,FL
+winter-park-fl,Winter Park,28.6,-81.33924,FL
+winter-springs-fl,Winter Springs,28.69889,-81.30812,FL
+winthrop-ma,Winthrop,42.3751,-70.98283,MA
+wisconsin-rapids-wi,Wisconsin Rapids,44.38358,-89.81735,WI
+wissinoming-pa,Wissinoming,40.02233,-75.06323,PA
+woburn-ma,Woburn,42.47926,-71.15228,MA
+wolcott-ct,Wolcott,41.60232,-72.98677,CT
+wolf-trap-va,Wolf Trap,38.93983,-77.28609,VA
+woodbridge-ca,Woodbridge,33.67724,-117.79442,CA
+woodbridge-nj,Woodbridge,40.5576,-74.28459,NJ
+woodburn-or,Woodburn,45.14373,-122.85537,OR
+woodbury-mn,Woodbury,44.92386,-92.95938,MN
+woodhaven-ny,Woodhaven,40.68927,-73.85791,NY
+woodland-ca,Woodland,38.67852,-121.7733,CA
+woodland-hills-ca,Woodland Hills,34.16834,-118.60592,CA
+woodlawn-il,Woodlawn,41.77948,-87.59949,IL
+woodlawn-md,Woodlawn,39.32288,-76.72803,MD
+woodlawn-va,Woodlawn,38.71678,-77.13276,VA
+woodmere-ny,Woodmere,40.63205,-73.71263,NY
+woodridge-il,Woodridge,41.74697,-88.05034,IL
+woodrow-ny,Woodrow,40.5415,-74.19106,NY
+woodside-ny,Woodside,40.74538,-73.90541,NY
+woodstock-ga,Woodstock,34.10149,-84.51938,GA
+woodstock-il,Woodstock,42.31474,-88.4487,IL
+woonsocket-ri,Woonsocket,42.00288,-71.51478,RI
+wooster-oh,Wooster,40.80517,-81.93646,OH
+worcester-ma,Worcester,42.26259,-71.80229,MA
+wright-fl,Wright,30.45575,-86.63829,FL
+wyandotte-mi,Wyandotte,42.21421,-83.14992,MI
+wyckoff-nj,Wyckoff,41.00954,-74.17292,NJ
+wylie-tx,Wylie,33.01512,-96.53888,TX
+wyoming-mi,Wyoming,42.91336,-85.70531,MI
+xenia-oh,Xenia,39.68478,-83.92965,OH
+yakima-wa,Yakima,46.60207,-120.5059,WA
+yarmouth-ma,Yarmouth,41.70567,-70.22863,MA
+yonkers-ny,Yonkers,40.9304,-73.89789,NY
+yorba-linda-ca,Yorba Linda,33.88863,-117.81311,CA
+york-pa,York,39.9626,-76.72774,PA
+yorkville-il,Yorkville,41.64114,-88.44729,IL
+youngstown-oh,Youngstown,41.09978,-80.64952,OH
+ypsilanti-mi,Ypsilanti,42.24115,-83.61299,MI
+yuba-city-ca,Yuba City,39.14045,-121.61691,CA
+yucaipa-ca,Yucaipa,34.03363,-117.04309,CA
+yucca-valley-ca,Yucca Valley,34.11417,-116.43224,CA
+yukon-ok,Yukon,35.50672,-97.76254,OK
+yuma-az,Yuma,32.72532,-114.6244,AZ
+zachary-la,Zachary,30.64852,-91.1565,LA
+zanesville-oh,Zanesville,39.94035,-82.01319,OH
+zion-il,Zion,42.44613,-87.83285,IL
+zionsville-in,Zionsville,39.95087,-86.26194,IN
+ewa-beach-iroquois-point-hi,ʻEwa Beach-Iroquois Point,21.31532,-157.99133,HI
+ewa-gentry-west-loch-hi,ʻEwa Gentry-West Loch,21.35335,-158.02836,HI
+ewa-beach-hi,‘Ewa Beach,21.31556,-158.00722,HI
+ewa-gentry-hi,‘Ewa Gentry,21.33999,-158.03039,HI
